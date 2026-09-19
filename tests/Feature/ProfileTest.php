@@ -61,6 +61,60 @@ class ProfileTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
+    public function test_profile_preferences_can_be_updated(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile/preferences', [
+                'learning_goal' => 'Construire des projets',
+                'daily_goal_minutes' => 60,
+                'weekly_goal_sessions' => 5,
+                'preferred_technology' => 'laravel',
+                'email_notifications' => false,
+                'learning_reminders' => true,
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'preferences-updated')
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('Construire des projets', $user->learning_goal);
+        $this->assertSame(60, $user->daily_goal_minutes);
+        $this->assertSame(5, $user->weekly_goal_sessions);
+        $this->assertSame('laravel', $user->preferred_technology);
+        $this->assertFalse($user->email_notifications);
+        $this->assertTrue($user->learning_reminders);
+    }
+
+    public function test_invalid_profile_preferences_are_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->from('/profile')
+            ->patch('/profile/preferences', [
+                'learning_goal' => 'x',
+                'daily_goal_minutes' => 25,
+                'weekly_goal_sessions' => 9,
+                'preferred_technology' => 'unknown-stack',
+                'email_notifications' => 'no',
+                'learning_reminders' => 'yes',
+            ])
+            ->assertSessionHasErrors([
+                'daily_goal_minutes',
+                'weekly_goal_sessions',
+                'preferred_technology',
+                'email_notifications',
+                'learning_reminders',
+            ])
+            ->assertRedirect('/profile');
+    }
+
     public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();
