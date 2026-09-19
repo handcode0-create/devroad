@@ -35,7 +35,6 @@ export default function Show({ roadmap }) {
 
     const currentStep =
         steps.find((step) => step.status !== 'completed') ??
-        steps[0] ??
         null;
 
     return (
@@ -219,7 +218,7 @@ function StepsTab({ steps, currentStep, roadmapId }) {
                 )}
             </section>
 
-            {currentStep && (
+            {currentStep ? (
                 <section className="sticky bottom-4 z-20">
                     <Link
                         href={`/steps/${currentStep.id}`}
@@ -242,6 +241,27 @@ function StepsTab({ steps, currentStep, roadmapId }) {
 
                         <ArrowRight size={19} className="shrink-0 text-[#FF8A3D]" />
                     </Link>
+                </section>
+            ) : (
+                <section className="rounded-2xl border border-emerald-500/10 bg-emerald-500/[0.035] p-5 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-400">
+                                Parcours terminé
+                            </p>
+                            <h2 className="mt-1 text-lg font-bold text-white">
+                                Tu as terminé toutes les étapes.
+                            </h2>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                                Tu peux revoir un cours terminé depuis la liste ci-dessus.
+                            </p>
+                        </div>
+
+                        <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-400">
+                            <CheckCircle2 size={17} />
+                            100% complété
+                        </span>
+                    </div>
                 </section>
             )}
         </>
