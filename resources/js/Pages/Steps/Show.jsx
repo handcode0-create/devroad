@@ -8,11 +8,13 @@ import {
     Clock3,
     Code2,
     Lock,
+    Loader2,
 } from "lucide-react";
 
 import technologyLogos from "@/Config/technologyLogos";
 
 import AppLayout from "@/Layouts/AppLayout";
+import { useState } from "react";
 
 export default function Show({
     step,
@@ -22,12 +24,18 @@ export default function Show({
 }) {
     const completed = step.status === "completed";
     const blocked = step.status === "blocked";
+    const [statusLoading, setStatusLoading] = useState(false);
 
     function changeStatus(status) {
+        setStatusLoading(true);
+
         router.patch(
             `/steps/${step.id}/status`,
             { status },
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onFinish: () => setStatusLoading(false),
+            },
         );
     }
 
@@ -154,6 +162,7 @@ export default function Show({
 
                                     <button
                                         type="button"
+                                        disabled={statusLoading}
                                         onClick={() =>
                                             changeStatus(
                                                 completed
@@ -168,10 +177,19 @@ export default function Show({
                                                 : "bg-[#FF6A00] text-white shadow-[0_8px_22px_rgba(255,106,0,0.24)] hover:bg-[#ff781a]",
                                         ].join(" ")}
                                     >
-                                        <Check size={17} />
-                                        {completed
-                                            ? "Remettre en cours"
-                                            : "Marquer comme terminée"}
+                                        {statusLoading ? (
+                                            <>
+                                                <Loader2 size={17} className="animate-spin" />
+                                                Enregistrement...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check size={17} />
+                                                {completed
+                                                    ? "Remettre en cours"
+                                                    : "Marquer comme terminée"}
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </section>
