@@ -6,8 +6,11 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends \
         bash \
+        nodejs \
         ca-certificates \
         curl \
         git \
@@ -15,8 +18,6 @@ RUN apt-get update \
         libonig-dev \
         libxml2-dev \
         libzip-dev \
-        nodejs \
-        npm \
         unzip \
         zip \
     && docker-php-ext-install \
