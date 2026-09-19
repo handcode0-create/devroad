@@ -6,12 +6,17 @@ import FavoriteButton from '@/Components/Memos/FavoriteButton';
 import MemoContent from '@/Components/Memos/MemoContent';
 import TagBadge from '@/Components/Memos/TagBadge';
 import { buttonClass } from '@/Components/Ui/buttons';
+import ConfirmModal from '@/Components/Ui/ConfirmModal';
+import { useState } from 'react';
 
 export default function Show({ memo }) {
+    const [confirmDelete, setConfirmDelete] = useState(false);
+
     function destroy() {
-        if (window.confirm('Supprimer cette fiche mémo ? Cette action est définitive.')) {
-            router.delete(`/memos/${memo.id}`);
-        }
+        router.delete(`/memos/${memo.id}`, {
+            preserveScroll: true,
+            onFinish: () => setConfirmDelete(false),
+        });
     }
 
     return (
@@ -48,12 +53,21 @@ export default function Show({ memo }) {
                         Modifier
                     </Link>
 
-                    <button type="button" onClick={destroy} className={buttonClass('danger')}>
+                    <button type="button" onClick={() => setConfirmDelete(true)} className={buttonClass('danger')}>
                         <Trash2 size={16} aria-hidden="true" />
                         Supprimer
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal
+                show={confirmDelete}
+                title="Supprimer cette fiche mémo ?"
+                description="Cette action est définitive et la fiche sera supprimée."
+                confirmLabel="Supprimer"
+                onClose={() => setConfirmDelete(false)}
+                onConfirm={destroy}
+            />
         </AppLayout>
     );
 }
