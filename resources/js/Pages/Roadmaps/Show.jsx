@@ -1,6 +1,7 @@
 import { Head, Link } from "@inertiajs/react";
 import {
     ArrowLeft,
+    Pencil,
     ArrowRight,
     Check,
     ChevronRight,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/Layouts/AppLayout";
+import AddStepForm from "@/Components/Roadmaps/AddStepForm";
 import technologyLogos from "@/Config/technologyLogos";
 
 export default function Show({ roadmap }) {
@@ -32,14 +34,24 @@ export default function Show({ roadmap }) {
             <Head title={roadmap?.title ?? "Feuille de route"} />
 
             <div className="space-y-6">
-                {/* Retour */}
-                <Link
-                    href="/roadmaps"
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
-                >
-                    <ArrowLeft size={16} />
-                    Toutes les feuilles de route
-                </Link>
+                {/* Retour + modifier */}
+                <div className="flex items-center justify-between gap-4">
+                    <Link
+                        href="/roadmaps"
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
+                    >
+                        <ArrowLeft size={16} />
+                        Toutes les feuilles de route
+                    </Link>
+
+                    <Link
+                        href={`/roadmaps/${roadmap?.id}/edit`}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-white"
+                    >
+                        <Pencil size={14} />
+                        Modifier
+                    </Link>
+                </div>
 
                 {/* =========================================================
                     HERO ROADMAP
@@ -148,6 +160,8 @@ export default function Show({ roadmap }) {
                             </p>
                         </div>
                     )}
+
+                    <AddStepForm roadmapId={roadmap?.id} />
                 </section>
 
                 {/* =========================================================
