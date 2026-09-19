@@ -63,23 +63,14 @@ export default function Sidebar({ user }) {
                 BRAND
             ============================================================ */}
             <div className="flex h-[88px] items-center border-b border-white/[0.06] px-6">
-                <Link href="/dashboard" className="flex items-center gap-3">
-                    {/* DevRoad mark */}
-                    <div className="relative flex h-10 w-10 items-center justify-center">
-                        <div className="absolute inset-0 rotate-[30deg] rounded-[10px] bg-[#FF6A00] shadow-[0_0_24px_rgba(255,106,0,0.18)]" />
-
-                        <div className="relative h-[22px] w-[22px] rotate-[30deg] rounded-[5px] border-[4px] border-white" />
-                    </div>
-
-                    <div>
-                        <div className="text-xl font-extrabold tracking-tight text-white">
-                            Dev<span className="text-[#FF6A00]">Road</span>
-                        </div>
-
-                        <p className="text-[10px] font-medium tracking-wide text-slate-500">
-                            Planifie. Apprends. Progresse.
-                        </p>
-                    </div>
+                <Link href="/dashboard" className="flex items-center">
+                    <span className="flex h-12 w-[150px] items-center justify-center overflow-hidden rounded-xl bg-white px-2 py-1 shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+                        <img
+                            src="/logo.png"
+                            alt="DevRoad"
+                            className="h-full w-full object-contain"
+                        />
+                    </span>
                 </Link>
             </div>
 
