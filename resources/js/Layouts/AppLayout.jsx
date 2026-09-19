@@ -1,15 +1,33 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
 import ToastViewport from '@/Components/Ui/ToastViewport';
+import { useEffect, useState } from 'react';
 
 export default function AppLayout({ children }) {
     const { auth } = usePage().props;
+    const [navigating, setNavigating] = useState(false);
 
     const user = auth?.user;
 
+    useEffect(() => {
+        const removeStartListener = router.on('start', () => setNavigating(true));
+        const removeFinishListener = router.on('finish', () => setNavigating(false));
+
+        return () => {
+            removeStartListener();
+            removeFinishListener();
+        };
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#08111F] text-white">
+            {navigating && (
+                <div className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-transparent">
+                    <div className="h-full w-1/3 animate-pulse bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)]" />
+                </div>
+            )}
+
             {/* Desktop sidebar */}
             <Sidebar user={user} />
 
