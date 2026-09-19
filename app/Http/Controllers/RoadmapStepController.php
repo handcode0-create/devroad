@@ -53,6 +53,7 @@ class RoadmapStepController extends Controller
             'roadmap' => [
                 'id' => $roadmap->id,
                 'title' => $roadmap->title,
+                'technology' => $roadmap->technology,
             ],
 
             'previous_step' => $previousStep
