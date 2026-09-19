@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRoadmapStepRequest;
 use App\Http\Requests\UpdateRoadmapStepRequest;
 use App\Http\Requests\UpdateStepStatusRequest;
+use App\Http\Requests\UpdateStepExerciseRequest;
 use App\Models\Roadmap;
 use App\Models\RoadmapStep;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,7 @@ class RoadmapStepController extends Controller
     /**
      * Afficher le cours d'une étape.
      */
-    public function show(RoadmapStep $step): Response
+    public function show(RoadmapStep $step): Response|RedirectResponse
     {
         $this->authorize('view', $step);
 
@@ -26,6 +27,32 @@ class RoadmapStepController extends Controller
         ]);
 
         $roadmap = $step->roadmap;
+
+        $currentStep = $roadmap
+            ->steps()
+            ->where('status', '!=', RoadmapStep::COMPLETED)
+            ->orderBy('position')
+            ->first();
+
+        if (
+            $currentStep &&
+            $currentStep->id !== $step->id &&
+            $step->position > $currentStep->position
+        ) {
+            return redirect()->route('steps.show', $currentStep);
+        }
+
+        if ($step->status === RoadmapStep::TODO) {
+            $step->update([
+                'status' => RoadmapStep::IN_PROGRESS,
+            ]);
+        }
+
+        $step->updateQuietly([
+            'last_viewed_at' => now(),
+        ]);
+
+        $step->refresh();
 
         $previousStep = $roadmap
             ->steps()
@@ -50,6 +77,13 @@ class RoadmapStepController extends Controller
                 'content' => $step->content,
                 'code_example' => $step->code_example,
                 'estimated_minutes' => $step->estimated_minutes,
+                'exercise' => $step->exercise_title ? [
+                    'title' => $step->exercise_title,
+                    'description' => $step->exercise_description,
+                    'hint' => $step->exercise_hint,
+                    'solution' => $step->exercise_solution,
+                    'completed' => $step->exercise_completed_at !== null,
+                ] : null,
             ],
 
             'roadmap' => fn () => [
@@ -129,31 +163,90 @@ class RoadmapStepController extends Controller
 
         $status = $request->validated('status');
 
+        if (
+            $status === RoadmapStep::COMPLETED &&
+            $step->exercise_title &&
+            ! $step->exercise_completed_at
+        ) {
+            return back()->withErrors([
+                'status' => "Termine d'abord l'exercice de cette leçon.",
+            ]);
+        }
+
         DB::transaction(function () use ($step, $status) {
             $step->update([
                 'status' => $status,
             ]);
 
-            if ($status !== RoadmapStep::COMPLETED) {
-                return;
-            }
+            $roadmap = $step->roadmap()->first();
 
-            $nextStep = RoadmapStep::query()
-                ->where('roadmap_id', $step->roadmap_id)
-                ->where('position', '>', $step->position)
-                ->orderBy('position')
-                ->first();
+            if ($status === RoadmapStep::COMPLETED) {
+                $nextStep = RoadmapStep::query()
+                    ->where('roadmap_id', $step->roadmap_id)
+                    ->where('position', '>', $step->position)
+                    ->where('status', '!=', RoadmapStep::COMPLETED)
+                    ->orderBy('position')
+                    ->first();
 
-            if ($nextStep && $nextStep->status === RoadmapStep::TODO) {
-                $nextStep->update([
-                    'status' => RoadmapStep::IN_PROGRESS,
-                ]);
+                if ($nextStep && $nextStep->status === RoadmapStep::TODO) {
+                    $nextStep->update([
+                        'status' => RoadmapStep::IN_PROGRESS,
+                    ]);
+                }
+
+                $hasIncompleteSteps = RoadmapStep::query()
+                    ->where('roadmap_id', $step->roadmap_id)
+                    ->where('status', '!=', RoadmapStep::COMPLETED)
+                    ->exists();
+
+                if ($roadmap && ! $hasIncompleteSteps && $roadmap->status !== 'archived') {
+                    $roadmap->update(['status' => 'completed']);
+                } elseif ($roadmap && $roadmap->status === 'draft') {
+                    $roadmap->update(['status' => 'active']);
+                }
+            } elseif ($roadmap && $roadmap->status === 'completed') {
+                $roadmap->update(['status' => 'active']);
             }
         });
 
         return back()->with(
             'success',
             'Progression mise à jour.'
+        );
+    }
+
+    /**
+     * Valider ou réouvrir l'exercice d'une étape.
+     */
+    public function updateExercise(
+        UpdateStepExerciseRequest $request,
+        RoadmapStep $step
+    ): RedirectResponse {
+        $this->authorize('update', $step);
+
+        if (! $step->exercise_title) {
+            return back();
+        }
+
+        $completed = $request->boolean('completed');
+
+        $step->update([
+            'exercise_completed_at' => $completed ? now() : null,
+        ]);
+
+        if (! $completed && $step->status === RoadmapStep::COMPLETED) {
+            $step->update([
+                'status' => RoadmapStep::IN_PROGRESS,
+            ]);
+
+            if ($step->roadmap->status === 'completed') {
+                $step->roadmap->update(['status' => 'active']);
+            }
+        }
+
+        return back()->with(
+            'success',
+            $completed ? 'Exercice validé.' : 'Exercice réouvert.'
         );
     }
 
