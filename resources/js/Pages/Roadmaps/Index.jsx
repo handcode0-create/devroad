@@ -79,7 +79,7 @@ function RoadmapCard({ roadmap }) {
 
     return (
         <Link
-            href={\`/roadmaps/\${roadmap.id}\`}
+            href={`/roadmaps/${roadmap.id}`}
             className="group block rounded-3xl border border-white/[0.06] bg-[#0D1725] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#FF6A00]/20 hover:bg-[#101B2C]"
         >
             <div className="flex items-start gap-4">
@@ -131,7 +131,7 @@ function RoadmapCard({ roadmap }) {
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
                     <div
                         className="h-full rounded-full bg-[#FF6A00] transition-all"
-                        style={{ width: \`\${progress}%\` }}
+                        style={{ width: `${progress}%` }}
                     />
                 </div>
             </div>
@@ -212,12 +212,12 @@ function getTechnologyLogo(title) {
     const normalized = title
         .toLowerCase()
         .trim()
-        .replace(/\\s+/g, '')
+        .replace(/\s+/g, '')
         .replace(/_/g, '-');
 
     return (
         technologyLogos[normalized] ??
-        technologyLogos[normalized.replace(/\\./g, '')] ??
+        technologyLogos[normalized.replace(/\./g, '')] ??
         null
     );
 }
