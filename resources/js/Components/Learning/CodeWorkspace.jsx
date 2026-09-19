@@ -829,11 +829,22 @@ export default function CodeWorkspace({ workspace, stepId }) {
 
                     <button
                         type="button"
-                        onClick={createFile}
-                        className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 hover:text-white"
+                        onClick={openCreateFileModal}
+                        className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[#FF8A3D]"
                         aria-label="Nouveau fichier"
+                        title="Nouveau fichier"
                     >
                         <FilePlus2 size={14} />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => importInputRef.current?.click()}
+                        className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[#FF8A3D]"
+                        aria-label="Importer des fichiers"
+                        title="Importer des fichiers"
+                    >
+                        <Upload size={14} />
                     </button>
                 </div>
             </div>
