@@ -24,6 +24,7 @@ class RoadmapController extends Controller
             ->through(fn (Roadmap $roadmap) => [
                 'id' => $roadmap->id,
                 'title' => $roadmap->title,
+                'technology' => $roadmap->technology,
                 'description' => $roadmap->description,
                 'status' => $roadmap->status,
                 'steps_count' => $roadmap->steps_count,
@@ -41,7 +42,9 @@ class RoadmapController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Roadmaps/Create');
+        return Inertia::render('Roadmaps/Create', [
+            'technologies' => config('devroad.technologies', []),
+        ]);
     }
 
     /**
@@ -110,6 +113,7 @@ class RoadmapController extends Controller
 
         return Inertia::render('Roadmaps/Edit', [
             'roadmap' => $roadmap,
+            'technologies' => config('devroad.technologies', []),
         ]);
     }
 
