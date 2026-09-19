@@ -125,6 +125,82 @@ class RoadmapStepTest extends TestCase
         ]);
     }
 
+    public function test_une_etape_suivante_est_verrouillee_tant_que_la_courante_n_est_pas_terminee(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 3);
+        $premiere = $roadmap->steps()->where('position', 1)->first();
+        $deuxieme = $roadmap->steps()->where('position', 2)->first();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $deuxieme))
+            ->assertRedirect(route('steps.show', $premiere));
+    }
+
+    public function test_consulter_l_etape_courante_enregistre_le_suivi(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 1);
+        $step = $roadmap->steps()->first();
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertOk();
+
+        $step->refresh();
+
+        $this->assertSame('in_progress', $step->status);
+        $this->assertNotNull($step->last_viewed_at);
+    }
+
+    public function test_un_exercice_peut_etre_valide_et_reouvert(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 1);
+        $step = $roadmap->steps()->first();
+
+        $step->update([
+            'exercise_title' => 'Créer une route',
+            'exercise_description' => 'Ajoute une route GET /hello.',
+            'exercise_hint' => 'Utilise Route::get().',
+            'exercise_solution' => "Route::get('/hello', fn () => 'Hello');",
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('steps.exercise', $step), ['completed' => true])
+            ->assertRedirect();
+
+        $this->assertNotNull($step->fresh()->exercise_completed_at);
+
+        $this->actingAs($user)
+            ->patch(route('steps.exercise', $step), ['completed' => false])
+            ->assertRedirect();
+
+        $this->assertNull($step->fresh()->exercise_completed_at);
+    }
+
+    public function test_une_etape_avec_exercice_ne_peut_pas_etre_terminee_sans_valider_l_exercice(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 1);
+        $step = $roadmap->steps()->first();
+
+        $step->update([
+            'exercise_title' => 'Créer une route',
+            'exercise_description' => 'Ajoute une route.',
+            'exercise_hint' => 'Utilise Route::get().',
+            'exercise_solution' => 'Route::get(...);',
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('steps.status', $step), ['status' => 'completed'])
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('todo', $step->fresh()->status);
+    }
+
     public function test_un_statut_invalide_est_refuse(): void
     {
         $user = User::factory()->create();
