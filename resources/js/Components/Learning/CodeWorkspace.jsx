@@ -17,20 +17,47 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const TERMINAL_HELP = [
-    "Commandes disponibles :",
-    "  help              afficher cette aide",
-    "  clear             vider le terminal",
-    "  pwd               afficher le dossier courant",
-    "  ls                afficher les fichiers",
-    "  cat <fichier>     afficher un fichier",
-    "  touch <fichier>   créer un fichier",
-    "  mkdir <dossier>   créer un dossier",
-    "  rm <fichier>      supprimer un fichier",
-    "  preview           ouvrir l’aperçu",
-    "  run               exécuter le JavaScript dans le navigateur",
-    "  reset             restaurer le workspace initial",
-];
+const TERMINAL_HELP = {
+    browser: [
+        "Commandes disponibles :",
+        "  help              afficher cette aide",
+        "  clear             vider le terminal",
+        "  pwd               afficher le dossier courant",
+        "  ls                afficher les fichiers",
+        "  cat <fichier>     afficher un fichier",
+        "  touch <fichier>   créer un fichier",
+        "  mkdir <dossier>   créer un dossier",
+        "  rm <fichier>      supprimer un fichier",
+        "  preview           ouvrir l’aperçu",
+        "  run               exécuter JavaScript dans le navigateur",
+        "  reset             restaurer le workspace initial",
+    ],
+    node: [
+        "Commandes Node.js disponibles :",
+        "  help              afficher cette aide",
+        "  node main.js      exécuter le fichier courant",
+        "  node --version    afficher la version Node",
+        "  npm --version     afficher la version npm",
+        "  npm install       installer les dépendances",
+        "  npm run build     exécuter un script package.json",
+    ],
+    php: [
+        "Commandes PHP disponibles :",
+        "  help              afficher cette aide",
+        "  php main.php      exécuter le fichier courant",
+        "  php --version     afficher la version PHP",
+    ],
+    laravel: [
+        "Commandes Laravel disponibles :",
+        "  php artisan --version",
+        "  php artisan route:list",
+        "  php artisan migrate",
+        "  php artisan make:model Post -m",
+        "  php artisan make:controller PostController",
+        "  php artisan make:request StorePostRequest",
+        "  php artisan test",
+    ],
+};
 
 const DEFAULT_FILES = {
     html: {
@@ -99,6 +126,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
     const [copied, setCopied] = useState(false);
     const [saved, setSaved] = useState(false);
     const [previewVersion, setPreviewVersion] = useState(0);
+    const [running, setRunning] = useState(false);
 
     const terminalEndRef = useRef(null);
     const hydratedRef = useRef(false);
@@ -269,6 +297,83 @@ export default function CodeWorkspace({ workspace, stepId }) {
         pushTerminal("▶ Aperçu actualisé.");
     }
 
+    async function runServer(commandOverride = null) {
+        if (running) {
+            return;
+        }
+
+        setRunning(true);
+        setPanel("terminal");
+
+        const commandToRun =
+            commandOverride ??
+            workspace.run_command ??
+            "run";
+
+        pushTerminal(
+            "",
+            "$ " + commandToRun,
+            "Exécution avec le runtime " +
+                workspace.label +
+                " de DevRoad...",
+        );
+
+        try {
+            const response = await fetch("/steps/" + stepId + "/run", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") ?? "",
+                },
+                body: JSON.stringify({
+                    language: workspace.language,
+                    command: commandToRun,
+                    file_path: activeFile,
+                    code: currentFile?.content ?? "",
+                    files,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.stdout) {
+                pushTerminal(result.stdout);
+            }
+
+            if (result.stderr) {
+                pushTerminal(result.stderr);
+            }
+
+            if (!result.stdout && !result.stderr) {
+                pushTerminal(
+                    result.status === "success"
+                        ? "✓ Processus terminé sans sortie."
+                        : "Aucune sortie.",
+                );
+            }
+
+            pushTerminal(
+                "Processus terminé · code " +
+                    (result.exit_code ?? "n/a") +
+                    " · " +
+                    (result.duration_ms ?? 0) +
+                    " ms",
+            );
+        } catch (error) {
+            pushTerminal(
+                "✕ Impossible d’exécuter le runtime DevRoad.",
+            );
+        } finally {
+            setRunning(false);
+        }
+    }
+
+
     function runJavaScript() {
         if (workspace.language !== "javascript") {
             pushTerminal(
@@ -335,6 +440,12 @@ export default function CodeWorkspace({ workspace, stepId }) {
         }
 
         setCommand("");
+
+        if (workspace.runtime === "server") {
+            runServer(value === "run" ? workspace.run_command : value);
+            return;
+        }
+
         pushTerminal("$ " + value);
 
         if (value === "clear") {
@@ -343,7 +454,11 @@ export default function CodeWorkspace({ workspace, stepId }) {
         }
 
         if (value === "help") {
-            pushTerminal("", ...TERMINAL_HELP);
+            pushTerminal(
+                "",
+                ...(TERMINAL_HELP[workspace.language] ??
+                    TERMINAL_HELP.browser),
+            );
             return;
         }
 
@@ -531,6 +646,18 @@ export default function CodeWorkspace({ workspace, stepId }) {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {workspace.runtime === "server" && (
+                            <button
+                                type="button"
+                                onClick={() => runServer()}
+                                disabled={running}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-3 py-2 text-[11px] font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:cursor-wait disabled:opacity-60"
+                            >
+                                <Play size={13} fill="currentColor" />
+                                {running ? "Exécution..." : "Exécuter"}
+                            </button>
+                        )}
+
                         <button
                             type="button"
                             onClick={saveWorkspace}
@@ -701,9 +828,9 @@ export default function CodeWorkspace({ workspace, stepId }) {
                         </div>
 
                         <span className="text-[10px] text-slate-700">
-                            {workspace.language === "laravel"
-                                ? "Mode navigateur · exécution Laravel distante optionnelle"
-                                : "Mode navigateur"}
+                            {workspace.runtime === "server"
+                                ? "Runtime local DevRoad · " + workspace.label
+                                : "Runtime navigateur"}
                         </span>
                     </div>
 
