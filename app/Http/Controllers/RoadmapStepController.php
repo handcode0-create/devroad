@@ -99,6 +99,10 @@ class RoadmapStepController extends Controller
                 'id' => $roadmap->id,
                 'title' => $roadmap->title,
                 'technology' => $roadmap->technology,
+                'steps_count' => $roadmap->steps()->count(),
+                'completed_steps_count' => $roadmap->steps()
+                    ->where('status', RoadmapStep::COMPLETED)
+                    ->count(),
             ],
 
             'previous_step' => fn () => $previousStep
