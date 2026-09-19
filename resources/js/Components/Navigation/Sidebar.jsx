@@ -4,6 +4,7 @@ import {
     ChevronRight,
     CircleUserRound,
     FileText,
+    Code2,
     LayoutDashboard,
     Plus,
     Search,
@@ -30,6 +31,11 @@ export default function Sidebar({ user }) {
             label: "Mémos",
             href: "/memos",
             icon: FileText,
+        },
+        {
+            label: "DevLab",
+            href: "/devlab",
+            icon: Code2,
         },
         {
             label: "Recherche",
