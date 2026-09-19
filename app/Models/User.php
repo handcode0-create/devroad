@@ -15,7 +15,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that should be mass assignable.
      *
      * @var list<string>
      */
@@ -23,6 +23,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'learning_goal',
+        'daily_goal_minutes',
+        'weekly_goal_sessions',
+        'preferred_technology',
+        'email_notifications',
+        'learning_reminders',
     ];
 
     /**
@@ -45,10 +51,14 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'daily_goal_minutes' => 'integer',
+            'weekly_goal_sessions' => 'integer',
+            'email_notifications' => 'boolean',
+            'learning_reminders' => 'boolean',
         ];
     }
 
-        public function roadmaps(): HasMany
+    public function roadmaps(): HasMany
     {
         return $this->hasMany(Roadmap::class);
     }
