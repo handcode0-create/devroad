@@ -1,3 +1,21 @@
+export const TECHNOLOGIES = [
+    { value: 'laravel', label: 'Laravel' },
+    { value: 'nextjs', label: 'Next.js' },
+    { value: 'react', label: 'React' },
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'typescript', label: 'TypeScript' },
+    { value: 'php', label: 'PHP' },
+    { value: 'html', label: 'HTML' },
+    { value: 'css', label: 'CSS' },
+    { value: 'tailwind', label: 'Tailwind CSS' },
+    { value: 'node', label: 'Node.js' },
+    { value: 'git', label: 'Git' },
+    { value: 'github', label: 'GitHub' },
+    { value: 'docker', label: 'Docker' },
+    { value: 'mysql', label: 'MySQL' },
+    { value: 'postgresql', label: 'PostgreSQL' },
+];
+
 const technologyLogos = {
     laravel: "/assets/laravel.png",
     nextjs: "/assets/next_js.png",
