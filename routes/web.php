@@ -28,13 +28,16 @@ Route::middleware('auth')->group(function () {
 
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
+    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])
+        ->name('profile.preferences');
+
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('roadmaps', RoadmapController::class);
-    
+
     Route::resource('roadmaps.steps', RoadmapStepController::class)
-    ->only(['store', 'update', 'destroy'])
-    ->shallow();
+        ->only(['store', 'update', 'destroy'])
+        ->shallow();
 
     Route::get('steps/{step}', [RoadmapStepController::class, 'show'])
         ->name('steps.show');
