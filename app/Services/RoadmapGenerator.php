@@ -98,6 +98,8 @@ class RoadmapGenerator
             $language = match ($technology) {
                 'laravel' => 'laravel',
                 'php' => 'php',
+                'html' => 'html',
+                'css' => 'css',
                 'javascript', 'node', 'react', 'nextjs' => 'javascript',
                 default => null,
             };
@@ -110,6 +112,8 @@ class RoadmapGenerator
                 'laravel' => 'routes/web.php',
                 'php' => 'main.php',
                 'javascript' => 'main.js',
+                'html' => 'index.html',
+                'css' => 'styles.css',
                 default => null,
             };
         }
