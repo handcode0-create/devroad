@@ -89,6 +89,7 @@ class RoadmapStepController extends Controller
                 'content' => $step->content,
                 'code_example' => $step->code_example,
                 'estimated_minutes' => $step->estimated_minutes,
+                'workspace' => $this->workspaceFor($roadmap->technology, $step->code_example),
                 'exercise' => $step->exercise_title ? [
                     'title' => $step->exercise_title,
                     'description' => $step->exercise_description,
@@ -160,6 +161,47 @@ class RoadmapStepController extends Controller
         return response()->json(
             $runner->run($language, $request->validated('code'))
         );
+    }
+
+    private function workspaceFor(?string $technology, ?string $codeExample): array
+    {
+        $profile = match ($technology) {
+            'laravel', 'php' => [
+                'language' => 'php',
+                'label' => 'PHP',
+                'filename' => 'main.php',
+                'run_command' => 'php main.php',
+                'starter' => "<?php\n\n",
+            ],
+            'javascript', 'node', 'react', 'nextjs' => [
+                'language' => 'javascript',
+                'label' => 'JavaScript',
+                'filename' => 'main.js',
+                'run_command' => 'node main.js',
+                'starter' => "console.log('Bonjour DevRoad');\n",
+            ],
+            default => null,
+        };
+
+        if ($profile === null) {
+            return [
+                'enabled' => false,
+                'language' => null,
+                'label' => null,
+                'filename' => null,
+                'run_command' => null,
+                'initial_code' => '',
+            ];
+        }
+
+        return [
+            'enabled' => true,
+            'language' => $profile['language'],
+            'label' => $profile['label'],
+            'filename' => $profile['filename'],
+            'run_command' => $profile['run_command'],
+            'initial_code' => $codeExample ?: $profile['starter'],
+        ];
     }
 
     private function workspaceLanguages(?string $technology): array
