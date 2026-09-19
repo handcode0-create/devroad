@@ -1,11 +1,14 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
+import ConfirmModal from '@/Components/Ui/ConfirmModal';
+import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import RoadmapForm from '@/Components/Roadmaps/RoadmapForm';
 import { buttonClass } from '@/Components/Ui/buttons';
 
 export default function Edit({ roadmap }) {
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const form = useForm({
         title: roadmap.title ?? '',
         technology: roadmap.technology ?? '',
@@ -19,9 +22,10 @@ export default function Edit({ roadmap }) {
     }
 
     function destroy() {
-        if (window.confirm('Supprimer cette roadmap et toutes ses étapes ? Cette action est définitive.')) {
-            router.delete(`/roadmaps/${roadmap.id}`);
-        }
+        router.delete(`/roadmaps/${roadmap.id}`, {
+            preserveScroll: true,
+            onFinish: () => setConfirmDelete(false),
+        });
     }
 
     return (
@@ -48,12 +52,21 @@ export default function Edit({ roadmap }) {
                         Supprimer la roadmap supprime aussi toutes ses étapes.
                     </p>
 
-                    <button type="button" onClick={destroy} className={`${buttonClass('danger')} mt-4`}>
+                    <button type="button" onClick={() => setConfirmDelete(true)} className={`${buttonClass('danger')} mt-4`}>
                         <Trash2 size={16} aria-hidden="true" />
                         Supprimer cette roadmap
                     </button>
                 </section>
             </div>
+
+            <ConfirmModal
+                show={confirmDelete}
+                title="Supprimer cette roadmap ?"
+                description="La roadmap et toutes ses étapes seront définitivement supprimées."
+                confirmLabel="Supprimer"
+                onClose={() => setConfirmDelete(false)}
+                onConfirm={destroy}
+            />
         </AppLayout>
     );
 }
