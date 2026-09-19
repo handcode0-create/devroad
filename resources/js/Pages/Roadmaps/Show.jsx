@@ -34,8 +34,7 @@ export default function Show({ roadmap }) {
     const logo = getTechnologyLogo(roadmap?.technology);
 
     const currentStep =
-        steps.find((step) => step.status === 'in_progress') ??
-        steps.find((step) => step.status === 'todo') ??
+        steps.find((step) => step.status !== 'completed') ??
         steps[0] ??
         null;
 
