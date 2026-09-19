@@ -47,12 +47,12 @@ export default function RoadmapForm({ form, technologies = [], onSubmit, submitL
                         const value = e.target.value;
                         const technology = technologies.find((item) => item.value === value);
 
-                        setData((current) => ({
-                            ...current,
+                        setData({
+                            ...data,
                             technology: value,
-                            title: current.title || technology?.label || '',
-                            description: current.description || technology?.description || '',
-                        }));
+                            title: data.title || technology?.label || '',
+                            description: data.description || technology?.description || '',
+                        });
                     }}
                     className={inputClass}
                     aria-invalid={errors.technology ? 'true' : undefined}
