@@ -19,20 +19,25 @@ class RoadmapStep extends Model
         self::BLOCKED,
     ];
 
-    // Toute modification d'une étape met à jour updated_at de sa roadmap :
-    // « les roadmaps récentes » du dashboard reflètent ainsi l'activité réelle.
     protected $touches = ['roadmap'];
 
-    // roadmap_id est défini via $roadmap->steps()->create(...)
     protected $fillable = [
         'title',
         'description',
+        'objective',
+        'content',
+        'code_example',
+        'estimated_minutes',
         'position',
         'status',
+    ];
+
+    protected $casts = [
+        'estimated_minutes' => 'integer',
     ];
 
     public function roadmap(): BelongsTo
     {
         return $this->belongsTo(Roadmap::class);
     }
-}   
+}
