@@ -547,7 +547,7 @@ function StatCard({ icon: Icon, label, value, tone }) {
 
 function RoadmapCard({ roadmap }) {
     const progress = clampProgress(roadmap.progress);
-    const logo = getTechnologyLogo(roadmap.title);
+    const logo = getTechnologyLogo(roadmap.technology);
 
     return (
         <Link
