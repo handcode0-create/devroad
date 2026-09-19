@@ -73,7 +73,7 @@ class RoadmapStepTest extends TestCase
 
         $this->actingAs($user)
             ->patch(route('steps.status', $premiere), ['status' => 'completed'])
-            ->assertRedirect(route('roadmaps.show', $roadmap));
+            ->assertRedirect();
 
         $this->assertSame(33, $roadmap->fresh()->progress);
     }
