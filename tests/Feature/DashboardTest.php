@@ -90,7 +90,10 @@ class DashboardTest extends TestCase
                 // C vient d'être modifiée (ajout d'étapes) : elle passe en tête
                 ->where('recent_roadmaps.0.title', 'C')
                 ->where('recent_roadmaps.0.progress', 50)
-                ->where('recent_roadmaps.0.steps_count', 2));
+                ->where('recent_roadmaps.0.steps_count', 2)
+                ->where('recent_roadmaps.0.current_step.title', 'Étape 2')
+                ->where('recent_roadmaps.0.current_step.status', 'todo'));
+
     }
 
     public function test_terminer_une_etape_remonte_sa_roadmap_en_tete(): void
