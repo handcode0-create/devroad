@@ -53,6 +53,54 @@ class MemoTest extends TestCase
         $this->assertDatabaseCount('memos', 0);
     }
 
+    public function test_un_memo_peut_etre_cree_directement_depuis_un_cours(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create(['title' => 'Laravel']);
+        $step = $roadmap->steps()->create([
+            'title' => 'Routing',
+            'position' => 1,
+            'status' => 'in_progress',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('steps.memo', $step), [
+                'title' => 'Notes Routing',
+                'content' => 'Route::get("/hello", ...);',
+                'tags' => ['Laravel', 'Routing'],
+            ])
+            ->assertRedirect(route('steps.show', $step));
+
+        $memo = $user->memos()->latest('id')->first();
+
+        $this->assertNotNull($memo);
+        $this->assertSame('Notes Routing', $memo->title);
+        $this->assertSame('Route::get("/hello", ...);', $memo->content);
+        $this->assertCount(2, $memo->tags);
+        $this->assertSame('laravel', $memo->tags->first()->slug);
+    }
+
+    public function test_un_utilisateur_ne_peut_pas_creer_un_memo_depuis_le_cours_d_un_autre(): void
+    {
+        $proprietaire = User::factory()->create();
+        $intrus = User::factory()->create();
+
+        $roadmap = $proprietaire->roadmaps()->create(['title' => 'Laravel']);
+        $step = $roadmap->steps()->create([
+            'title' => 'Routing',
+            'position' => 1,
+        ]);
+
+        $this->actingAs($intrus)
+            ->post(route('steps.memo', $step), [
+                'title' => 'Intrusion',
+                'content' => 'Contenu',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('memos', 0);
+    }
+
     public function test_le_proprietaire_peut_modifier_son_memo(): void
     {
         $user = User::factory()->create();
