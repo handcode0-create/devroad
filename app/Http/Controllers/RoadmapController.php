@@ -80,6 +80,7 @@ class RoadmapController extends Controller
             'roadmap' => [
                 'id' => $roadmap->id,
                 'title' => $roadmap->title,
+                'technology' => $roadmap->technology,
                 'description' => $roadmap->description,
                 'status' => $roadmap->status,
                 'progress' => $roadmap->progress,
@@ -87,6 +88,11 @@ class RoadmapController extends Controller
                 'completed_steps_count' => $roadmap->steps
                     ->where('status', 'completed')
                     ->count(),
+                'resources' => config("devroad.catalog.{$roadmap->technology}.resources", []),
+                'about' => [
+                    'technology' => $roadmap->technology,
+                    'description' => config("devroad.catalog.{$roadmap->technology}.description"),
+                ],
                 'steps' => $roadmap->steps->map(
                     fn ($step) => [
                         'id' => $step->id,
