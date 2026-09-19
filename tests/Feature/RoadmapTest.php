@@ -24,6 +24,7 @@ class RoadmapTest extends TestCase
         // On tente de forcer un autre user_id : il doit être ignoré.
         $this->actingAs($user)->post('/roadmaps', [
             'title' => 'Laravel',
+            'technology' => 'laravel',
             'status' => 'active',
             'user_id' => $autre->id,
         ])->assertRedirect();
@@ -39,10 +40,16 @@ class RoadmapTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post('/roadmaps', ['title' => ''])
+        $this->actingAs($user)->post('/roadmaps', [
+            'title' => '',
+            'technology' => 'laravel',
+        ])
             ->assertSessionHasErrors('title');
 
-        $this->actingAs($user)->post('/roadmaps', ['title' => 'ab'])
+        $this->actingAs($user)->post('/roadmaps', [
+            'title' => 'ab',
+            'technology' => 'laravel',
+        ])
             ->assertSessionHasErrors('title');
 
         $this->assertDatabaseCount('roadmaps', 0);
@@ -54,6 +61,7 @@ class RoadmapTest extends TestCase
 
         $this->actingAs($user)->post('/roadmaps', [
             'title' => 'Laravel',
+            'technology' => 'laravel',
             'status' => 'nimporte-quoi',
         ])->assertSessionHasErrors('status');
     }
@@ -64,7 +72,10 @@ class RoadmapTest extends TestCase
         $roadmap = $user->roadmaps()->create(['title' => 'Laravel']);
 
         $this->actingAs($user)
-            ->put(route('roadmaps.update', $roadmap), ['title' => 'Laravel avancé'])
+            ->put(route('roadmaps.update', $roadmap), [
+                'title' => 'Laravel avancé',
+                'technology' => 'laravel',
+            ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('roadmaps', ['id' => $roadmap->id, 'title' => 'Laravel avancé']);
@@ -77,7 +88,10 @@ class RoadmapTest extends TestCase
         $roadmap = $proprietaire->roadmaps()->create(['title' => 'Laravel']);
 
         $this->actingAs($intrus)
-            ->put(route('roadmaps.update', $roadmap), ['title' => 'Piratée'])
+            ->put(route('roadmaps.update', $roadmap), [
+                'title' => 'Piratée',
+                'technology' => 'laravel',
+            ])
             ->assertForbidden();
 
         $this->assertDatabaseHas('roadmaps', ['id' => $roadmap->id, 'title' => 'Laravel']);
