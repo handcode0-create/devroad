@@ -2,7 +2,7 @@ export default function ApplicationLogo({ className = "", alt = "DevRoad", ...pr
     return (
         <img
             {...props}
-            src="/logo.png"
+            src="/icondevroad.png"
             alt={alt}
             className={className}
         />
