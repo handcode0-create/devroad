@@ -14,7 +14,7 @@ import {
 import AppLayout from "@/Layouts/AppLayout";
 import technologyLogos from "@/Config/technologyLogos";
 
-export default function Dashboard({ stats, recent_roadmaps }) {
+export default function Dashboard({ stats, recent_roadmaps, continue_roadmap }) {
     const { auth } = usePage().props;
 
     const user = auth?.user;
@@ -35,7 +35,7 @@ export default function Dashboard({ stats, recent_roadmaps }) {
         ? recent_roadmaps
         : [];
 
-    const latestRoadmap = recentRoadmaps[0] ?? null;
+    const latestRoadmap = continue_roadmap ?? recentRoadmaps[0] ?? null;
 
     function submitSearch(event) {
         event.preventDefault();
