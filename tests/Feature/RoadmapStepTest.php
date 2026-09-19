@@ -176,6 +176,92 @@ class RoadmapStepTest extends TestCase
             );
     }
 
+    public function test_une_lecon_php_expose_un_ide_et_un_terminal(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'PHP',
+            'technology' => 'php',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Variables',
+            'position' => 1,
+            'code_example' => "<?php\n\n\\$name = 'DevRoad';",
+        ]);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('step.workspace.enabled', true)
+                ->where('step.workspace.language', 'php')
+                ->where('step.workspace.filename', 'main.php')
+                ->where('step.workspace.run_command', 'php main.php')
+            );
+    }
+
+    public function test_un_utilisateur_ne_peut_pas_executer_le_code_d_un_autre(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+
+        $roadmap = $owner->roadmaps()->create([
+            'title' => 'PHP',
+            'technology' => 'php',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Variables',
+            'position' => 1,
+        ]);
+
+        $this->actingAs($intruder)
+            ->postJson(route('steps.run', $step), [
+                'language' => 'php',
+                'code' => "<?php echo 'x';",
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_le_runner_peut_etre_moque_pour_tester_l_execution(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'PHP',
+            'technology' => 'php',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Variables',
+            'position' => 1,
+        ]);
+
+        $this->mock(\App\Services\CodeRunnerService::class, function ($mock) {
+            $mock->shouldReceive('run')
+                ->once()
+                ->with('php', "<?php echo 'Hello';")
+                ->andReturn([
+                    'status' => 'success',
+                    'stdout' => 'Hello',
+                    'stderr' => '',
+                    'exit_code' => 0,
+                    'duration_ms' => 25,
+                ]);
+        });
+
+        $this->actingAs($user)
+            ->postJson(route('steps.run', $step), [
+                'language' => 'php',
+                'code' => "<?php echo 'Hello';",
+            ])
+            ->assertOk()
+            ->assertJson([
+                'status' => 'success',
+                'stdout' => 'Hello',
+                'exit_code' => 0,
+            ]);
+    }
+
     public function test_un_exercice_peut_etre_valide_et_reouvert(): void
     {
         $user = User::factory()->create();
