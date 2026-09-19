@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRoadmapStepRequest;
 use App\Http\Requests\UpdateRoadmapStepRequest;
 use App\Http\Requests\UpdateStepStatusRequest;
+use App\Models\Roadmap;
 use App\Models\RoadmapStep;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -77,13 +78,21 @@ class RoadmapStepController extends Controller
      */
     public function store(
         StoreRoadmapStepRequest $request,
-        \App\Models\Roadmap $roadmap
+        Roadmap $roadmap
     ): RedirectResponse {
         $this->authorize('update', $roadmap);
 
-        $roadmap->steps()->create(
-            $request->validated()
-        );
+        $data = $request->validated();
+
+        if (!array_key_exists('position', $data)) {
+            $lastPosition = $roadmap->steps()->max('position');
+
+            $data['position'] = $lastPosition === null
+                ? 1
+                : $lastPosition + 1;
+        }
+
+        $roadmap->steps()->create($data);
 
         return redirect()
             ->route('roadmaps.show', $roadmap)
