@@ -11,14 +11,34 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const TERMINAL_HELP = [
-    "Commandes disponibles :",
-    "  help          afficher cette aide",
-    "  clear         vider le terminal",
-    "  reset         restaurer le code initial",
-    "  php main.php  exécuter le fichier PHP",
-    "  node main.js  exécuter le fichier JavaScript",
-];
+const TERMINAL_HELP = {
+    php: [
+        "Commandes disponibles :",
+        "  help          afficher cette aide",
+        "  clear         vider le terminal",
+        "  reset         restaurer le code initial",
+        "  php main.php  exécuter le fichier PHP",
+    ],
+    javascript: [
+        "Commandes disponibles :",
+        "  help          afficher cette aide",
+        "  clear         vider le terminal",
+        "  reset         restaurer le code initial",
+        "  node main.js  exécuter le fichier JavaScript",
+    ],
+    laravel: [
+        "Commandes Laravel disponibles :",
+        "  php artisan route:list",
+        "  php artisan migrate",
+        "  php artisan make:model Post -m",
+        "  php artisan make:controller PostController",
+        "  php artisan make:request StorePostRequest",
+        "  php artisan test",
+        "  composer show",
+        "  npm run build",
+        "  ls / cat <fichier>",
+    ],
+};
 
 export default function CodeWorkspace({ workspace, stepId }) {
     const [code, setCode] = useState(workspace.initial_code ?? "");
@@ -62,7 +82,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
         pushOutput("↳ Code restauré.");
     }
 
-    async function runCode() {
+    async function runCode(commandOverride = null) {
         if (running) {
             return;
         }
@@ -80,6 +100,8 @@ export default function CodeWorkspace({ workspace, stepId }) {
                 {
                     language: workspace.language,
                     code,
+                    command: commandOverride ?? workspace.run_command,
+                    file_path: workspace.filename,
                 },
             );
 
@@ -143,7 +165,10 @@ export default function CodeWorkspace({ workspace, stepId }) {
         }
 
         if (value === "help") {
-            pushOutput("", ...TERMINAL_HELP);
+            pushOutput(
+                "",
+                ...(TERMINAL_HELP[workspace.language] ?? TERMINAL_HELP.php),
+            );
             return;
         }
 
@@ -154,10 +179,15 @@ export default function CodeWorkspace({ workspace, stepId }) {
 
         if (
             value === workspace.run_command ||
-            (workspace.language === "php" && value === "php") ||
-            (workspace.language === "javascript" && value === "node")
+            value === "php" ||
+            value === "node"
         ) {
-            runCode();
+            runCode(value === "php" || value === "node" ? null : value);
+            return;
+        }
+
+        if (workspace.language === "laravel" && value.length > 0) {
+            runCode(value);
             return;
         }
 
