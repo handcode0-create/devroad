@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import {
     ArrowRight,
     Code2,
@@ -8,10 +8,27 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/Layouts/AppLayout";
+import CodeWorkspace from "@/Components/Learning/CodeWorkspace";
 import technologyLogos from "@/Config/technologyLogos";
 
-export default function Index({ roadmaps = [] }) {
+export default function Index({
+    roadmaps = [],
+    active_roadmap = null,
+    active_step = null,
+}) {
     const hasRoadmaps = Array.isArray(roadmaps) && roadmaps.length > 0;
+
+    function selectRoadmap(roadmapId) {
+        router.get(
+            "/devlab",
+            { roadmap: roadmapId },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    }
 
     return (
         <AppLayout>
@@ -82,6 +99,8 @@ export default function Index({ roadmaps = [] }) {
                                 <RoadmapWorkspaceCard
                                     key={roadmap.id}
                                     roadmap={roadmap}
+                                    active={roadmap.id === active_roadmap?.id}
+                                    onSelect={selectRoadmap}
                                 />
                             ))}
                         </div>
@@ -108,12 +127,43 @@ export default function Index({ roadmaps = [] }) {
                         </div>
                     )}
                 </section>
+
+                {active_roadmap && active_step?.workspace?.enabled && (
+                    <section className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#07101A]">
+                        <div className="flex flex-col gap-3 border-b border-white/[0.06] bg-[#0D1725] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                    IDE actif
+                                </p>
+                                <h2 className="mt-1 truncate text-lg font-bold text-white">
+                                    {active_step.title}
+                                </h2>
+                                <p className="mt-1 text-xs text-slate-600">
+                                    {active_roadmap.title} · étape {active_step.position} · {active_step.workspace.label}
+                                </p>
+                            </div>
+
+                            <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-[10px] font-semibold text-slate-500">
+                                {active_step.workspace.runtime === "server"
+                                    ? "Runtime local"
+                                    : "Runtime navigateur"}
+                            </div>
+                        </div>
+
+                        <div className="p-3 sm:p-4 lg:p-5">
+                            <CodeWorkspace
+                                workspace={active_step.workspace}
+                                stepId={active_step.id}
+                            />
+                        </div>
+                    </section>
+                )}
             </div>
         </AppLayout>
     );
 }
 
-function RoadmapWorkspaceCard({ roadmap }) {
+function RoadmapWorkspaceCard({ roadmap, active, onSelect }) {
     const tech = roadmap.technology
         ? formatTechnology(roadmap.technology)
         : "Technologie";
@@ -122,9 +172,7 @@ function RoadmapWorkspaceCard({ roadmap }) {
         ? technologyLogos[roadmap.technology]
         : null;
 
-    const target = roadmap.current_step
-        ? "/steps/" + roadmap.current_step.id
-        : "/roadmaps/" + roadmap.id;
+    const target = "/devlab?roadmap=" + roadmap.id;
 
     return (
         <article className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0D1725]">
@@ -178,13 +226,19 @@ function RoadmapWorkspaceCard({ roadmap }) {
                         {roadmap.completed_steps_count} / {roadmap.steps_count} étapes
                     </span>
 
-                    <Link
-                        href={target}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] transition hover:bg-[#ff781a]"
+                    <button
+                        type="button"
+                        onClick={() => onSelect(roadmap.id)}
+                        className={[
+                            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition",
+                            active
+                                ? "border border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF8A3D]"
+                                : "bg-[#FF6A00] text-[#08111F] hover:bg-[#ff781a]",
+                        ].join(" ")}
                     >
-                        {roadmap.current_step ? "Ouvrir l'IDE" : "Revoir le parcours"}
+                        {active ? "IDE ouvert" : "Ouvrir l'IDE"}
                         <Play size={13} fill="currentColor" />
-                    </Link>
+                    </button>
                 </div>
             </div>
         </article>
