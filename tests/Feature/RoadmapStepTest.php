@@ -78,6 +78,53 @@ class RoadmapStepTest extends TestCase
         $this->assertSame(33, $roadmap->fresh()->progress);
     }
 
+    public function test_terminer_une_etape_lance_automatiquement_la_suivante(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 3);
+        $premiere = $roadmap->steps()->where('position', 1)->first();
+        $deuxieme = $roadmap->steps()->where('position', 2)->first();
+
+        $this->actingAs($user)
+            ->patch(route('steps.status', $premiere), ['status' => 'completed'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('roadmap_steps', [
+            'id' => $premiere->id,
+            'status' => 'completed',
+        ]);
+
+        $this->assertDatabaseHas('roadmap_steps', [
+            'id' => $deuxieme->id,
+            'status' => 'in_progress',
+        ]);
+    }
+
+    public function test_reouvrir_une_etape_ne_modifie_pas_le_statut_de_la_suivante(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 3);
+        $premiere = $roadmap->steps()->where('position', 1)->first();
+        $deuxieme = $roadmap->steps()->where('position', 2)->first();
+
+        $premiere->update(['status' => 'completed']);
+        $deuxieme->update(['status' => 'in_progress']);
+
+        $this->actingAs($user)
+            ->patch(route('steps.status', $premiere), ['status' => 'in_progress'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('roadmap_steps', [
+            'id' => $premiere->id,
+            'status' => 'in_progress',
+        ]);
+
+        $this->assertDatabaseHas('roadmap_steps', [
+            'id' => $deuxieme->id,
+            'status' => 'in_progress',
+        ]);
+    }
+
     public function test_un_statut_invalide_est_refuse(): void
     {
         $user = User::factory()->create();
