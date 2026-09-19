@@ -43,8 +43,20 @@ class RoadmapController extends Controller
      */
     public function create(): Response
     {
+        $technologies = config('devroad.technologies', []);
+        $catalog = config('devroad.catalog', []);
+        $courses = config('devroad_courses', []);
+
         return Inertia::render('Roadmaps/Create', [
-            'technologies' => config('devroad.technologies', []),
+            'technologies' => collect($technologies)
+                ->map(fn ($label, $value) => [
+                    'value' => $value,
+                    'label' => $label,
+                    'description' => $catalog[$value]['description'] ?? null,
+                    'lesson_count' => count($courses[$value]['lessons'] ?? []),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
