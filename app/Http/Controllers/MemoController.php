@@ -95,7 +95,8 @@ class MemoController extends Controller
             return $memo;
         });
 
-        return back()
+        return redirect()
+            ->route('steps.show', $step)
             ->with('success', 'Mémo créé depuis le cours.');
     }
 
