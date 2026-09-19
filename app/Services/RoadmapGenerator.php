@@ -31,13 +31,28 @@ class RoadmapGenerator
             $codeExamples = $course['code'] ?? [];
 
             foreach ($steps as $index => $lesson) {
+                $isStructured = array_key_exists('title', $lesson);
+
+                $title = $isStructured ? $lesson['title'] : ($lesson[0] ?? 'Cours');
+                $description = $isStructured ? ($lesson['description'] ?? null) : ($lesson[1] ?? null);
+                $objective = $isStructured ? ($lesson['objective'] ?? null) : ($lesson[2] ?? null);
+                $content = $isStructured
+                    ? ($lesson['content'] ?? null)
+                    : $this->buildContent($title, $lesson[3] ?? null);
+                $codeExample = $isStructured
+                    ? ($lesson['code_example'] ?? null)
+                    : ($codeExamples[$index] ?? null);
+                $estimatedMinutes = $isStructured
+                    ? ($lesson['estimated_minutes'] ?? 30)
+                    : ($index === count($steps) - 1 ? 60 : 30);
+
                 $roadmap->steps()->create([
-                    'title' => $lesson[0],
-                    'description' => $lesson[1] ?? null,
-                    'objective' => $lesson[2] ?? null,
-                    'content' => $this->buildContent($lesson[0], $lesson[3] ?? null),
-                    'code_example' => $codeExamples[$index] ?? null,
-                    'estimated_minutes' => $index === count($steps) - 1 ? 60 : 30,
+                    'title' => $title,
+                    'description' => $description,
+                    'objective' => $objective,
+                    'content' => $content,
+                    'code_example' => $codeExample,
+                    'estimated_minutes' => $estimatedMinutes,
                     'position' => $index + 1,
                     'status' => $index === 0
                         ? RoadmapStep::IN_PROGRESS
