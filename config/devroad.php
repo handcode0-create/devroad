@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'devlab' => [
+        'execution_mode' => env('DEVROAD_EXECUTION_MODE', 'host'),
+        'allow_host_runtime' => env('DEVROAD_ALLOW_HOST_RUNTIME', true),
+        'root' => storage_path('app/devlab'),
+        'max_output' => 20000,
+    ],
+
     'technologies' => [
         'laravel' => 'Laravel',
         'nextjs' => 'Next.js',
