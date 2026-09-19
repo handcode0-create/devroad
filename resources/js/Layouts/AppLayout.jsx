@@ -91,9 +91,9 @@ export default function AppLayout({ children }) {
                             aria-label="DevRoad"
                         >
                             <img
-                                src="/logo.png"
+                                src="/icondevroad.png"
                                 alt="DevRoad"
-                                className="h-9 w-[120px] rounded-lg bg-white object-contain px-1.5 py-1"
+                                className="h-10 w-10 rounded-xl bg-[#FF6A00] p-1.5 object-contain"
                             />
                         </Link>
 
