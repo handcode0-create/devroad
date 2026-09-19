@@ -31,6 +31,7 @@ class RoadmapStep extends Model
         'exercise_description',
         'exercise_hint',
         'exercise_solution',
+        'last_viewed_at',
         'estimated_minutes',
         'position',
         'status',
@@ -39,6 +40,7 @@ class RoadmapStep extends Model
     protected $casts = [
         'estimated_minutes' => 'integer',
         'exercise_completed_at' => 'datetime',
+        'last_viewed_at' => 'datetime',
     ];
 
     public function roadmap(): BelongsTo
