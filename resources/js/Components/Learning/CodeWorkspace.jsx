@@ -557,6 +557,34 @@ export default function CodeWorkspace({ workspace, stepId }) {
             return;
         }
 
+        if (
+            workspace.runtime === "server" &&
+            /^(node|npm)(?:\s|$)/i.test(value) &&
+            workspace.language !== "node"
+        ) {
+            pushTerminal(
+                "⚠ Runtime actif : " + workspace.label,
+                "La commande « " +
+                    value +
+                    " » nécessite un environnement Node.js.",
+                "Sélectionne une roadmap Node.js dans le sélecteur de runtime.",
+            );
+            return;
+        }
+
+        if (
+            workspace.runtime === "server" &&
+            /^php(?:\s|$)|^composer(?:\s|$)/i.test(value) &&
+            workspace.language !== "php" &&
+            workspace.language !== "laravel"
+        ) {
+            pushTerminal(
+                "⚠ Runtime actif : " + workspace.label,
+                "Cette commande nécessite un environnement PHP/Laravel.",
+            );
+            return;
+        }
+
         if (value === "help") {
             pushTerminal(
                 "",
