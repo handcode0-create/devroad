@@ -36,6 +36,14 @@ class DevLabRuntimeService
         File::ensureDirectoryExists($workspace);
 
         try {
+            if ($runtime === 'laravel') {
+                $setup = $this->ensureLaravelWorkspace($workspace);
+
+                if ($setup !== null) {
+                    return $setup;
+                }
+            }
+
             $this->writeFiles($workspace, $files);
 
             return match ($runtime) {
@@ -98,27 +106,30 @@ class DevLabRuntimeService
         return $this->execute($tokens, $workspace, self::TIMEOUT_SECONDS);
     }
 
-    private function runLaravel(string $workspace, string $command): array
+    private function ensureLaravelWorkspace(string $workspace): ?array
     {
-        if (! File::exists($workspace.DIRECTORY_SEPARATOR.'artisan')) {
-            $setup = $this->execute(
-                [
-                    'composer',
-                    'create-project',
-                    'laravel/laravel:^12.0',
-                    '.',
-                    '--no-interaction',
-                    '--prefer-dist',
-                ],
-                $workspace,
-                self::LARAVEL_SETUP_TIMEOUT_SECONDS
-            );
-
-            if ($setup['status'] !== 'success') {
-                return $setup;
-            }
+        if (File::exists($workspace.DIRECTORY_SEPARATOR.'artisan')) {
+            return null;
         }
 
+        $setup = $this->execute(
+            [
+                'composer',
+                'create-project',
+                'laravel/laravel:^12.0',
+                '.',
+                '--no-interaction',
+                '--prefer-dist',
+            ],
+            $workspace,
+            self::LARAVEL_SETUP_TIMEOUT_SECONDS
+        );
+
+        return $setup['status'] === 'success' ? null : $setup;
+    }
+
+    private function runLaravel(string $workspace, string $command): array
+    {
         $tokens = $this->parseLaravelCommand($command);
 
         if ($tokens === null) {
@@ -158,6 +169,7 @@ class DevLabRuntimeService
 
         if (
             $path === ''
+            || basename($path) === '.env'
             || str_contains($path, '..')
             || preg_match('/^[A-Za-z]:/', $path)
             || preg_match('/[^A-Za-z0-9_\/\.\-]/', $path)
