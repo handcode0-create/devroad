@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Throwable;
 use Symfony\Component\Process\Process;
 
 class CodeRunnerService
@@ -76,19 +77,40 @@ class CodeRunnerService
         } catch (ProcessTimedOutException) {
             return [
                 'status' => 'timeout',
-                'stdout' => trim($process->getOutput()),
+                'stdout' => $this->limitOutput($process->getOutput()),
                 'stderr' => 'Temps d’exécution dépassé (12 secondes).',
                 'exit_code' => $process->getExitCode(),
+                'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+            ];
+        }
+        catch (Throwable $exception) {
+            return [
+                'status' => 'unavailable',
+                'stdout' => '',
+                'stderr' => 'Sandbox indisponible : ' . $exception->getMessage(),
+                'exit_code' => null,
                 'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
             ];
         }
 
         return [
             'status' => $process->isSuccessful() ? 'success' : 'error',
-            'stdout' => trim($process->getOutput()),
-            'stderr' => trim($process->getErrorOutput()),
+            'stdout' => $this->limitOutput($process->getOutput()),
+            'stderr' => $this->limitOutput($process->getErrorOutput()),
             'exit_code' => $process->getExitCode(),
             'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
         ];
+    }
+
+    private function limitOutput(string $output): string
+    {
+        $output = trim($output);
+        $limit = 20000;
+
+        if (mb_strlen($output) <= $limit) {
+            return $output;
+        }
+
+        return mb_substr($output, 0, $limit) . "\n… sortie tronquée par DevRoad.";
     }
 }
