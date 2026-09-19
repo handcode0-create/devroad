@@ -28,6 +28,10 @@ class DevRoadCourseSeeder extends Seeder
             ],
         );
 
+        if (! $roadmap->technology) {
+            $roadmap->update(['technology' => 'laravel']);
+        }
+
         $lessons = [
             [
                 'title' => 'Découvrir Laravel',
