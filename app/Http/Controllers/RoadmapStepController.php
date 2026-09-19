@@ -194,6 +194,7 @@ class RoadmapStepController extends Controller
                 'filename' => $workspaceFile ?: 'routes/web.php',
                 'run_command' => 'php artisan route:list',
                 'starter' => "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n",
+                'preview' => false,
             ],
             'php' => [
                 'language' => 'php',
@@ -201,6 +202,23 @@ class RoadmapStepController extends Controller
                 'filename' => $workspaceFile ?: 'main.php',
                 'run_command' => 'php main.php',
                 'starter' => "<?php\n\n",
+                'preview' => false,
+            ],
+            'html' => [
+                'language' => 'html',
+                'label' => 'HTML',
+                'filename' => $workspaceFile ?: 'index.html',
+                'run_command' => 'preview',
+                'starter' => "<!doctype html>\n<html lang=\"fr\">\n<head>\n    <meta charset=\"UTF-8\">\n</head>\n<body>\n    <h1>Bonjour DevRoad</h1>\n</body>\n</html>",
+                'preview' => true,
+            ],
+            'css' => [
+                'language' => 'css',
+                'label' => 'CSS',
+                'filename' => $workspaceFile ?: 'styles.css',
+                'run_command' => 'preview',
+                'starter' => "body {\n    font-family: system-ui, sans-serif;\n}",
+                'preview' => true,
             ],
             'javascript' => [
                 'language' => 'javascript',
@@ -208,6 +226,7 @@ class RoadmapStepController extends Controller
                 'filename' => $workspaceFile ?: 'main.js',
                 'run_command' => 'node main.js',
                 'starter' => "console.log('Bonjour DevRoad');\n",
+                'preview' => true,
             ],
             default => null,
         };
@@ -215,21 +234,32 @@ class RoadmapStepController extends Controller
         if ($profile === null) {
             return [
                 'enabled' => false,
+                'runtime' => 'browser',
+                'preview_enabled' => false,
                 'language' => null,
                 'label' => null,
                 'filename' => null,
                 'run_command' => null,
                 'initial_code' => '',
+                'files' => [],
             ];
         }
 
         return [
             'enabled' => true,
+            'runtime' => 'browser',
+            'preview_enabled' => $profile['preview'],
             'language' => $profile['language'],
             'label' => $profile['label'],
             'filename' => $profile['filename'],
             'run_command' => $profile['run_command'],
             'initial_code' => $codeExample ?: $profile['starter'],
+            'files' => [
+                [
+                    'path' => $profile['filename'],
+                    'content' => $codeExample ?: $profile['starter'],
+                ],
+            ],
         ];
     }
 
