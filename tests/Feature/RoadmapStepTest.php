@@ -322,6 +322,93 @@ class RoadmapStepTest extends TestCase
             );
     }
 
+    public function test_une_lecon_node_expose_un_runtime_serveur(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Node.js',
+            'technology' => 'node',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Node CLI',
+            'position' => 1,
+            'code_example' => "console.log('DevRoad');",
+            'workspace_file' => 'main.js',
+            'workspace_language' => 'node',
+        ]);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('step.workspace.runtime', 'server')
+                ->where('step.workspace.language', 'node')
+                ->where('step.workspace.filename', 'main.js')
+            );
+    }
+
+    public function test_le_runner_node_utilise_le_runtime_dev_lab(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Node.js',
+            'technology' => 'node',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Node CLI',
+            'position' => 1,
+            'workspace_file' => 'main.js',
+            'workspace_language' => 'node',
+        ]);
+
+        $this->mock(\App\Services\DevLabRuntimeService::class, function ($mock) {
+            $mock->shouldReceive('run')
+                ->once()
+                ->with(
+                    'node',
+                    \Mockery::type('int'),
+                    \Mockery::type('int'),
+                    [
+                        [
+                            'path' => 'main.js',
+                            'content' => "console.log('Hello');",
+                        ],
+                    ],
+                    'main.js',
+                    'node main.js',
+                )
+                ->andReturn([
+                    'status' => 'success',
+                    'stdout' => 'Hello',
+                    'stderr' => '',
+                    'exit_code' => 0,
+                    'duration_ms' => 18,
+                ]);
+        });
+
+        $this->actingAs($user)
+            ->postJson(route('steps.run', $step), [
+                'language' => 'node',
+                'command' => 'node main.js',
+                'file_path' => 'main.js',
+                'code' => "console.log('Hello');",
+                'files' => [
+                    [
+                        'path' => 'main.js',
+                        'content' => "console.log('Hello');",
+                    ],
+                ],
+            ])
+            ->assertOk()
+            ->assertJson([
+                'status' => 'success',
+                'stdout' => 'Hello',
+                'exit_code' => 0,
+            ]);
+    }
+
     public function test_un_utilisateur_ne_peut_pas_executer_le_code_d_un_autre(): void
     {
         $owner = User::factory()->create();
