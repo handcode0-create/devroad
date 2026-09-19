@@ -48,6 +48,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('steps/{step}/exercise', [RoadmapStepController::class, 'updateExercise'])
         ->name('steps.exercise');
 
+    Route::post('steps/{step}/run', [RoadmapStepController::class, 'runCode'])
+        ->name('steps.run');
+
     Route::post('steps/{step}/memo', [MemoController::class, 'storeFromStep'])
         ->name('steps.memo');
 
