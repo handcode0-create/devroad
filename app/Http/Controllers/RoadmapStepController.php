@@ -17,7 +17,7 @@ class RoadmapStepController extends Controller
      */
     public function show(RoadmapStep $step): Response
     {
-        $this->authorize('update', $step);
+        $this->authorize('view', $step);
 
         $step->load([
             'roadmap',
