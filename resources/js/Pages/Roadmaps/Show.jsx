@@ -401,7 +401,7 @@ function StepCard({ step, index }) {
 }
 
 function StatusIcon({ status }) {
-    if (status === 'completed') return <CircleCheck size={17} className="text-emerald-400" />;
+    if (status === 'completed') return <CheckCircle2 size={17} className="text-emerald-400" />;
     if (status === 'in_progress') return <Clock3 size={17} className="text-[#FF8A3D]" />;
     if (status === 'blocked') return <Lock size={16} className="text-slate-600" />;
     return <Circle size={17} className="text-slate-700" />;
