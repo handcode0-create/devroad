@@ -47,6 +47,14 @@ class RoadmapStepController extends Controller
             $step->update([
                 'status' => RoadmapStep::IN_PROGRESS,
             ]);
+
+            if ($roadmap->status === 'draft') {
+                $roadmap->update(['status' => 'active']);
+            }
+        }
+
+        if (! $step->exercise_title) {
+            $this->ensureExercise($step);
         }
 
         $step->updateQuietly([
@@ -261,6 +269,19 @@ class RoadmapStepController extends Controller
             'success',
             $completed ? 'Exercice validé.' : 'Exercice réouvert.'
         );
+    }
+
+    private function ensureExercise(RoadmapStep $step): void
+    {
+        $step->update([
+            'exercise_title' => "Exercice — {$step->title}",
+            'exercise_description' => $step->objective
+                ? "Mets en pratique l'objectif suivant : {$step->objective}"
+                : "Crée un petit exemple pratique pour démontrer que tu maîtrises « {$step->title} ».",
+            'exercise_hint' => 'Commence par écrire une version minimale, puis vérifie que tu peux expliquer chaque partie de ta solution.',
+            'exercise_solution' => $step->code_example
+                ?: "Construis un exemple minimal lié à « {$step->title} ».",
+        ]);
     }
 
     private function isLockedForProgression(RoadmapStep $step): bool
