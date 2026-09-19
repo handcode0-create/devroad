@@ -45,6 +45,13 @@ class RoadmapGenerator
                 $estimatedMinutes = $isStructured
                     ? ($lesson['estimated_minutes'] ?? 30)
                     : ($index === count($steps) - 1 ? 60 : 30);
+                $workspace = $this->buildWorkspaceMetadata(
+                    $technology,
+                    $title,
+                    $codeExample,
+                    $isStructured ? ($lesson['workspace_file'] ?? null) : null,
+                    $isStructured ? ($lesson['workspace_language'] ?? null) : null
+                );
 
                 $exercise = $this->buildExercise(
                     $title,
@@ -60,6 +67,8 @@ class RoadmapGenerator
                     'objective' => $objective,
                     'content' => $content,
                     'code_example' => $codeExample,
+                    'workspace_file' => $workspace['file'],
+                    'workspace_language' => $workspace['language'],
                     'exercise_title' => $exercise['title'],
                     'exercise_description' => $exercise['description'],
                     'exercise_hint' => $exercise['hint'],
@@ -74,6 +83,41 @@ class RoadmapGenerator
 
             return $roadmap->load('steps');
         });
+    }
+
+    private function buildWorkspaceMetadata(
+        string $technology,
+        string $title,
+        ?string $codeExample,
+        ?string $workspaceFile,
+        ?string $workspaceLanguage
+    ): array {
+        $language = $workspaceLanguage;
+
+        if (! $language) {
+            $language = match ($technology) {
+                'laravel' => 'laravel',
+                'php' => 'php',
+                'javascript', 'node', 'react', 'nextjs' => 'javascript',
+                default => null,
+            };
+        }
+
+        $file = $workspaceFile;
+
+        if (! $file) {
+            $file = match ($language) {
+                'laravel' => 'routes/web.php',
+                'php' => 'main.php',
+                'javascript' => 'main.js',
+                default => null,
+            };
+        }
+
+        return [
+            'language' => $language,
+            'file' => $file,
+        ];
     }
 
     private function buildExercise(
