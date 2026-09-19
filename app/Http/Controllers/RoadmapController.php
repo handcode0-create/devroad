@@ -75,7 +75,7 @@ class RoadmapController extends Controller
 
         // Si l'utilisateur ne fournit pas de titre ou de description métier,
         // le catalogue fournit des valeurs cohérentes pour le parcours.
-        $data['title'] = $data['title'] ?: ($catalog['title'] ?? config("devroad.technologies.{$technology}"));
+        $data['title'] = $data['title'] ?? ($catalog['title'] ?? config("devroad.technologies.{$technology}"));
         $data['description'] = $data['description'] ?: ($catalog['description'] ?? null);
 
         $roadmap = $generator->create(
