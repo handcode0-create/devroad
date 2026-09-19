@@ -164,17 +164,14 @@ export default function Dashboard({ stats, recent_roadmaps }) {
                                 </div>
 
                                 <h2 className="mt-3 truncate text-xl font-bold text-white">
-                                    {latestRoadmap.title}
+                                    {latestRoadmap.current_step?.title ??
+                                        latestRoadmap.title}
                                 </h2>
 
                                 <p className="mt-1 text-sm text-slate-500">
-                                    {latestRoadmap.completed_steps_count ?? 0}{" "}
-                                    étape
-                                    {(latestRoadmap.completed_steps_count ??
-                                        0) > 1
-                                        ? "s"
-                                        : ""}{" "}
-                                    sur {latestRoadmap.steps_count ?? 0}
+                                    {latestRoadmap.current_step
+                                        ? `Étape ${latestRoadmap.current_step.position} · ${latestRoadmap.title}`
+                                        : `${latestRoadmap.completed_steps_count ?? 0} étape${(latestRoadmap.completed_steps_count ?? 0) > 1 ? "s" : ""} sur ${latestRoadmap.steps_count ?? 0}`}
                                 </p>
 
                                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
@@ -191,7 +188,9 @@ export default function Dashboard({ stats, recent_roadmaps }) {
 
                             <div className="flex flex-wrap items-center gap-3">
                                 <Link
-                                    href={`/roadmaps/${latestRoadmap.id}`}
+                                    href={latestRoadmap.current_step
+                                        ? `/steps/${latestRoadmap.current_step.id}`
+                                        : `/roadmaps/${latestRoadmap.id}`}
                                     className="
                                         inline-flex
                                         items-center
