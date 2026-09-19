@@ -124,6 +124,53 @@ class DashboardTest extends TestCase
                 ->where('continue_roadmap.current_step.title', 'Cours actuel'));
     }
 
+
+
+    public function test_le_dev_laboratory_liste_les_roadmaps_et_leur_lecon_courante(): void
+    {
+        $user = User::factory()->create();
+
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Mon Laravel',
+            'technology' => 'laravel',
+            'status' => 'active',
+        ]);
+
+        $roadmap->steps()->create([
+            'title' => 'Découvrir Laravel',
+            'position' => 1,
+            'status' => 'in_progress',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('devlab'))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('DevLab/Index', false)
+                ->where('roadmaps.0.title', 'Mon Laravel')
+                ->where('roadmaps.0.technology', 'laravel')
+                ->where('roadmaps.0.current_step.title', 'Découvrir Laravel')
+            );
+    }
+
+    public function test_le_dev_laboratory_ne_retourne_pas_les_roadmaps_d_un_autre_utilisateur(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        $other->roadmaps()->create([
+            'title' => 'Secret',
+            'technology' => 'php',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('devlab'))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('DevLab/Index', false)
+                ->has('roadmaps', 0)
+            );
+    }
+
     public function test_terminer_une_etape_remonte_sa_roadmap_en_tete(): void
     {
         $user = User::factory()->create();
