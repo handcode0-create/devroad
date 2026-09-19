@@ -202,6 +202,77 @@ class RoadmapStepTest extends TestCase
             );
     }
 
+    public function test_une_lecon_laravel_expose_un_workspace_complet(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Laravel',
+            'technology' => 'laravel',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Les routes',
+            'position' => 1,
+            'code_example' => "use Illuminate\\Support\\Facades\\Route;\n\nRoute::get('/hello', fn () => 'Hello');",
+        ]);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('step.workspace.enabled', true)
+                ->where('step.workspace.language', 'laravel')
+                ->where('step.workspace.filename', 'routes/web.php')
+                ->where('step.workspace.run_command', 'php artisan route:list')
+            );
+    }
+
+    public function test_le_runner_laravel_est_isole_par_utilisateur_et_etape(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Laravel',
+            'technology' => 'laravel',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Routes',
+            'position' => 1,
+        ]);
+
+        $this->mock(\App\Services\CodeRunnerService::class, function ($mock) use ($user, $step) {
+            $mock->shouldReceive('runLaravel')
+                ->once()
+                ->with(
+                    $user->id,
+                    $step->id,
+                    'php artisan route:list',
+                    'routes/web.php',
+                    "Route::get('/hello', fn () => 'Hello');"
+                )
+                ->andReturn([
+                    'status' => 'success',
+                    'stdout' => 'GET /hello',
+                    'stderr' => '',
+                    'exit_code' => 0,
+                    'duration_ms' => 40,
+                ]);
+        });
+
+        $this->actingAs($user)
+            ->postJson(route('steps.run', $step), [
+                'language' => 'laravel',
+                'command' => 'php artisan route:list',
+                'file_path' => 'routes/web.php',
+                'code' => "Route::get('/hello', fn () => 'Hello');",
+            ])
+            ->assertOk()
+            ->assertJson([
+                'status' => 'success',
+                'exit_code' => 0,
+            ]);
+    }
+
     public function test_un_utilisateur_ne_peut_pas_executer_le_code_d_un_autre(): void
     {
         $owner = User::factory()->create();
