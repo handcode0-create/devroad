@@ -25,7 +25,7 @@ export default function Show({ roadmap }) {
         steps[0] ??
         null;
 
-    const logo = getTechnologyLogo(roadmap?.title);
+    const logo = getTechnologyLogo(roadmap?.technology);
 
     return (
         <AppLayout>
