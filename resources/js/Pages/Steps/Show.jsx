@@ -9,7 +9,7 @@ import {
     Code2,
     Lock,
     Loader2,
-    BookPlus,
+    BookOpen,
 } from "lucide-react";
 
 import technologyLogos from "@/Config/technologyLogos";
@@ -280,7 +280,7 @@ export default function Show({
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-start gap-3">
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                                        <BookPlus size={18} />
+                                        <BookOpen size={18} />
                                     </div>
 
                                     <div>
@@ -298,7 +298,7 @@ export default function Show({
                                     onClick={() => setShowMemoForm((value) => !value)}
                                     className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-4 py-2.5 text-sm font-bold text-[#FF8A3D] transition hover:bg-[#FF6A00]/15"
                                 >
-                                    <BookPlus size={16} />
+                                    <BookOpen size={16} />
                                     {showMemoForm ? "Fermer" : "Créer un mémo"}
                                 </button>
                             </div>
