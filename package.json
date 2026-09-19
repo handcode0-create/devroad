@@ -24,5 +24,9 @@
     },
     "dependencies": {
         "lucide-react": "^1.47.0"
+    },
+    "engines": {
+        "node": "22.x",
+        "npm": "10.x"
     }
 }
