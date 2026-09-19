@@ -85,10 +85,9 @@ class RoadmapStepController extends Controller
             $request->validated()
         );
 
-        return back()->with(
-            'success',
-            'Étape ajoutée.'
-        );
+        return redirect()
+            ->route('roadmaps.show', $roadmap)
+            ->with('success', 'Étape ajoutée.');
     }
 
     /**
@@ -104,10 +103,9 @@ class RoadmapStepController extends Controller
             $request->validated()
         );
 
-        return back()->with(
-            'success',
-            'Étape mise à jour.'
-        );
+        return redirect()
+            ->route('roadmaps.show', $step->roadmap_id)
+            ->with('success', 'Étape mise à jour.');
     }
 
     /**
@@ -123,10 +121,9 @@ class RoadmapStepController extends Controller
             'status' => $request->validated('status'),
         ]);
 
-        return back()->with(
-            'success',
-            'Progression mise à jour.'
-        );
+        return redirect()
+            ->route('roadmaps.show', $step->roadmap_id)
+            ->with('success', 'Progression mise à jour.');
     }
 
     /**
@@ -137,11 +134,12 @@ class RoadmapStepController extends Controller
     ): RedirectResponse {
         $this->authorize('delete', $step);
 
+        $roadmapId = $step->roadmap_id;
+
         $step->delete();
 
-        return back()->with(
-            'success',
-            'Étape supprimée.'
-        );
+        return redirect()
+            ->route('roadmaps.show', $roadmapId)
+            ->with('success', 'Étape supprimée.');
     }
 }
