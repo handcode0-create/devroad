@@ -46,12 +46,23 @@ class RoadmapGenerator
                     ? ($lesson['estimated_minutes'] ?? 30)
                     : ($index === count($steps) - 1 ? 60 : 30);
 
+                $exercise = $this->buildExercise(
+                    $title,
+                    $description,
+                    $objective,
+                    $isStructured ? $lesson : []
+                );
+
                 $roadmap->steps()->create([
                     'title' => $title,
                     'description' => $description,
                     'objective' => $objective,
                     'content' => $content,
                     'code_example' => $codeExample,
+                    'exercise_title' => $exercise['title'],
+                    'exercise_description' => $exercise['description'],
+                    'exercise_hint' => $exercise['hint'],
+                    'exercise_solution' => $exercise['solution'],
                     'estimated_minutes' => $estimatedMinutes,
                     'position' => $index + 1,
                     'status' => $index === 0
@@ -62,6 +73,39 @@ class RoadmapGenerator
 
             return $roadmap->load('steps');
         });
+    }
+
+    private function buildExercise(
+        string $title,
+        ?string $description,
+        ?string $objective,
+        array $lesson
+    ): array {
+        return [
+            'title' => $lesson['exercise_title'] ?? "Exercice — {$title}",
+            'description' => $lesson['exercise_description']
+                ?? $this->defaultExerciseDescription($title, $description, $objective),
+            'hint' => $lesson['exercise_hint']
+                ?? 'Commence par identifier le concept principal, puis applique-le dans un petit exemple concret.',
+            'solution' => $lesson['exercise_solution']
+                ?? "Construis un exemple minimal lié à « {$title} » et vérifie que tu peux expliquer chaque partie de ta solution.",
+        ];
+    }
+
+    private function defaultExerciseDescription(
+        string $title,
+        ?string $description,
+        ?string $objective
+    ): string {
+        if ($objective) {
+            return "Mets en pratique l'objectif suivant : {$objective}";
+        }
+
+        if ($description) {
+            return "Mets en pratique la notion « {$title} » : {$description}";
+        }
+
+        return "Crée un petit exemple pratique pour démontrer que tu maîtrises « {$title} ».";
     }
 
     private function buildContent(string $title, ?string $content): ?string
