@@ -42,20 +42,26 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Clear Laravel caches
-        run: php artisan optimize:clear
-
       - name: Run migrations
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
         run: php artisan migrate --force
 
+      - name: Clear Laravel caches
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan optimize:clear
+
       - name: Check routes
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
         run: php artisan route:list
+
+      - name: Install development dependencies for tests
+        run: composer install
 
       - name: Run tests
         run: php artisan test
