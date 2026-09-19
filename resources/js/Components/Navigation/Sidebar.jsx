@@ -63,13 +63,15 @@ export default function Sidebar({ user }) {
                 BRAND
             ============================================================ */}
             <div className="flex h-[88px] items-center border-b border-white/[0.06] px-6">
-                <Link href="/dashboard" className="flex items-center">
-                    <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-[#FF6A00] p-1.5 shadow-[0_8px_24px_rgba(255,106,0,0.18)]">
-                        <img
-                            src="/icondevroad.png"
-                            alt="DevRoad"
-                            className="h-full w-full object-contain"
-                        />
+                <Link href="/dashboard" className="flex items-center gap-2.5">
+                    <img
+                        src="/icondevroad.png"
+                        alt="DevRoad"
+                        className="h-10 w-10 shrink-0 object-contain"
+                    />
+
+                    <span className="text-[19px] font-extrabold tracking-tight text-white">
+                        Dev<span className="text-[#FF6A00]">Road</span>
                     </span>
                 </Link>
             </div>
