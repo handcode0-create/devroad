@@ -100,7 +100,8 @@ class RoadmapGenerator
                 'php' => 'php',
                 'html' => 'html',
                 'css' => 'css',
-                'javascript', 'node', 'react', 'nextjs' => 'javascript',
+                'javascript', 'react', 'nextjs' => 'javascript',
+                'node' => 'node',
                 default => null,
             };
         }
