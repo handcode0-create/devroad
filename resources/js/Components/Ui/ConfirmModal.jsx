@@ -11,6 +11,7 @@ export default function ConfirmModal({
     onClose,
     processing = false,
     tone = 'danger',
+    children = null,
 }) {
     const accent =
         tone === 'danger'
@@ -81,6 +82,8 @@ export default function ConfirmModal({
                                 <X size={18} />
                             </button>
                         </div>
+
+                        {children && <div className="border-t border-white/[0.06] px-5 py-4">{children}</div>}
 
                         <div className="flex justify-end gap-2 px-5 py-4">
                             <button
