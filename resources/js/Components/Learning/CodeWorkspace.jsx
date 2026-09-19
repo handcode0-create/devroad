@@ -13,6 +13,7 @@ import {
     Save,
     Terminal,
     Trash2,
+    Upload,
     X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -127,6 +128,10 @@ export default function CodeWorkspace({ workspace, stepId }) {
     const [saved, setSaved] = useState(false);
     const [previewVersion, setPreviewVersion] = useState(0);
     const [running, setRunning] = useState(false);
+    const [showCreateFileModal, setShowCreateFileModal] = useState(false);
+    const [newFilePath, setNewFilePath] = useState("");
+    const [createFileError, setCreateFileError] = useState("");
+    const importInputRef = useRef(null);
 
     const terminalEndRef = useRef(null);
     const hydratedRef = useRef(false);
@@ -246,20 +251,50 @@ export default function CodeWorkspace({ workspace, stepId }) {
         window.setTimeout(() => setCopied(false), 1600);
     }
 
-    function createFile() {
-        const path = window.prompt(
-            "Nom du nouveau fichier",
-            "src/main.js",
-        );
+    function openCreateFileModal() {
+        setNewFilePath("");
+        setCreateFileError("");
+        setShowCreateFileModal(true);
+    }
 
-        if (!path) {
+    function closeCreateFileModal() {
+        setShowCreateFileModal(false);
+        setNewFilePath("");
+        setCreateFileError("");
+    }
+
+    function normalizeWorkspacePath(path) {
+        return path
+            .trim()
+            .replace(/\\/g, "/")
+            .replace(/^\/+/, "")
+            .replace(/\/+/g, "/");
+    }
+
+    function isValidWorkspacePath(path) {
+        return (
+            path &&
+            !path.includes("..") &&
+            !path.startsWith(".") &&
+            !/[<>:"|?*\\]/.test(path)
+        );
+    }
+
+    function createFile() {
+        const normalized = normalizeWorkspacePath(newFilePath);
+
+        if (!normalized) {
+            setCreateFileError("Indique le nom du fichier.");
             return;
         }
 
-        const normalized = path.trim().replace(/^\/+/, "");
+        if (!isValidWorkspacePath(normalized)) {
+            setCreateFileError("Le chemin du fichier est invalide.");
+            return;
+        }
 
-        if (!normalized || files.some((file) => file.path === normalized)) {
-            pushTerminal("✕ Fichier invalide ou déjà existant.");
+        if (files.some((file) => file.path === normalized)) {
+            setCreateFileError("Ce fichier existe déjà.");
             return;
         }
 
@@ -272,6 +307,82 @@ export default function CodeWorkspace({ workspace, stepId }) {
         ]);
         setActiveFile(normalized);
         pushTerminal("✓ Fichier créé : " + normalized);
+        closeCreateFileModal();
+    }
+
+    function importFiles(event) {
+        const selectedFiles = Array.from(event.target.files ?? []);
+
+        if (selectedFiles.length === 0) {
+            return;
+        }
+
+        let imported = 0;
+        let rejected = 0;
+
+        selectedFiles.forEach((file) => {
+            if (file.size > 300 * 1024) {
+                rejected += 1;
+                return;
+            }
+
+            const relativePath =
+                file.webkitRelativePath || file.name;
+            const normalized = normalizeWorkspacePath(relativePath);
+
+            if (!isValidWorkspacePath(normalized)) {
+                rejected += 1;
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const content = typeof reader.result === "string"
+                    ? reader.result
+                    : "";
+
+                setFiles((current) => {
+                    const exists = current.some(
+                        (item) => item.path === normalized,
+                    );
+
+                    if (exists) {
+                        return current.map((item) =>
+                            item.path === normalized
+                                ? { ...item, content }
+                                : item,
+                        );
+                    }
+
+                    return [...current, { path: normalized, content }];
+                });
+
+                setActiveFile(normalized);
+                imported += 1;
+
+                pushTerminal("✓ Importé : " + normalized);
+
+                if (imported + rejected === selectedFiles.length) {
+                    if (rejected > 0) {
+                        pushTerminal(
+                            "⚠ " +
+                                rejected +
+                                " fichier(s) ignoré(s) : taille ou chemin invalide.",
+                        );
+                    }
+                }
+            };
+
+            reader.onerror = () => {
+                rejected += 1;
+                pushTerminal("✕ Impossible de lire : " + normalized);
+            };
+
+            reader.readAsText(file);
+        });
+
+        event.target.value = "";
     }
 
     function deleteFile() {
@@ -638,6 +749,16 @@ export default function CodeWorkspace({ workspace, stepId }) {
 
     return (
         <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#09111D] shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+            <input
+                ref={importInputRef}
+                type="file"
+                multiple
+                webkitdirectory=""
+                directory=""
+                className="hidden"
+                onChange={importFiles}
+            />
+
             <div className="flex flex-col gap-3 border-b border-white/[0.06] bg-[#0A1422] p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
@@ -727,14 +848,27 @@ export default function CodeWorkspace({ workspace, stepId }) {
                             </span>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={createFile}
-                            className="text-slate-600 hover:text-white"
-                            aria-label="Créer un fichier"
-                        >
-                            <FilePlus2 size={14} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={openCreateFileModal}
+                                className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.04] hover:text-white"
+                                aria-label="Créer un fichier"
+                                title="Créer un fichier"
+                            >
+                                <FilePlus2 size={14} />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => importInputRef.current?.click()}
+                                className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.04] hover:text-[#FF8A3D]"
+                                aria-label="Importer des fichiers"
+                                title="Importer des fichiers"
+                            >
+                                <Upload size={14} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="max-h-[540px] overflow-y-auto p-2">
@@ -931,6 +1065,104 @@ export default function CodeWorkspace({ workspace, stepId }) {
                     )}
                 </div>
             </div>
+
+            {showCreateFileModal && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="devroad-create-file-title"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            closeCreateFileModal();
+                        }
+                    }}
+                >
+                    <div className="w-full max-w-md overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0D1725] shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+                        <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                            <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                    Explorateur
+                                </p>
+                                <h2
+                                    id="devroad-create-file-title"
+                                    className="mt-1 text-base font-bold text-white"
+                                >
+                                    Nouveau fichier
+                                </h2>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={closeCreateFileModal}
+                                className="rounded-xl p-2 text-slate-600 transition hover:bg-white/[0.05] hover:text-white"
+                                aria-label="Fermer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                createFile();
+                            }}
+                            className="space-y-5 p-5"
+                        >
+                            <div>
+                                <label
+                                    htmlFor="devroad-new-file-path"
+                                    className="text-xs font-semibold text-slate-300"
+                                >
+                                    Chemin du fichier
+                                </label>
+
+                                <input
+                                    id="devroad-new-file-path"
+                                    autoFocus
+                                    value={newFilePath}
+                                    onChange={(event) => {
+                                        setNewFilePath(event.target.value);
+                                        setCreateFileError("");
+                                    }}
+                                    placeholder="src/components/Button.jsx"
+                                    className="mt-2 h-11 w-full rounded-xl border border-white/[0.08] bg-[#07101A] px-3 text-sm text-white outline-none transition placeholder:text-slate-700 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10"
+                                />
+
+                                <p className="mt-2 text-[10px] leading-5 text-slate-600">
+                                    Tu peux créer un fichier dans un dossier,
+                                    par exemple <span className="text-slate-400">js/app.js</span>.
+                                </p>
+
+                                {createFileError && (
+                                    <p className="mt-2 text-xs font-medium text-red-400">
+                                        {createFileError}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={closeCreateFileModal}
+                                    className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-xs font-semibold text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+                                >
+                                    Annuler
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] transition hover:bg-[#ff781a]"
+                                >
+                                    <FilePlus2 size={14} />
+                                    Créer le fichier
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </section>
     );
 }
