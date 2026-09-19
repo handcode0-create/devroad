@@ -7,7 +7,7 @@ import PageHeader from '@/Components/Ui/PageHeader';
 import RoadmapForm from '@/Components/Roadmaps/RoadmapForm';
 import { buttonClass } from '@/Components/Ui/buttons';
 
-export default function Edit({ roadmap }) {
+export default function Edit({ roadmap, technologies = [] }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
     const form = useForm({
         title: roadmap.title ?? '',
@@ -41,6 +41,7 @@ export default function Edit({ roadmap }) {
 
                 <RoadmapForm
                     form={form}
+                    technologies={technologies}
                     onSubmit={submit}
                     submitLabel="Enregistrer"
                     cancelHref={`/roadmaps/${roadmap.id}`}
