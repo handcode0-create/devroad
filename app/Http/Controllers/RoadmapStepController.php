@@ -235,6 +235,14 @@ class RoadmapStepController extends Controller
                 'starter' => "<?php\n\n",
                 'preview' => false,
             ],
+            'node' => [
+                'language' => 'node',
+                'label' => 'Node.js',
+                'filename' => $workspaceFile ?: 'main.js',
+                'run_command' => 'node main.js',
+                'starter' => "console.log('Bonjour DevRoad');\n",
+                'preview' => false,
+            ],
             'html' => [
                 'language' => 'html',
                 'label' => 'HTML',
