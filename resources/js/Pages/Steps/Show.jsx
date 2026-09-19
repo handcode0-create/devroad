@@ -1,4 +1,4 @@
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import {
     ArrowLeft,
     ArrowRight,
@@ -9,6 +9,7 @@ import {
     Code2,
     Lock,
     Loader2,
+    BookPlus,
 } from "lucide-react";
 
 import technologyLogos from "@/Config/technologyLogos";
@@ -24,16 +25,26 @@ export default function Show({
 }) {
     const [displayStatus, setDisplayStatus] = useState(step.status);
     const [statusLoading, setStatusLoading] = useState(false);
+    const [exerciseCompleted, setExerciseCompleted] = useState(
+        Boolean(step.exercise?.completed),
+    );
+    const [showMemoForm, setShowMemoForm] = useState(false);
 
     const completed = displayStatus === "completed";
     const blocked = displayStatus === "blocked";
+    const hasExercise = Boolean(step.exercise);
 
     useEffect(() => {
         setDisplayStatus(step.status);
-    }, [step.status]);
+        setExerciseCompleted(Boolean(step.exercise?.completed));
+    }, [step.status, step.exercise?.completed]);
 
     function changeStatus(status) {
         if (statusLoading || status === displayStatus) {
+            return;
+        }
+
+        if (status === "completed" && hasExercise && !exerciseCompleted) {
             return;
         }
 
@@ -53,6 +64,39 @@ export default function Show({
                 onFinish: () => setStatusLoading(false),
             },
         );
+    }
+
+    function changeExercise(completed) {
+        const previousValue = exerciseCompleted;
+
+        setExerciseCompleted(completed);
+
+        router.patch(
+            `/steps/${step.id}/exercise`,
+            { completed },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                only: ["step"],
+                onError: () => setExerciseCompleted(previousValue),
+            },
+        );
+    }
+
+    const memoForm = useForm({
+        title: `Notes — ${step.title}`,
+        content: buildMemoContent(step),
+        tags: [],
+        is_favorite: false,
+    });
+
+    function createMemo(event) {
+        event.preventDefault();
+
+        memoForm.post(`/steps/${step.id}/memo`, {
+            preserveScroll: true,
+            onSuccess: () => setShowMemoForm(false),
+        });
     }
 
     return (
