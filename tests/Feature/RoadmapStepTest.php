@@ -240,15 +240,21 @@ class RoadmapStepTest extends TestCase
             'position' => 1,
         ]);
 
-        $this->mock(\App\Services\CodeRunnerService::class, function ($mock) use ($user, $step) {
-            $mock->shouldReceive('runLaravel')
+        $this->mock(\App\Services\DevLabRuntimeService::class, function ($mock) use ($user, $step) {
+            $mock->shouldReceive('run')
                 ->once()
                 ->with(
+                    'laravel',
                     $user->id,
                     $step->id,
-                    'php artisan route:list',
+                    [
+                        [
+                            'path' => 'routes/web.php',
+                            'content' => "Route::get('/hello', fn () => 'Hello');",
+                        ],
+                    ],
                     'routes/web.php',
-                    "Route::get('/hello', fn () => 'Hello');"
+                    'php artisan route:list',
                 )
                 ->andReturn([
                     'status' => 'success',
@@ -273,7 +279,7 @@ class RoadmapStepTest extends TestCase
             ]);
     }
 
-    public function test_une_lecon_laravel_utilise_l_ide_navigateur_sans_docker(): void
+    public function test_une_lecon_laravel_utilise_un_runtime_serveur_sans_docker_local(): void
     {
         $user = User::factory()->create();
         $roadmap = $user->roadmaps()->create([
@@ -291,7 +297,7 @@ class RoadmapStepTest extends TestCase
             ->get(route('steps.show', $step))
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Steps/Show', false)
-                ->where('step.workspace.runtime', 'browser')
+                ->where('step.workspace.runtime', 'server')
                 ->where('step.workspace.preview_enabled', false)
                 ->where('step.workspace.language', 'laravel')
             );
@@ -443,10 +449,22 @@ class RoadmapStepTest extends TestCase
             'position' => 1,
         ]);
 
-        $this->mock(\App\Services\CodeRunnerService::class, function ($mock) {
+        $this->mock(\App\Services\DevLabRuntimeService::class, function ($mock) use ($user, $step) {
             $mock->shouldReceive('run')
                 ->once()
-                ->with('php', "<?php echo 'Hello';")
+                ->with(
+                    'php',
+                    $user->id,
+                    $step->id,
+                    [
+                        [
+                            'path' => 'main.php',
+                            'content' => "<?php echo 'Hello';",
+                        ],
+                    ],
+                    'main.php',
+                    'php main.php',
+                )
                 ->andReturn([
                     'status' => 'success',
                     'stdout' => 'Hello',
