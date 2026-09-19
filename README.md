@@ -1,59 +1,290 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# DevRoad
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> **Ton parcours de développeur, dans une seule application.**
 
-## About Laravel
+DevRoad est une plateforme d’apprentissage destinée aux développeurs qui veulent **apprendre, pratiquer et progresser dans un même environnement**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Le projet combine des **roadmaps pédagogiques**, des **leçons structurées**, des **exercices**, des **mémos** et un **DevLab** intégré servant d’environnement de développement dans le navigateur.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+![DevRoad](https://raw.githubusercontent.com/handcode0-create/devroad/main/public/logo.png)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Vision
 
-## Learning Laravel
+DevRoad cherche à rapprocher deux choses qui sont souvent séparées :
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**apprendre une technologie** et **écrire réellement du code**.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Le parcours suit donc une logique :
 
-## Laravel Sponsors
+```text
+Cours
+  ↓
+Leçon
+  ↓
+Exercice
+  ↓
+DevLab
+  ↓
+Code
+  ↓
+Exécution / aperçu
+  ↓
+Validation
+  ↓
+Progression
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Fonctionnalités
 
-### Premium Partners
+### Roadmaps
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Les utilisateurs peuvent créer des parcours d'apprentissage autour de différentes technologies.
 
-## Contributing
+Les technologies actuellement référencées dans DevRoad comprennent notamment :
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Laravel
+- PHP
+- Next.js
+- React
+- JavaScript
+- TypeScript
+- HTML
+- CSS
+- Tailwind CSS
+- Node.js
+- Git
+- GitHub
+- Docker
+- MySQL
+- PostgreSQL
 
-## Code of Conduct
+### Expérience d'apprentissage
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Chaque roadmap est composée d'étapes ordonnées avec :
 
-## Security Vulnerabilities
+- progression ;
+- étape courante ;
+- verrouillage des étapes futures ;
+- suivi de la dernière consultation ;
+- exercices associés ;
+- validation de l'exercice avant progression lorsque nécessaire ;
+- passage automatique à l'étape suivante.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### DevLab
 
-## License
+DevLab est l'environnement de développement intégré de DevRoad.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Il est pensé dans l'esprit des IDE mobiles comme **TrebEdit**, tout en étant intégré directement au parcours pédagogique.
+
+Le workspace comprend :
+
+- explorateur de fichiers ;
+- onglets de fichiers ;
+- éditeur de code ;
+- création de fichiers ;
+- import de fichiers ;
+- sauvegarde locale du workspace ;
+- terminal pédagogique ;
+- aperçu intégré pour le Web ;
+- sélection de runtime.
+
+Les runtimes actuellement pris en charge dans l'architecture sont :
+
+| Environnement | Mode |
+|---|---|
+| HTML | Navigateur |
+| CSS | Navigateur |
+| JavaScript | Navigateur |
+| Node.js | Runtime local |
+| PHP | Runtime local |
+| Laravel | Runtime local |
+
+L'architecture du runtime est extensible pour ajouter d'autres environnements par la suite.
+
+### Mémos
+
+Une leçon peut générer directement un mémo afin de conserver :
+
+- des notes ;
+- des explications ;
+- des extraits de code ;
+- des points importants à retenir.
+
+### Profil et préférences
+
+Le profil permet notamment de gérer :
+
+- informations du compte ;
+- technologie prioritaire ;
+- objectif quotidien ;
+- objectif hebdomadaire ;
+- notifications ;
+- rappels d'apprentissage ;
+- aide et support.
+
+## Stack technique
+
+### Backend
+
+- Laravel 12
+- PHP 8.2+
+- SQLite en développement / environnement configurable
+- Eloquent
+- Form Requests
+- Policies
+- Inertia
+
+### Frontend
+
+- React
+- Inertia React
+- Vite
+- Tailwind CSS
+- Lucide React
+
+### DevLab
+
+Le DevLab combine un éditeur navigateur et des runtimes adaptés au type de projet.
+
+L'exécution locale s'appuie actuellement sur les outils disponibles sur la machine hôte pour les runtimes concernés. Une architecture sandboxée pourra être utilisée pour un déploiement de production.
+
+## Installation
+
+Cloner le projet :
+
+```powershell
+git clone https://github.com/handcode0-create/devroad.git
+cd devroad
+```
+
+Installer les dépendances PHP :
+
+```powershell
+composer install
+```
+
+Installer les dépendances JavaScript :
+
+```powershell
+npm install
+```
+
+Créer le fichier d'environnement :
+
+```powershell
+copy .env.example .env
+php artisan key:generate
+```
+
+Lancer les migrations :
+
+```powershell
+php artisan migrate
+```
+
+Construire les assets :
+
+```powershell
+npm run build
+```
+
+Lancer le serveur Laravel :
+
+```powershell
+php artisan serve
+```
+
+Puis ouvrir :
+
+```text
+http://127.0.0.1:8000
+```
+
+## Tester
+
+Suite complète :
+
+```powershell
+php artisan test
+```
+
+Tests du parcours d'apprentissage et du runtime :
+
+```powershell
+php artisan test --filter=RoadmapStepTest
+```
+
+## Runtime Node.js
+
+Pour utiliser les fonctionnalités Node.js du DevLab en environnement local, Node.js et npm doivent être installés sur la machine hôte.
+
+Vérifier :
+
+```powershell
+node --version
+npm --version
+```
+
+Puis redémarrer le serveur Laravel après l'installation de Node.js.
+
+## Architecture du workspace
+
+Le DevLab conserve les fichiers du projet dans un workspace propre à l'utilisateur et à l'environnement de développement.
+
+Le navigateur conserve également l'état d'édition local du workspace pour permettre de reprendre son travail.
+
+## Arborescence principale
+
+```text
+app/
+├── Http/
+├── Models/
+├── Policies/
+└── Services/
+    ├── CodeRunnerService.php
+    ├── DevLabRuntimeService.php
+    └── RoadmapGenerator.php
+
+resources/
+└── js/
+    ├── Components/
+    │   └── Learning/
+    │       └── CodeWorkspace.jsx
+    ├── Config/
+    ├── Layouts/
+    └── Pages/
+        ├── DevLab/
+        ├── Roadmaps/
+        ├── Steps/
+        └── Profile/
+
+public/
+└── logo.png
+
+routes/
+└── web.php
+```
+
+## État actuel du projet
+
+Le projet possède actuellement un socle fonctionnel couvrant :
+
+- authentification ;
+- gestion des profils ;
+- roadmaps ;
+- progression pédagogique ;
+- étapes verrouillées ;
+- exercices ;
+- mémos ;
+- recherche ;
+- DevLab ;
+- IDE navigateur ;
+- explorateur de fichiers ;
+- import de fichiers ;
+- runtimes Node.js / PHP / Laravel selon l'environnement.
+
+La suite du développement porte notamment sur l'évolution de l'IDE vers une expérience mobile et desktop encore plus complète : coloration syntaxique avancée, gestion de projet multi-fichiers, console améliorée, preview Web et runtimes sandboxés pour la production.
+
+## Licence
+
+Projet en développement par **HANCODE STUDIO**.
