@@ -186,7 +186,7 @@ class RoadmapStepTest extends TestCase
         $step = $roadmap->steps()->create([
             'title' => 'Variables',
             'position' => 1,
-            'code_example' => "<?php\n\n\\$name = 'DevRoad';",
+            'code_example' => "<?php\n\n$name = 'DevRoad';",
         ]);
 
         $this->withoutVite();
