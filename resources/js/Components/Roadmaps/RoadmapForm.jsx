@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Field, inputClass } from '@/Components/Ui/Field';
 import { buttonClass } from '@/Components/Ui/buttons';
-import technologyLogos, { TECHNOLOGIES } from '@/Config/technologyLogos';
+import technologyLogos from '@/Config/technologyLogos';
 
 const STATUSES = [
     { value: 'draft', label: 'Brouillon' },
@@ -10,8 +10,9 @@ const STATUSES = [
     { value: 'archived', label: 'Archivée' },
 ];
 
-export default function RoadmapForm({ form, onSubmit, submitLabel, cancelHref }) {
+export default function RoadmapForm({ form, technologies = [], onSubmit, submitLabel, cancelHref }) {
     const { data, setData, errors, processing } = form;
+    const selectedTechnology = technologies.find((item) => item.value === data.technology);
 
     return (
         <form
@@ -42,12 +43,22 @@ export default function RoadmapForm({ form, onSubmit, submitLabel, cancelHref })
                 <select
                     id="technology"
                     value={data.technology ?? ''}
-                    onChange={(e) => setData('technology', e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        const technology = technologies.find((item) => item.value === value);
+
+                        setData((current) => ({
+                            ...current,
+                            technology: value,
+                            title: current.title || technology?.label || '',
+                            description: current.description || technology?.description || '',
+                        }));
+                    }}
                     className={inputClass}
                     aria-invalid={errors.technology ? 'true' : undefined}
                 >
                     <option value="">Sélectionner une technologie</option>
-                    {TECHNOLOGIES.map((technology) => (
+                    {technologies.map((technology) => (
                         <option key={technology.value} value={technology.value}>
                             {technology.label}
                         </option>
@@ -74,6 +85,18 @@ export default function RoadmapForm({ form, onSubmit, submitLabel, cancelHref })
                                 )?.label}
                             </p>
                         </div>
+                    </div>
+                )}
+
+                {selectedTechnology && (
+                    <div className="mt-3 rounded-xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.04] p-3">
+                        <p className="text-xs font-semibold text-white">
+                            Parcours prêt à générer
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                            {selectedTechnology.lesson_count} cours seront créés automatiquement,
+                            avec objectifs, contenu, exemples de code et durée estimée.
+                        </p>
                     </div>
                 )}
             </Field>
