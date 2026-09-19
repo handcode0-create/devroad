@@ -10,6 +10,7 @@ use App\Models\Roadmap;
 use App\Models\RoadmapStep;
 use App\Http\Requests\RunCodeRequest;
 use App\Services\CodeRunnerService;
+use App\Services\DevLabRuntimeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -164,21 +165,51 @@ class RoadmapStepController extends Controller
             ], 422);
         }
 
-        if ($language === 'laravel') {
-            return response()->json(
-                $runner->runLaravel(
-                    $request->user()->id,
-                    $step->id,
-                    $validated['command'] ?? 'php artisan route:list',
-                    $validated['file_path'] ?? null,
-                    $validated['code'] ?? null,
-                )
-            );
+        $runtime = $this->workspaceRuntime(
+            $technology,
+            $step->workspace_language,
+        );
+
+        if ($runtime !== 'server') {
+            return response()->json([
+                'status' => 'unsupported',
+                'stdout' => '',
+                'stderr' => 'Cette leçon utilise un runtime navigateur.',
+                'exit_code' => null,
+                'duration_ms' => 0,
+            ], 422);
         }
 
         return response()->json(
-            $runner->run($language, $validated['code'] ?? '')
+            app(DevLabRuntimeService::class)->run(
+                $language,
+                $request->user()->id,
+                $step->id,
+                $validated['files'] ?? [[
+                    'path' => $validated['file_path'] ?? 'main.' . ($language === 'node' ? 'js' : 'php'),
+                    'content' => $validated['code'] ?? '',
+                ]],
+                $validated['file_path']
+                    ?? ($step->workspace_file ?: ($language === 'node' ? 'main.js' : 'main.php')),
+                $validated['command']
+                    ?? match ($language) {
+                        'laravel' => 'php artisan route:list',
+                        'node' => 'node ' . ($step->workspace_file ?: 'main.js'),
+                        'php' => 'php ' . ($step->workspace_file ?: 'main.php'),
+                        default => 'run',
+                    },
+            )
         );
+    }
+
+    private function workspaceRuntime(
+        ?string $technology,
+        ?string $workspaceLanguage
+    ): string {
+        return match ($workspaceLanguage ?? $technology) {
+            'node', 'php', 'laravel' => 'server',
+            default => 'browser',
+        };
     }
 
     private function workspaceFor(
@@ -234,7 +265,7 @@ class RoadmapStepController extends Controller
         if ($profile === null) {
             return [
                 'enabled' => false,
-                'runtime' => 'browser',
+                'runtime' => $this->workspaceRuntime($technology, $workspaceLanguage),
                 'preview_enabled' => false,
                 'language' => null,
                 'label' => null,
@@ -247,7 +278,7 @@ class RoadmapStepController extends Controller
 
         return [
             'enabled' => true,
-            'runtime' => 'browser',
+            'runtime' => $this->workspaceRuntime($technology, $workspaceLanguage),
             'preview_enabled' => $profile['preview'],
             'language' => $profile['language'],
             'label' => $profile['label'],
@@ -268,7 +299,8 @@ class RoadmapStepController extends Controller
         return match ($technology) {
             'laravel' => ['laravel'],
             'php' => ['php'],
-            'javascript', 'node', 'react', 'nextjs' => ['javascript'],
+            'node' => ['node'],
+            'javascript', 'react', 'nextjs' => ['javascript'],
             default => [],
         };
     }
