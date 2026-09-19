@@ -14,7 +14,7 @@ import {
 import technologyLogos from "@/Config/technologyLogos";
 
 import AppLayout from "@/Layouts/AppLayout";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Show({
     step,
@@ -22,18 +22,34 @@ export default function Show({
     previous_step,
     next_step,
 }) {
-    const completed = step.status === "completed";
-    const blocked = step.status === "blocked";
+    const [displayStatus, setDisplayStatus] = useState(step.status);
     const [statusLoading, setStatusLoading] = useState(false);
 
+    const completed = displayStatus === "completed";
+    const blocked = displayStatus === "blocked";
+
+    useEffect(() => {
+        setDisplayStatus(step.status);
+    }, [step.status]);
+
     function changeStatus(status) {
+        if (statusLoading || status === displayStatus) {
+            return;
+        }
+
+        const previousStatus = displayStatus;
+
         setStatusLoading(true);
+        setDisplayStatus(status);
 
         router.patch(
             `/steps/${step.id}/status`,
             { status },
             {
                 preserveScroll: true,
+                preserveState: true,
+                only: ["step"],
+                onError: () => setDisplayStatus(previousStatus),
                 onFinish: () => setStatusLoading(false),
             },
         );
@@ -67,7 +83,7 @@ export default function Show({
                         <span className="rounded-full bg-[#FF6A00]/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
                             Étape {step.position}
                         </span>
-                        <StatusBadge status={step.status} />
+                        <StatusBadge status={displayStatus} />
                         {step.estimated_minutes && (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold text-slate-500">
                                 <Clock3 size={13} />
@@ -235,7 +251,7 @@ export default function Show({
                             </p>
 
                             <div className="mt-4 flex items-center gap-3">
-                                <StatusBadge status={step.status} />
+                                <StatusBadge status={displayStatus} />
                             </div>
                         </section>
                     </aside>
