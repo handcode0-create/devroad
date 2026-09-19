@@ -209,6 +209,23 @@ export default function Show({
                                     </button>
                                 </div>
                             </section>
+
+                            {completed && next_step && (
+                                <Link
+                                    href={`/steps/${next_step.id}`}
+                                    className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] p-4 transition hover:border-[#FF6A00]/35 hover:bg-[#FF6A00]/[0.1]"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#FF8A3D]">
+                                            Cours suivant
+                                        </p>
+                                        <p className="mt-1 truncate text-sm font-bold text-white">
+                                            {next_step.title}
+                                        </p>
+                                    </div>
+                                    <ArrowRight size={18} className="shrink-0 text-[#FF8A3D]" />
+                                </Link>
+                            )}
                         )}
                     </main>
 
