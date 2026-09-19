@@ -89,7 +89,12 @@ class RoadmapStepController extends Controller
                 'content' => $step->content,
                 'code_example' => $step->code_example,
                 'estimated_minutes' => $step->estimated_minutes,
-                'workspace' => $this->workspaceFor($roadmap->technology, $step->code_example),
+                'workspace' => $this->workspaceFor(
+                    $roadmap->technology,
+                    $step->code_example,
+                    $step->workspace_file,
+                    $step->workspace_language,
+                ),
                 'exercise' => $step->exercise_title ? [
                     'title' => $step->exercise_title,
                     'description' => $step->exercise_description,
@@ -146,7 +151,8 @@ class RoadmapStepController extends Controller
         }
 
         $technology = $step->roadmap?->technology;
-        $language = $request->validated('language');
+        $validated = $request->validated();
+        $language = $validated['language'];
 
         if (! in_array($language, $this->workspaceLanguages($technology), true)) {
             return response()->json([
@@ -158,25 +164,48 @@ class RoadmapStepController extends Controller
             ], 422);
         }
 
+        if ($language === 'laravel') {
+            return response()->json(
+                $runner->runLaravel(
+                    $request->user()->id,
+                    $step->id,
+                    $validated['command'] ?? 'php artisan route:list',
+                    $validated['file_path'] ?? null,
+                    $validated['code'] ?? null,
+                )
+            );
+        }
+
         return response()->json(
-            $runner->run($language, $request->validated('code'))
+            $runner->run($language, $validated['code'] ?? '')
         );
     }
 
-    private function workspaceFor(?string $technology, ?string $codeExample): array
-    {
-        $profile = match ($technology) {
-            'laravel', 'php' => [
+    private function workspaceFor(
+        ?string $technology,
+        ?string $codeExample,
+        ?string $workspaceFile = null,
+        ?string $workspaceLanguage = null
+    ): array {
+        $profile = match ($workspaceLanguage ?? $technology) {
+            'laravel' => [
+                'language' => 'laravel',
+                'label' => 'Laravel',
+                'filename' => $workspaceFile ?: 'routes/web.php',
+                'run_command' => 'php artisan route:list',
+                'starter' => "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n",
+            ],
+            'php' => [
                 'language' => 'php',
                 'label' => 'PHP',
-                'filename' => 'main.php',
+                'filename' => $workspaceFile ?: 'main.php',
                 'run_command' => 'php main.php',
                 'starter' => "<?php\n\n",
             ],
-            'javascript', 'node', 'react', 'nextjs' => [
+            'javascript' => [
                 'language' => 'javascript',
                 'label' => 'JavaScript',
-                'filename' => 'main.js',
+                'filename' => $workspaceFile ?: 'main.js',
                 'run_command' => 'node main.js',
                 'starter' => "console.log('Bonjour DevRoad');\n",
             ],
@@ -207,7 +236,8 @@ class RoadmapStepController extends Controller
     private function workspaceLanguages(?string $technology): array
     {
         return match ($technology) {
-            'laravel', 'php' => ['php'],
+            'laravel' => ['laravel'],
+            'php' => ['php'],
             'javascript', 'node', 'react', 'nextjs' => ['javascript'],
             default => [],
         };
