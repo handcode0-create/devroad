@@ -38,7 +38,7 @@ class RoadmapStepController extends Controller
             ->first();
 
         return Inertia::render('Steps/Show', [
-            'step' => [
+            'step' => fn () => [
                 'id' => $step->id,
                 'title' => $step->title,
                 'description' => $step->description,
@@ -50,20 +50,20 @@ class RoadmapStepController extends Controller
                 'estimated_minutes' => $step->estimated_minutes,
             ],
 
-            'roadmap' => [
+            'roadmap' => fn () => [
                 'id' => $roadmap->id,
                 'title' => $roadmap->title,
                 'technology' => $roadmap->technology,
             ],
 
-            'previous_step' => $previousStep
+            'previous_step' => fn () => $previousStep
                 ? [
                     'id' => $previousStep->id,
                     'title' => $previousStep->title,
                 ]
                 : null,
 
-            'next_step' => $nextStep
+            'next_step' => fn () => $nextStep
                 ? [
                     'id' => $nextStep->id,
                     'title' => $nextStep->title,
