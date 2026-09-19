@@ -20,7 +20,16 @@ class RoadmapController extends Controller
             ->withProgress()
             ->latest('updated_at')
             ->paginate(10)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Roadmap $roadmap) => [
+                'id' => $roadmap->id,
+                'title' => $roadmap->title,
+                'description' => $roadmap->description,
+                'status' => $roadmap->status,
+                'steps_count' => $roadmap->steps_count,
+                'completed_steps_count' => $roadmap->completed_steps_count,
+                'progress' => $roadmap->progress,
+            ]);
 
         return Inertia::render('Roadmaps/Index', [
             'roadmaps' => $roadmaps,
