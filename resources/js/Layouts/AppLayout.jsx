@@ -87,14 +87,18 @@ export default function AppLayout({ children }) {
                     <div className="flex min-h-[68px] items-center justify-between px-4">
                         <Link
                             href="/dashboard"
-                            className="flex items-center"
+                            className="flex items-center gap-2.5"
                             aria-label="DevRoad"
                         >
                             <img
                                 src="/icondevroad.png"
-                                alt="DevRoad"
-                                className="h-10 w-10 rounded-xl bg-[#FF6A00] p-1.5 object-contain"
+                                alt=""
+                                className="h-9 w-9 shrink-0 object-contain"
                             />
+
+                            <span className="text-[18px] font-extrabold tracking-tight text-white">
+                                Dev<span className="text-[#FF6A00]">Road</span>
+                            </span>
                         </Link>
 
                         <div className="flex items-center gap-2">
