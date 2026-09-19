@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Roadmap;
 use App\Models\RoadmapStep;
-use Illuminate\Support\Arr;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -16,7 +16,7 @@ class RoadmapGenerator
      * The catalog is configuration-driven so the same templates can be reused
      * by HTTP flows, seeders and future admin tooling.
      */
-    public function create(array $roadmapData, string $technology): Roadmap
+    public function create(User $user, array $roadmapData, string $technology): Roadmap
     {
         $course = config("devroad_courses.{$technology}");
 
@@ -25,7 +25,7 @@ class RoadmapGenerator
         }
 
         return DB::transaction(function () use ($roadmapData, $technology, $course): Roadmap {
-            $roadmap = Roadmap::create($roadmapData);
+            $roadmap = $user->roadmaps()->create($roadmapData);
 
             $steps = $course['lessons'];
             $codeExamples = $course['code'] ?? [];
