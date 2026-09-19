@@ -96,6 +96,34 @@ class DashboardTest extends TestCase
 
     }
 
+    public function test_le_dashboard_recommande_le_parcours_actif_a_reprendre(): void
+    {
+        $user = User::factory()->create();
+
+        $active = $user->roadmaps()->create(['title' => 'Parcours actif']);
+        $active->steps()->create([
+            'title' => 'Cours actuel',
+            'position' => 1,
+            'status' => 'in_progress',
+        ]);
+
+        $completed = $user->roadmaps()->create([
+            'title' => 'Parcours terminé',
+            'status' => 'completed',
+        ]);
+        $completed->steps()->create([
+            'title' => 'Ancien cours',
+            'position' => 1,
+            'status' => 'completed',
+        ]);
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Dashboard', false)
+                ->where('continue_roadmap.title', 'Parcours actif')
+                ->where('continue_roadmap.current_step.title', 'Cours actuel'));
+    }
+
     public function test_terminer_une_etape_remonte_sa_roadmap_en_tete(): void
     {
         $user = User::factory()->create();
