@@ -15,6 +15,7 @@ import {
 import technologyLogos from "@/Config/technologyLogos";
 
 import AppLayout from "@/Layouts/AppLayout";
+import CodeWorkspace from "@/Components/Learning/CodeWorkspace";
 import { useEffect, useState } from "react";
 
 export default function Show({
@@ -278,6 +279,13 @@ export default function Show({
                                     <code>{step.code_example}</code>
                                 </pre>
                             </section>
+                        )}
+
+                        {step.workspace?.enabled && (
+                            <CodeWorkspace
+                                workspace={step.workspace}
+                                stepId={step.id}
+                            />
                         )}
 
                         {hasExercise && (
