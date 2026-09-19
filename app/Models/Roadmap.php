@@ -16,6 +16,7 @@ class Roadmap extends Model
     // $request->user()->roadmaps()->create(...), jamais par le frontend.
     protected $fillable = [
         'title',
+        'technology',
         'description',
         'status',
     ];
