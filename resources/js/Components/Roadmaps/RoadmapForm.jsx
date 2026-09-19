@@ -80,9 +80,7 @@ export default function RoadmapForm({ form, technologies = [], onSubmit, submitL
                                 Logo de la technologie
                             </p>
                             <p className="mt-0.5 text-[11px] text-slate-500">
-                                {TECHNOLOGIES.find(
-                                    (item) => item.value === data.technology,
-                                )?.label}
+                                {selectedTechnology?.label}
                             </p>
                         </div>
                     </div>
