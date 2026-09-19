@@ -37,6 +37,7 @@ class RoadmapStepController extends Controller
         if (
             $currentStep &&
             $currentStep->id !== $step->id &&
+            $step->status !== RoadmapStep::COMPLETED &&
             $step->position > $currentStep->position
         ) {
             return redirect()->route('steps.show', $currentStep);
