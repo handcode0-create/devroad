@@ -16,6 +16,7 @@ return [
             'lessons' => [
                 [
                     'title' => 'Découvrir Laravel',
+                    'workspace_file' => 'routes/web.php',
                     'description' => 'Comprendre Laravel, son rôle et le fonctionnement général d\\\'une application Laravel.',
                     'objective' => 'Identifier les principales briques de Laravel et comprendre le cycle requête → route → contrôleur → réponse.',
                     'content' => '## Qu\\\'est-ce que Laravel ?
@@ -47,6 +48,7 @@ Route::get(\'/bonjour\', function () {
                 ],
                 [
                     'title' => 'Installer et lancer Laravel',
+                    'workspace_file' => 'routes/web.php',
                     'description' => 'Comprendre la structure minimale nécessaire pour démarrer un projet Laravel.',
                     'objective' => 'Savoir créer un projet, installer ses dépendances et lancer le serveur de développement.',
                     'content' => '## Préparer l\\\'environnement
@@ -71,6 +73,7 @@ npm run dev',
                 ],
                 [
                     'title' => 'Comprendre la structure du projet',
+                    'workspace_file' => 'routes/web.php',
                     'description' => 'Se repérer dans les principaux dossiers d\\\'une application Laravel.',
                     'objective' => 'Savoir où placer routes, contrôleurs, modèles, migrations et fichiers React.',
                     'content' => '## Les dossiers importants
@@ -108,6 +111,7 @@ routes/
                 ],
                 [
                     'title' => 'Les routes Laravel',
+                    'workspace_file' => 'routes/web.php',
                     'description' => 'Créer des routes simples et comprendre le lien entre URL, contrôleur et action.',
                     'objective' => 'Être capable de créer, nommer et organiser des routes.',
                     'content' => '## Une route relie une URL à une action
@@ -134,6 +138,7 @@ Route::resource(\'roadmaps\', RoadmapController::class);',
                 ],
                 [
                     'title' => 'Les Controllers',
+                    'workspace_file' => 'app/Http/Controllers/RoadmapController.php',
                     'description' => 'Déplacer la logique HTTP dans des contrôleurs propres et maintenables.',
                     'objective' => 'Comprendre le rôle d\\\'un contrôleur et savoir retourner une réponse Inertia.',
                     'content' => '## Le rôle du contrôleur
@@ -162,6 +167,7 @@ public function index(Request $request)
                 ],
                 [
                     'title' => 'Migrations et schéma de base',
+                    'workspace_file' => 'database/migrations/2026_01_01_000000_create_roadmaps_table.php',
                     'description' => 'Décrire les tables de l\\\'application avec des migrations Laravel.',
                     'objective' => 'Savoir créer une table, ajouter des colonnes et faire évoluer le schéma sans modifier directement la base.',
                     'content' => '## Une migration est une version du schéma
@@ -192,6 +198,7 @@ Chaque changement structurel doit être versionné dans Git avec une migration.'
                 ],
                 [
                     'title' => 'Models et Eloquent',
+                    'workspace_file' => 'app/Models/Roadmap.php',
                     'description' => 'Manipuler les données avec Eloquent plutôt qu\\\'avec du SQL brut partout.',
                     'objective' => 'Créer un modèle, définir ses champs autorisés et interagir avec une table.',
                     'content' => '## Eloquent
@@ -217,6 +224,7 @@ $roadmaps = Roadmap::query()
                 ],
                 [
                     'title' => 'Relations Eloquent',
+                    'workspace_file' => 'app/Models/RoadmapStep.php',
                     'description' => 'Relier utilisateurs, roadmaps et étapes.',
                     'objective' => 'Comprendre belongsTo, hasMany et exploiter les relations dans les requêtes.',
                     'content' => '## Une roadmap possède plusieurs étapes
@@ -248,6 +256,7 @@ class RoadmapStep extends Model
                 ],
                 [
                     'title' => 'Validation avec Form Requests',
+                    'workspace_file' => 'app/Http/Requests/StoreRoadmapRequest.php',
                     'description' => 'Valider les données entrantes avant de les enregistrer.',
                     'objective' => 'Créer des règles de validation propres et retourner des erreurs exploitables par React.',
                     'content' => '## Pourquoi un Form Request ?
@@ -270,6 +279,7 @@ Avec Inertia, les erreurs de validation peuvent être affichées directement dan
                 ],
                 [
                     'title' => 'Policies et autorisation',
+                    'workspace_file' => 'app/Policies/RoadmapPolicy.php',
                     'description' => 'Empêcher un utilisateur de lire ou modifier les ressources d\\\'un autre utilisateur.',
                     'objective' => 'Comprendre la différence entre authentification et autorisation et appliquer une Policy.',
                     'content' => '## Authentification
@@ -294,6 +304,7 @@ $this->authorize(\'view\', $roadmap);',
                 ],
                 [
                     'title' => 'Inertia et React',
+                    'workspace_file' => 'resources/js/Pages/Roadmaps/Index.jsx',
                     'description' => 'Construire une interface React alimentée directement par Laravel.',
                     'objective' => 'Comprendre le passage des données Laravel vers une page React et les actions avec useForm ou router.',
                     'content' => '## Le flux
@@ -326,6 +337,7 @@ export default function Index({ roadmaps }) {
                 ],
                 [
                     'title' => 'Construire un CRUD complet',
+                    'workspace_file' => 'routes/web.php',
                     'description' => 'Assembler routes, requests, policy, controller, modèle et interface.',
                     'objective' => 'Être capable de construire une fonctionnalité CRUD complète sans mélanger les responsabilités.',
                     'content' => '## La chaîne complète
