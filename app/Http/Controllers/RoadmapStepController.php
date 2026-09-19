@@ -121,9 +121,10 @@ class RoadmapStepController extends Controller
             'status' => $request->validated('status'),
         ]);
 
-        return redirect()
-            ->route('roadmaps.show', $step->roadmap_id)
-            ->with('success', 'Progression mise à jour.');
+        return back()->with(
+            'success',
+            'Progression mise à jour.'
+        );
     }
 
     /**
