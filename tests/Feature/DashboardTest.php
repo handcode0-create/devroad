@@ -152,6 +152,38 @@ class DashboardTest extends TestCase
             );
     }
 
+    public function test_le_dev_laboratory_affiche_directement_l_ide_de_la_roadmap_active(): void
+    {
+        $user = User::factory()->create();
+
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Mon parcours Laravel',
+            'technology' => 'laravel',
+            'status' => 'active',
+        ]);
+
+        $step = $roadmap->steps()->create([
+            'title' => 'Les routes Laravel',
+            'position' => 1,
+            'status' => 'in_progress',
+            'code_example' => "Route::get('/hello', fn () => 'Hello');",
+            'workspace_file' => 'routes/web.php',
+            'workspace_language' => 'laravel',
+        ]);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('devlab'))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('DevLab/Index', false)
+                ->where('active_roadmap.id', $roadmap->id)
+                ->where('active_step.id', $step->id)
+                ->where('active_step.workspace.enabled', true)
+                ->where('active_step.workspace.language', 'laravel')
+            );
+    }
+
     public function test_le_dev_laboratory_ne_retourne_pas_les_roadmaps_d_un_autre_utilisateur(): void
     {
         $user = User::factory()->create();
