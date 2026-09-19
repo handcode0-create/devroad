@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
+import ToastViewport from '@/Components/Ui/ToastViewport';
 
 export default function AppLayout({ children }) {
     const { auth } = usePage().props;
@@ -103,6 +104,9 @@ export default function AppLayout({ children }) {
                     </div>
                 </main>
             </div>
+
+            {/* Global notifications */}
+            <ToastViewport />
 
             {/* Mobile navigation */}
             <BottomNav />
