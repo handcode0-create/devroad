@@ -31,6 +31,7 @@ class DashboardController extends Controller
             ->withProgress()
             ->with([
                 'steps' => fn ($query) => $query
+                    ->reorder()
                     ->whereIn('status', [
                         RoadmapStep::IN_PROGRESS,
                         RoadmapStep::TODO,
