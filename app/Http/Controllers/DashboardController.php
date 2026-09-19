@@ -29,6 +29,18 @@ class DashboardController extends Controller
 
         $recentRoadmaps = $user->roadmaps()
             ->withProgress()
+            ->with([
+                'steps' => fn ($query) => $query
+                    ->whereIn('status', [
+                        RoadmapStep::IN_PROGRESS,
+                        RoadmapStep::TODO,
+                    ])
+                    ->orderByRaw(
+                        "case when status = ? then 0 else 1 end",
+                        [RoadmapStep::IN_PROGRESS]
+                    )
+                    ->orderBy('position'),
+            ])
             ->latest('updated_at')
             ->limit(3)
             ->get()
@@ -40,6 +52,14 @@ class DashboardController extends Controller
                 'steps_count' => $roadmap->steps_count,
                 'completed_steps_count' => $roadmap->completed_steps_count,
                 'progress' => $roadmap->progress,
+                'current_step' => ($currentStep = $roadmap->steps->first())
+                    ? [
+                        'id' => $currentStep->id,
+                        'title' => $currentStep->title,
+                        'position' => $currentStep->position,
+                        'status' => $currentStep->status,
+                    ]
+                    : null,
             ]);
 
         return Inertia::render('Dashboard', [
