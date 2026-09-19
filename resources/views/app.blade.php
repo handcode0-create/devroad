@@ -4,8 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#08111F">
-        <link rel="icon" type="image/png" href="/logo.png">
-        <link rel="apple-touch-icon" href="/logo.png">
+        <link rel="icon" type="image/png" href="/icondevroad.png">
+        <link rel="apple-touch-icon" href="/icondevroad.png">
 
         <title inertia>{{ config('app.name', 'DevRoad') }}</title>
 
