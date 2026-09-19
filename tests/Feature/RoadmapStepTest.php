@@ -155,6 +155,26 @@ class RoadmapStepTest extends TestCase
         $this->assertNotNull($step->last_viewed_at);
     }
 
+    public function test_le_cours_expose_la_progression_de_sa_roadmap(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 3);
+        $premiere = $roadmap->steps()->where('position', 1)->first();
+        $premiere->update(['status' => 'completed']);
+        $roadmap->steps()->where('position', 2)->first()->update(['status' => 'in_progress']);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $premiere))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('roadmap.steps_count', 3)
+                ->where('roadmap.completed_steps_count', 1)
+                ->where('roadmap.technology', null)
+            );
+    }
+
     public function test_un_exercice_peut_etre_valide_et_reouvert(): void
     {
         $user = User::factory()->create();
