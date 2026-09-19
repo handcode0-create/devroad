@@ -192,7 +192,15 @@ function StepsTab({ steps, currentStep, roadmapId }) {
                 {steps.length > 0 ? (
                     <div className="space-y-2">
                         {steps.map((step, index) => (
-                            <StepCard key={step.id} step={step} index={index} />
+                            <StepCard
+                            key={step.id}
+                            step={step}
+                            index={index}
+                            locked={
+                                step.status === "todo" &&
+                                currentStep?.id !== step.id
+                            }
+                        />
                         ))}
                     </div>
                 ) : (
@@ -332,10 +340,10 @@ function InfoCard({ label, value }) {
     );
 }
 
-function StepCard({ step, index }) {
+function StepCard({ step, index, locked = false }) {
     const completed = step.status === 'completed';
     const inProgress = step.status === 'in_progress';
-    const blocked = step.status === 'blocked';
+    const blocked = step.status === 'blocked' || locked;
 
     const cardClass = completed
         ? 'border-emerald-500/10 bg-emerald-500/[0.035]'
@@ -383,6 +391,13 @@ function StepCard({ step, index }) {
                 {step.description && (
                     <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
                         {step.description}
+                    </p>
+                )}
+
+                {locked && (
+                    <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600">
+                        <Lock size={11} />
+                        Termine les étapes précédentes pour débloquer ce cours.
                     </p>
                 )}
             </div>
