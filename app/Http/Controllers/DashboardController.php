@@ -35,6 +35,7 @@ class DashboardController extends Controller
             ->map(fn (Roadmap $roadmap) => [
                 'id' => $roadmap->id,
                 'title' => $roadmap->title,
+                'technology' => $roadmap->technology,
                 'status' => $roadmap->status,
                 'steps_count' => $roadmap->steps_count,
                 'completed_steps_count' => $roadmap->completed_steps_count,
