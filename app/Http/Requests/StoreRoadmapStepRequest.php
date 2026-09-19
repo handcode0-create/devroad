@@ -8,8 +8,6 @@ use Illuminate\Validation\Rule;
 
 class StoreRoadmapStepRequest extends FormRequest
 {
-    // L'autorisation (propriétaire de la roadmap) est vérifiée
-    // par la Policy dans le Controller.
     public function authorize(): bool
     {
         return true;
@@ -20,6 +18,10 @@ class StoreRoadmapStepRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'min:2', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'objective' => ['nullable', 'string', 'max:5000'],
+            'content' => ['nullable', 'string', 'max:100000'],
+            'code_example' => ['nullable', 'string', 'max:50000'],
+            'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'position' => ['sometimes', 'integer', 'min:0'],
             'status' => ['sometimes', Rule::in(RoadmapStep::STATUSES)],
         ];
@@ -31,6 +33,12 @@ class StoreRoadmapStepRequest extends FormRequest
             'title.required' => "Le titre de l'étape est obligatoire.",
             'title.min' => 'Le titre doit contenir au moins :min caractères.',
             'title.max' => 'Le titre ne peut pas dépasser :max caractères.',
+            'objective.max' => "L'objectif ne peut pas dépasser :max caractères.",
+            'content.max' => 'Le contenu du cours est trop long.',
+            'code_example.max' => "L'exemple de code est trop long.",
+            'estimated_minutes.integer' => 'La durée estimée doit être un nombre entier.',
+            'estimated_minutes.min' => 'La durée estimée doit être supérieure à 0.',
+            'estimated_minutes.max' => 'La durée estimée ne peut pas dépasser :max minutes.',
             'status.in' => 'Le statut choisi est invalide.',
         ];
     }
