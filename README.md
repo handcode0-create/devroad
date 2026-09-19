@@ -367,11 +367,13 @@ sh scripts/railway-predeploy.sh
 Le script exécute :
 
 ```bash
-php artisan optimize:clear
 php artisan migrate --force
+php artisan optimize:clear
 php artisan config:cache
 php artisan view:cache
 ```
+
+La migration précède le nettoyage du cache car DevRoad utilise actuellement le cache et les sessions en base de données.
 
 Aucun seeder n'est exécuté automatiquement.
 
@@ -474,8 +476,8 @@ Exécuter obligatoirement :
 composer install
 npm ci
 npm run build
-php artisan optimize:clear
 php artisan migrate --force
+php artisan optimize:clear
 php artisan route:list
 ```
 
