@@ -9,6 +9,7 @@ use App\Http\Controllers\RoadmapStepController;
 use App\Http\Controllers\MemoController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DevLabController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -32,6 +33,8 @@ Route::middleware('auth')->group(function () {
         ->name('profile.preferences');
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/devlab', DevLabController::class)->name('devlab');
 
     Route::resource('roadmaps', RoadmapController::class);
 
