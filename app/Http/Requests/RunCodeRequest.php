@@ -18,7 +18,7 @@ class RunCodeRequest extends FormRequest
             'language' => [
                 'required',
                 'string',
-                Rule::in(['php', 'javascript', 'laravel']),
+                Rule::in(['php', 'javascript', 'node', 'python', 'laravel']),
             ],
             'code' => [
                 'nullable',
@@ -35,6 +35,22 @@ class RunCodeRequest extends FormRequest
                 'string',
                 'max:180',
                 'regex:/^(?!.*\.\.)(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+$/',
+            ],
+            'files' => [
+                'nullable',
+                'array',
+                'max:50',
+            ],
+            'files.*.path' => [
+                'required',
+                'string',
+                'max:180',
+                'regex:/^(?!.*\.\.)(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+$/',
+            ],
+            'files.*.content' => [
+                'nullable',
+                'string',
+                'max:100000',
             ],
         ];
     }
