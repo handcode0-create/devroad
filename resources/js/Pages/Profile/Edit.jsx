@@ -4,6 +4,7 @@ import { KeyRound, LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
+import DeleteUserForm from './Partials/DeleteUserForm';
 
 export default function Edit({ mustVerifyEmail, status }) {
     const { auth } = usePage().props;
@@ -94,6 +95,8 @@ export default function Edit({ mustVerifyEmail, status }) {
                         </div>
                     </div>
                 </section>
+
+                <DeleteUserForm />
             </div>
         </AppLayout>
     );
