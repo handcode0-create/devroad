@@ -44,6 +44,10 @@ class RoadmapStepController extends Controller
                 'description' => $step->description,
                 'position' => $step->position,
                 'status' => $step->status,
+                'objective' => $step->objective,
+                'content' => $step->content,
+                'code_example' => $step->code_example,
+                'estimated_minutes' => $step->estimated_minutes,
             ],
 
             'roadmap' => [
