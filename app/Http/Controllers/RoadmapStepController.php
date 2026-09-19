@@ -164,6 +164,12 @@ class RoadmapStepController extends Controller
 
         $status = $request->validated('status');
 
+        if ($this->isLockedForProgression($step)) {
+            return back()->withErrors([
+                'status' => 'Cette leçon est encore verrouillée.',
+            ]);
+        }
+
         if (
             $status === RoadmapStep::COMPLETED &&
             $step->exercise_title &&
@@ -229,6 +235,12 @@ class RoadmapStepController extends Controller
             return back();
         }
 
+        if ($this->isLockedForProgression($step)) {
+            return back()->withErrors([
+                'completed' => 'Cette leçon est encore verrouillée.',
+            ]);
+        }
+
         $completed = $request->boolean('completed');
 
         $step->update([
@@ -249,6 +261,23 @@ class RoadmapStepController extends Controller
             'success',
             $completed ? 'Exercice validé.' : 'Exercice réouvert.'
         );
+    }
+
+    private function isLockedForProgression(RoadmapStep $step): bool
+    {
+        if ($step->status === RoadmapStep::COMPLETED) {
+            return false;
+        }
+
+        $currentStep = $step->roadmap
+            ->steps()
+            ->where('status', '!=', RoadmapStep::COMPLETED)
+            ->orderBy('position')
+            ->first();
+
+        return $currentStep
+            && $currentStep->id !== $step->id
+            && $step->position > $currentStep->position;
     }
 
     /**
