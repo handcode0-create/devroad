@@ -31,6 +31,7 @@ class RoadmapStep extends Model
         'exercise_description',
         'exercise_hint',
         'exercise_solution',
+        'exercise_completed_at',
         'last_viewed_at',
         'estimated_minutes',
         'position',
