@@ -6,6 +6,7 @@ import RoadmapForm from '@/Components/Roadmaps/RoadmapForm';
 export default function Create() {
     const form = useForm({
         title: '',
+        technology: '',
         description: '',
         status: 'active',
     });
