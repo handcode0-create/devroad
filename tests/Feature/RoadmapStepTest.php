@@ -273,6 +273,55 @@ class RoadmapStepTest extends TestCase
             ]);
     }
 
+    public function test_une_lecon_laravel_utilise_l_ide_navigateur_sans_docker(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Laravel',
+            'technology' => 'laravel',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Les routes',
+            'position' => 1,
+        ]);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('step.workspace.runtime', 'browser')
+                ->where('step.workspace.preview_enabled', false)
+                ->where('step.workspace.language', 'laravel')
+            );
+    }
+
+    public function test_une_lecon_html_expose_un_apercu_navigateur(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'HTML',
+            'technology' => 'html',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Structure HTML',
+            'position' => 1,
+            'code_example' => '<!doctype html><html><body><h1>DevRoad</h1></body></html>',
+        ]);
+
+        $this->withoutVite();
+
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('step.workspace.runtime', 'browser')
+                ->where('step.workspace.preview_enabled', true)
+                ->where('step.workspace.filename', 'index.html')
+            );
+    }
+
     public function test_un_utilisateur_ne_peut_pas_executer_le_code_d_un_autre(): void
     {
         $owner = User::factory()->create();
