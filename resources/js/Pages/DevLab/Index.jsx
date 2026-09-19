@@ -74,6 +74,37 @@ export default function Index({
                     </div>
                 </section>
 
+                {active_roadmap && active_step?.workspace?.enabled && (
+                    <section className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#07101A]">
+                        <div className="flex flex-col gap-3 border-b border-white/[0.06] bg-[#0D1725] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                    IDE actif
+                                </p>
+                                <h2 className="mt-1 truncate text-lg font-bold text-white">
+                                    {active_step.title}
+                                </h2>
+                                <p className="mt-1 text-xs text-slate-600">
+                                    {active_roadmap.title} · étape {active_step.position} · {active_step.workspace.label}
+                                </p>
+                            </div>
+
+                            <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-[10px] font-semibold text-slate-500">
+                                {active_step.workspace.runtime === "server"
+                                    ? "Runtime local"
+                                    : "Runtime navigateur"}
+                            </div>
+                        </div>
+
+                        <div className="p-3 sm:p-4 lg:p-5">
+                            <CodeWorkspace
+                                workspace={active_step.workspace}
+                                stepId={active_step.id}
+                            />
+                        </div>
+                    </section>
+                )}
+
                 <section>
                     <div className="mb-4 flex items-end justify-between gap-4">
                         <div>
@@ -128,36 +159,7 @@ export default function Index({
                     )}
                 </section>
 
-                {active_roadmap && active_step?.workspace?.enabled && (
-                    <section className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#07101A]">
-                        <div className="flex flex-col gap-3 border-b border-white/[0.06] bg-[#0D1725] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                            <div className="min-w-0">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
-                                    IDE actif
-                                </p>
-                                <h2 className="mt-1 truncate text-lg font-bold text-white">
-                                    {active_step.title}
-                                </h2>
-                                <p className="mt-1 text-xs text-slate-600">
-                                    {active_roadmap.title} · étape {active_step.position} · {active_step.workspace.label}
-                                </p>
-                            </div>
 
-                            <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-[10px] font-semibold text-slate-500">
-                                {active_step.workspace.runtime === "server"
-                                    ? "Runtime local"
-                                    : "Runtime navigateur"}
-                            </div>
-                        </div>
-
-                        <div className="p-3 sm:p-4 lg:p-5">
-                            <CodeWorkspace
-                                workspace={active_step.workspace}
-                                stepId={active_step.id}
-                            />
-                        </div>
-                    </section>
-                )}
             </div>
         </AppLayout>
     );
