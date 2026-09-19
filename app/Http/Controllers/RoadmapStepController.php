@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateStepStatusRequest;
 use App\Models\Roadmap;
 use App\Models\RoadmapStep;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -126,9 +127,29 @@ class RoadmapStepController extends Controller
     ): RedirectResponse {
         $this->authorize('update', $step);
 
-        $step->update([
-            'status' => $request->validated('status'),
-        ]);
+        $status = $request->validated('status');
+
+        DB::transaction(function () use ($step, $status) {
+            $step->update([
+                'status' => $status,
+            ]);
+
+            if ($status !== RoadmapStep::COMPLETED) {
+                return;
+            }
+
+            $nextStep = RoadmapStep::query()
+                ->where('roadmap_id', $step->roadmap_id)
+                ->where('position', '>', $step->position)
+                ->orderBy('position')
+                ->first();
+
+            if ($nextStep && $nextStep->status === RoadmapStep::TODO) {
+                $nextStep->update([
+                    'status' => RoadmapStep::IN_PROGRESS,
+                ]);
+            }
+        });
 
         return back()->with(
             'success',
