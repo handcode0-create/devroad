@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\UpdateProfilePreferencesRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,9 +19,26 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'preferences' => [
+                'learning_goal' => $user->learning_goal,
+                'daily_goal_minutes' => $user->daily_goal_minutes,
+                'weekly_goal_sessions' => $user->weekly_goal_sessions,
+                'preferred_technology' => $user->preferred_technology,
+                'email_notifications' => $user->email_notifications,
+                'learning_reminders' => $user->learning_reminders,
+            ],
+            'technologies' => collect(config('devroad.technologies', []))
+                ->map(fn ($label, $value) => [
+                    'value' => $value,
+                    'label' => $label,
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -38,6 +56,18 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit');
+    }
+
+    /**
+     * Update DevRoad learning preferences and goals.
+     */
+    public function updatePreferences(
+        UpdateProfilePreferencesRequest $request
+    ): RedirectResponse {
+        $request->user()->update($request->validated());
+
+        return Redirect::route('profile.edit')
+            ->with('status', 'preferences-updated');
     }
 
     /**
