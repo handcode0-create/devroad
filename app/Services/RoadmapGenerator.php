@@ -24,7 +24,7 @@ class RoadmapGenerator
             throw new InvalidArgumentException("Aucun parcours n'est configuré pour la technologie [{$technology}].");
         }
 
-        return DB::transaction(function () use ($roadmapData, $technology, $course): Roadmap {
+        return DB::transaction(function () use ($user, $roadmapData, $technology, $course): Roadmap {
             $roadmap = $user->roadmaps()->create($roadmapData);
 
             $steps = $course['lessons'];
