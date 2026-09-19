@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Roadmap;
+use App\Services\RoadmapGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -51,15 +52,29 @@ class RoadmapController extends Controller
      * Création d'une feuille de route.
      */
     public function store(
-        \App\Http\Requests\StoreRoadmapRequest $request
+        \App\Http\Requests\StoreRoadmapRequest $request,
+        RoadmapGenerator $generator
     ): RedirectResponse {
-        $roadmap = $request->user()
-            ->roadmaps()
-            ->create($request->validated());
+        $data = $request->validated();
+
+        $technology = $data['technology'];
+
+        $catalog = config("devroad.catalog.{$technology}", []);
+
+        // Si l'utilisateur ne fournit pas de titre ou de description métier,
+        // le catalogue fournit des valeurs cohérentes pour le parcours.
+        $data['title'] = $data['title'] ?: ($catalog['title'] ?? config("devroad.technologies.{$technology}"));
+        $data['description'] = $data['description'] ?: ($catalog['description'] ?? null);
+
+        $roadmap = $generator->create(
+            $request->user(),
+            $data,
+            $technology
+        );
 
         return redirect()
             ->route('roadmaps.show', $roadmap)
-            ->with('success', 'Feuille de route créée.');
+            ->with('success', 'Parcours créé avec ses cours.');
     }
 
     /**
