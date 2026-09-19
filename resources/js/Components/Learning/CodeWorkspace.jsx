@@ -441,13 +441,6 @@ export default function CodeWorkspace({ workspace, stepId }) {
 
         setCommand("");
 
-        if (workspace.runtime === "server") {
-            runServer(value === "run" ? workspace.run_command : value);
-            return;
-        }
-
-        pushTerminal("$ " + value);
-
         if (value === "clear") {
             setTerminal([]);
             return;
@@ -461,6 +454,23 @@ export default function CodeWorkspace({ workspace, stepId }) {
             );
             return;
         }
+
+        if (value === "reset") {
+            resetWorkspace();
+            return;
+        }
+
+        if (value === "save") {
+            saveWorkspace();
+            return;
+        }
+
+        if (workspace.runtime === "server") {
+            runServer(value === "run" ? workspace.run_command : value);
+            return;
+        }
+
+        pushTerminal("$ " + value);
 
         if (value === "pwd") {
             pushTerminal("/devroad/" + workspace.language);
