@@ -8,6 +8,7 @@ import { buttonClass } from '@/Components/Ui/buttons';
 export default function Edit({ roadmap }) {
     const form = useForm({
         title: roadmap.title ?? '',
+        technology: roadmap.technology ?? '',
         description: roadmap.description ?? '',
         status: roadmap.status ?? 'draft',
     });
