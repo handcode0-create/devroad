@@ -101,6 +101,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
     const [previewVersion, setPreviewVersion] = useState(0);
 
     const terminalEndRef = useRef(null);
+    const hydratedRef = useRef(false);
 
     const currentFile =
         files.find((file) => file.path === activeFile) ?? files[0];
@@ -111,27 +112,33 @@ export default function CodeWorkspace({ workspace, stepId }) {
     );
 
     useEffect(() => {
+        hydratedRef.current = false;
+
         try {
             const stored = window.localStorage.getItem(storageKey);
 
-            if (!stored) {
-                return;
-            }
+            if (stored) {
+                const parsed = JSON.parse(stored);
 
-            const parsed = JSON.parse(stored);
-
-            if (Array.isArray(parsed.files) && parsed.files.length > 0) {
-                setFiles(parsed.files);
-                setActiveFile(
-                    parsed.activeFile ?? parsed.files[0].path,
-                );
+                if (Array.isArray(parsed.files) && parsed.files.length > 0) {
+                    setFiles(parsed.files);
+                    setActiveFile(
+                        parsed.activeFile ?? parsed.files[0].path,
+                    );
+                }
             }
         } catch {
             // Un workspace local corrompu ne doit pas bloquer le cours.
+        } finally {
+            hydratedRef.current = true;
         }
     }, [storageKey]);
 
     useEffect(() => {
+        if (!hydratedRef.current) {
+            return;
+        }
+
         window.localStorage.setItem(
             storageKey,
             JSON.stringify({
