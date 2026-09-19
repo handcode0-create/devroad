@@ -10,6 +10,8 @@ import {
     Lock,
 } from "lucide-react";
 
+import technologyLogos from "@/Config/technologyLogos";
+
 import AppLayout from "@/Layouts/AppLayout";
 
 export default function Show({
@@ -34,13 +36,23 @@ export default function Show({
             <Head title={step.title} />
 
             <div className="mx-auto max-w-5xl space-y-6">
-                <Link
-                    href={`/roadmaps/${roadmap.id}`}
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
-                >
-                    <ArrowLeft size={16} />
-                    {roadmap.title}
-                </Link>
+                <div className="flex items-center justify-between gap-4">
+                    <Link
+                        href={`/roadmaps/${roadmap.id}`}
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
+                    >
+                        <ArrowLeft size={16} />
+                        {roadmap.title}
+                    </Link>
+
+                    {roadmap.technology && technologyLogos[roadmap.technology] && (
+                        <img
+                            src={technologyLogos[roadmap.technology]}
+                            alt=""
+                            className="h-9 w-9 object-contain"
+                        />
+                    )}
+                </div>
 
                 <section className="rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725] p-6 sm:p-8">
                     <div className="flex flex-wrap items-center gap-3">
