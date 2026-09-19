@@ -76,6 +76,7 @@ export default function BottomNav() {
                             key={item.href}
                             href={item.href}
                             aria-current={active ? 'page' : undefined}
+                            aria-label={item.label}
                             className="flex flex-1 items-center justify-center"
                         >
                             <div
