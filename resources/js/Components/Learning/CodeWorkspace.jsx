@@ -90,7 +90,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
         setRunning(true);
         pushOutput(
             "",
-            "$ " + workspace.run_command,
+            "$ " + (commandOverride ?? workspace.run_command),
             "Exécution dans le sandbox DevRoad...",
         );
 
