@@ -9,7 +9,6 @@ use App\Http\Requests\UpdateStepExerciseRequest;
 use App\Models\Roadmap;
 use App\Models\RoadmapStep;
 use App\Http\Requests\RunCodeRequest;
-use App\Services\CodeRunnerService;
 use App\Services\DevLabRuntimeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -136,8 +135,7 @@ class RoadmapStepController extends Controller
      */
     public function runCode(
         RunCodeRequest $request,
-        RoadmapStep $step,
-        CodeRunnerService $runner
+        RoadmapStep $step
     ): JsonResponse {
         $this->authorize('view', $step);
 
