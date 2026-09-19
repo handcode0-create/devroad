@@ -29,6 +29,10 @@ export default function Show({
         Boolean(step.exercise?.completed),
     );
     const [showMemoForm, setShowMemoForm] = useState(false);
+    const [readingProgress, setReadingProgress] = useState(0);
+    const [roadmapCompletedSteps, setRoadmapCompletedSteps] = useState(
+        Number(roadmap.completed_steps_count ?? 0),
+    );
 
     const completed = displayStatus === "completed";
     const blocked = displayStatus === "blocked";
@@ -38,6 +42,33 @@ export default function Show({
         setDisplayStatus(step.status);
         setExerciseCompleted(Boolean(step.exercise?.completed));
     }, [step.status, step.exercise?.completed]);
+
+    useEffect(() => {
+        const updateReadingProgress = () => {
+            const scrollableHeight =
+                document.documentElement.scrollHeight - window.innerHeight;
+
+            if (scrollableHeight <= 0) {
+                setReadingProgress(100);
+                return;
+            }
+
+            const progress = (window.scrollY / scrollableHeight) * 100;
+
+            setReadingProgress(Math.min(100, Math.max(0, progress)));
+        };
+
+        updateReadingProgress();
+        window.addEventListener("scroll", updateReadingProgress, {
+            passive: true,
+        });
+        window.addEventListener("resize", updateReadingProgress);
+
+        return () => {
+            window.removeEventListener("scroll", updateReadingProgress);
+            window.removeEventListener("resize", updateReadingProgress);
+        };
+    }, []);
 
     function changeStatus(status) {
         if (statusLoading || status === displayStatus) {
@@ -61,6 +92,13 @@ export default function Show({
                 preserveState: true,
                 only: ["step"],
                 onError: () => setDisplayStatus(previousStatus),
+                onSuccess: () => {
+                    setRoadmapCompletedSteps((current) =>
+                        status === "completed"
+                            ? Math.min(current + 1, Number(roadmap.steps_count ?? current + 1))
+                            : Math.max(current - 1, 0),
+                    );
+                },
                 onFinish: () => setStatusLoading(false),
             },
         );
@@ -103,6 +141,16 @@ export default function Show({
         <AppLayout>
             <Head title={step.title} />
 
+            <div
+                className="fixed inset-x-0 top-0 z-50 h-1 bg-white/[0.04]"
+                aria-label="Progression de lecture"
+            >
+                <div
+                    className="h-full bg-[#FF6A00] transition-[width] duration-150"
+                    style={{ width: `${readingProgress}%` }}
+                />
+            </div>
+
             <div className="mx-auto max-w-5xl space-y-6">
                 <div className="flex items-center justify-between gap-4">
                     <Link
@@ -144,6 +192,31 @@ export default function Show({
                         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
                             {step.description}
                         </p>
+                    )}
+
+                    {Number(roadmap.steps_count ?? 0) > 0 && (
+                        <div className="mt-6 max-w-xl">
+                            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em]">
+                                <span className="text-slate-600">
+                                    Progression du parcours
+                                </span>
+                                <span className="text-[#FF8A3D]">
+                                    {roadmapCompletedSteps} / {roadmap.steps_count}
+                                </span>
+                            </div>
+
+                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                                <div
+                                    className="h-full rounded-full bg-[#FF6A00] transition-all duration-500"
+                                    style={{
+                                        width: `${progressFromCount(
+                                            roadmapCompletedSteps,
+                                            roadmap.steps_count,
+                                        )}%`,
+                                    }}
+                                />
+                            </div>
+                        </div>
                     )}
                 </section>
 
@@ -585,4 +658,15 @@ function buildMemoContent(step) {
     }
 
     return parts.join("\n\n");
+}
+
+function progressFromCount(completedSteps, totalSteps) {
+    if (!totalSteps) {
+        return 0;
+    }
+
+    return Math.min(
+        100,
+        Math.max(0, Math.round((completedSteps / totalSteps) * 100)),
+    );
 }
