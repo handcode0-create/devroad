@@ -64,9 +64,9 @@ export default function Sidebar({ user }) {
             ============================================================ */}
             <div className="flex h-[88px] items-center border-b border-white/[0.06] px-6">
                 <Link href="/dashboard" className="flex items-center">
-                    <span className="flex h-12 w-[150px] items-center justify-center overflow-hidden rounded-xl bg-white px-2 py-1 shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+                    <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-[#FF6A00] p-1.5 shadow-[0_8px_24px_rgba(255,106,0,0.18)]">
                         <img
-                            src="/logo.png"
+                            src="/icondevroad.png"
                             alt="DevRoad"
                             className="h-full w-full object-contain"
                         />
