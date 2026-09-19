@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { KeyRound, LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react';
 
 import AppLayout from '@/Layouts/AppLayout';
@@ -83,16 +83,28 @@ export default function Edit({ mustVerifyEmail, status }) {
                 </section>
 
                 <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
-                    <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-slate-400">
-                            <LogOut size={18} />
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-slate-400">
+                                <LogOut size={18} />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-bold text-white">Session</h2>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    Ferme ta session actuelle sur DevRoad.
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-base font-bold text-white">Session</h2>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                                Pour fermer ta session, utilise le bouton de déconnexion de ton compte.
-                            </p>
-                        </div>
+
+                        <Link
+                            href={route('logout')}
+                            method="post"
+                            as="button"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/10 hover:text-[#FF8A3D] sm:w-auto"
+                        >
+                            <LogOut size={16} />
+                            Se déconnecter
+                        </Link>
                     </div>
                 </section>
 
