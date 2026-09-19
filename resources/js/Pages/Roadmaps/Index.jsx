@@ -75,7 +75,7 @@ function RoadmapCard({ roadmap }) {
         100,
     );
 
-    const logo = getTechnologyLogo(roadmap.title);
+    const logo = getTechnologyLogo(roadmap.technology);
 
     return (
         <Link
