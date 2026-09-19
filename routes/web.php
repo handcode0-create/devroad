@@ -45,6 +45,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('steps/{step}/status', [RoadmapStepController::class, 'updateStatus'])
         ->name('steps.status');
 
+    Route::patch('steps/{step}/exercise', [RoadmapStepController::class, 'updateExercise'])
+        ->name('steps.exercise');
+
     Route::resource('memos', MemoController::class);
 
     Route::patch('memos/{memo}/favorite', [MemoController::class, 'toggleFavorite'])
