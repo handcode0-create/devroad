@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import RoadmapForm from '@/Components/Roadmaps/RoadmapForm';
 
-export default function Create() {
+export default function Create({ technologies = [] }) {
     const form = useForm({
         title: '',
         technology: '',
@@ -22,16 +22,17 @@ export default function Create() {
 
             <div className="mx-auto max-w-2xl">
                 <PageHeader
-                    title="Nouvelle roadmap"
-                    subtitle="Donne un nom à ton parcours. Tu ajouteras les étapes ensuite."
+                    title="Nouveau parcours"
+                    subtitle="Choisis une technologie : DevRoad générera automatiquement les cours de ton parcours."
                     backHref="/roadmaps"
                     backLabel="Mes roadmaps"
                 />
 
                 <RoadmapForm
                     form={form}
+                    technologies={technologies}
                     onSubmit={submit}
-                    submitLabel="Créer la roadmap"
+                    submitLabel="Créer le parcours"
                     cancelHref="/roadmaps"
                 />
             </div>
