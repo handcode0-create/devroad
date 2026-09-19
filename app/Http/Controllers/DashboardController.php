@@ -27,6 +27,37 @@ class DashboardController extends Controller
         $stepsTotal = (int) $steps->total;
         $stepsCompleted = (int) $steps->completed;
 
+        $continueRoadmap = $user->roadmaps()
+            ->withProgress()
+            ->whereHas('steps', fn ($query) => $query->where('status', '!=', RoadmapStep::COMPLETED))
+            ->latest('updated_at')
+            ->first();
+
+        if ($continueRoadmap) {
+            $currentStep = $continueRoadmap->steps()
+                ->where('status', '!=', RoadmapStep::COMPLETED)
+                ->orderBy('position')
+                ->first();
+
+            $continueRoadmapData = [
+                'id' => $continueRoadmap->id,
+                'title' => $continueRoadmap->title,
+                'technology' => $continueRoadmap->technology,
+                'status' => $continueRoadmap->status,
+                'steps_count' => $continueRoadmap->steps_count,
+                'completed_steps_count' => $continueRoadmap->completed_steps_count,
+                'progress' => $continueRoadmap->progress,
+                'current_step' => $currentStep ? [
+                    'id' => $currentStep->id,
+                    'title' => $currentStep->title,
+                    'position' => $currentStep->position,
+                    'status' => $currentStep->status,
+                ] : null,
+            ];
+        } else {
+            $continueRoadmapData = null;
+        }
+
         $recentRoadmaps = $user->roadmaps()
             ->withProgress()
             ->with([
@@ -75,6 +106,7 @@ class DashboardController extends Controller
                     : (int) round($stepsCompleted / $stepsTotal * 100),
             ],
             'recent_roadmaps' => $recentRoadmaps,
+            'continue_roadmap' => $continueRoadmapData,
         ]);
     }
 }
