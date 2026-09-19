@@ -425,6 +425,7 @@ export default function Show({
                                     <ArrowRight size={18} className="shrink-0 text-[#FF8A3D]" />
                                 </Link>
                             )}
+                        </>
                         )}
                     </main>
 
