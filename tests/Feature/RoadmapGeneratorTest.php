@@ -16,6 +16,7 @@ class RoadmapGeneratorTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('roadmaps.store'), [
+                'title' => 'Mon parcours Laravel',
                 'technology' => 'laravel',
                 'status' => 'active',
             ])
@@ -24,7 +25,7 @@ class RoadmapGeneratorTest extends TestCase
         $roadmap = $user->roadmaps()->first();
 
         $this->assertNotNull($roadmap);
-        $this->assertSame('Laravel', $roadmap->title);
+        $this->assertSame('Mon parcours Laravel', $roadmap->title);
         $this->assertSame('laravel', $roadmap->technology);
         $this->assertSame(13, $roadmap->steps()->count());
 
