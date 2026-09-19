@@ -450,15 +450,29 @@ export default function Show({
                                 ) : null}
 
                                 {next_step ? (
-                                    <Link
-                                        href={`/steps/${next_step.id}`}
-                                        className="flex items-center gap-3 rounded-xl border border-[#FF6A00]/10 bg-[#FF6A00]/[0.035] p-3 transition hover:bg-[#FF6A00]/[0.07]"
-                                    >
-                                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white">
-                                            {next_step.title}
-                                        </span>
-                                        <ArrowRight size={15} className="text-[#FF8A3D]" />
-                                    </Link>
+                                    completed ? (
+                                        <Link
+                                            href={`/steps/${next_step.id}`}
+                                            className="flex items-center gap-3 rounded-xl border border-[#FF6A00]/10 bg-[#FF6A00]/[0.035] p-3 transition hover:bg-[#FF6A00]/[0.07]"
+                                        >
+                                            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white">
+                                                {next_step.title}
+                                            </span>
+                                            <ArrowRight size={15} className="text-[#FF8A3D]" />
+                                        </Link>
+                                    ) : (
+                                        <div className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.015] p-3 opacity-70">
+                                            <Lock size={15} className="shrink-0 text-slate-600" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-xs font-semibold text-slate-500">
+                                                    {next_step.title}
+                                                </p>
+                                                <p className="mt-1 text-[10px] text-slate-700">
+                                                    Termine cette leçon pour débloquer la suivante.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )
                                 ) : null}
                             </div>
                         </section>
