@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMemoRequest;
 use App\Http\Requests\UpdateMemoRequest;
 use App\Models\Memo;
+use App\Models\RoadmapStep;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,6 +79,24 @@ class MemoController extends Controller
         });
 
         return redirect()->route('memos.show', $memo);
+    }
+
+    public function storeFromStep(StoreMemoRequest $request, RoadmapStep $step): RedirectResponse
+    {
+        Gate::authorize('view', $step);
+
+        $memo = DB::transaction(function () use ($request) {
+            $memo = $request->user()
+                ->memos()
+                ->create($request->safe()->except('tags'));
+
+            $memo->syncTagNames($request->validated('tags', []) ?? []);
+
+            return $memo;
+        });
+
+        return back()
+            ->with('success', 'Mémo créé depuis le cours.');
     }
 
     public function show(Memo $memo): Response
