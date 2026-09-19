@@ -37,6 +37,8 @@ class RoadmapGeneratorTest extends TestCase
         $this->assertNotEmpty($first->objective);
         $this->assertNotEmpty($first->content);
         $this->assertNotEmpty($first->code_example);
+        $this->assertSame('routes/web.php', $first->workspace_file);
+        $this->assertSame('laravel', $first->workspace_language);
         $this->assertNotEmpty($first->exercise_title);
         $this->assertNotEmpty($first->exercise_description);
         $this->assertNotEmpty($first->exercise_hint);
