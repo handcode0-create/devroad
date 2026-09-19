@@ -27,6 +27,8 @@ class RoadmapStep extends Model
         'objective',
         'content',
         'code_example',
+        'workspace_file',
+        'workspace_language',
         'exercise_title',
         'exercise_description',
         'exercise_hint',
