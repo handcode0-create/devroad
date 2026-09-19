@@ -1,6 +1,7 @@
 import { Head, Link, router } from "@inertiajs/react";
 import {
     ArrowRight,
+    ChevronDown,
     Code2,
     Eye,
     Play,
@@ -89,10 +90,45 @@ export default function Index({
                                 </p>
                             </div>
 
-                            <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-[10px] font-semibold text-slate-500">
-                                {active_step.workspace.runtime === "server"
-                                    ? "Runtime local"
-                                    : "Runtime navigateur"}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="relative">
+                                    <select
+                                        value={active_roadmap.id}
+                                        onChange={(event) =>
+                                            selectRoadmap(event.target.value)
+                                        }
+                                        className="appearance-none rounded-xl border border-white/[0.07] bg-white/[0.03] py-2 pl-3 pr-8 text-[10px] font-semibold text-slate-400 outline-none transition hover:border-[#FF6A00]/30 hover:text-white focus:border-[#FF6A00]/40"
+                                        aria-label="Choisir l'environnement DevLab"
+                                    >
+                                        {roadmaps.map((roadmap) => (
+                                            <option
+                                                key={roadmap.id}
+                                                value={roadmap.id}
+                                                className="bg-[#0D1725] text-white"
+                                            >
+                                                {formatTechnology(roadmap.technology)} · {roadmap.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown
+                                        size={13}
+                                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600"
+                                    />
+                                </div>
+
+                                <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-[10px] font-semibold text-slate-500">
+                                    <span
+                                        className={[
+                                            "h-1.5 w-1.5 rounded-full",
+                                            active_step.workspace.runtime === "server"
+                                                ? "bg-emerald-400"
+                                                : "bg-sky-400",
+                                        ].join(" ")}
+                                    />
+                                    {active_step.workspace.runtime === "server"
+                                        ? "Runtime local · " + active_step.workspace.label
+                                        : "Runtime navigateur"}
+                                </div>
                             </div>
                         </div>
 
