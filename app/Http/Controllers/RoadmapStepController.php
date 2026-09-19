@@ -8,6 +8,9 @@ use App\Http\Requests\UpdateStepStatusRequest;
 use App\Http\Requests\UpdateStepExerciseRequest;
 use App\Models\Roadmap;
 use App\Models\RoadmapStep;
+use App\Http\Requests\RunCodeRequest;
+use App\Services\CodeRunnerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -119,6 +122,53 @@ class RoadmapStepController extends Controller
                 ]
                 : null,
         ]);
+    }
+
+    /**
+     * Exécuter le code de la leçon dans le sandbox DevRoad.
+     */
+    public function runCode(
+        RunCodeRequest $request,
+        RoadmapStep $step,
+        CodeRunnerService $runner
+    ): JsonResponse {
+        $this->authorize('view', $step);
+
+        if ($this->isLockedForProgression($step)) {
+            return response()->json([
+                'status' => 'locked',
+                'stdout' => '',
+                'stderr' => 'Cette leçon est encore verrouillée.',
+                'exit_code' => null,
+                'duration_ms' => 0,
+            ], 403);
+        }
+
+        $technology = $step->roadmap?->technology;
+        $language = $request->validated('language');
+
+        if (! in_array($language, $this->workspaceLanguages($technology), true)) {
+            return response()->json([
+                'status' => 'unsupported',
+                'stdout' => '',
+                'stderr' => 'Ce langage n’est pas encore disponible pour cette technologie.',
+                'exit_code' => null,
+                'duration_ms' => 0,
+            ], 422);
+        }
+
+        return response()->json(
+            $runner->run($language, $request->validated('code'))
+        );
+    }
+
+    private function workspaceLanguages(?string $technology): array
+    {
+        return match ($technology) {
+            'laravel', 'php' => ['php'],
+            'javascript', 'node', 'react', 'nextjs' => ['javascript'],
+            default => [],
+        };
     }
 
     /**
