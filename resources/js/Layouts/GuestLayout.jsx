@@ -5,8 +5,12 @@ export default function GuestLayout({ children }) {
     return (
         <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
             <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 rounded-2xl bg-[#FF6A00] p-2 shadow-[0_10px_28px_rgba(255,106,0,0.2)]" />
+                <Link href="/" className="flex items-center gap-2.5">
+                    <ApplicationLogo className="h-12 w-12 object-contain" />
+
+                    <span className="text-2xl font-extrabold tracking-tight text-slate-900">
+                        Dev<span className="text-[#FF6A00]">Road</span>
+                    </span>
                 </Link>
             </div>
 
