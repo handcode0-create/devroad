@@ -3,7 +3,7 @@ import {
     Bell,
     CircleHelp,
     ExternalLink,
-    Github,
+    Code2,
     KeyRound,
     LogOut,
     Mail,
@@ -380,7 +380,7 @@ export default function Edit({
                         >
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-slate-300">
-                                    <Github size={18} />
+                                    <Code2 size={18} />
                                 </div>
 
                                 <div className="min-w-0 flex-1">
@@ -434,7 +434,7 @@ export default function Edit({
 
                 <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
                     <SectionHeader
-                        icon={Github}
+                        icon={Code2}
                         title="À propos de DevRoad"
                         description="Une base de travail pour planifier, apprendre et progresser dans tes technologies."
                     />
