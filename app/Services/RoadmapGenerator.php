@@ -50,6 +50,7 @@ class RoadmapGenerator
                     $title,
                     $description,
                     $objective,
+                    $codeExample,
                     $isStructured ? $lesson : []
                 );
 
@@ -79,26 +80,30 @@ class RoadmapGenerator
         string $title,
         ?string $description,
         ?string $objective,
+        ?string $codeExample,
         array $lesson
     ): array {
         return [
             'title' => $lesson['exercise_title'] ?? "Exercice — {$title}",
             'description' => $lesson['exercise_description']
-                ?? $this->defaultExerciseDescription($title, $description, $objective),
+                ?? $this->defaultExerciseDescription($title, $description, $objective, $codeExample),
             'hint' => $lesson['exercise_hint']
                 ?? 'Commence par identifier le concept principal, puis applique-le dans un petit exemple concret.',
             'solution' => $lesson['exercise_solution']
-                ?? "Construis un exemple minimal lié à « {$title} » et vérifie que tu peux expliquer chaque partie de ta solution.",
+                ?? ($codeExample ?: "Construis un exemple minimal lié à « {$title} » et vérifie que tu peux expliquer chaque partie de ta solution."),
         ];
     }
 
     private function defaultExerciseDescription(
         string $title,
         ?string $description,
-        ?string $objective
+        ?string $objective,
+        ?string $codeExample
     ): string {
         if ($objective) {
-            return "Mets en pratique l'objectif suivant : {$objective}";
+            return $codeExample
+                ? "Reproduis puis adapte l'exemple de code de cette leçon. L'objectif est de vérifier que tu peux le réécrire sans copier-coller."
+                : "Mets en pratique l'objectif suivant : {$objective}";
         }
 
         if ($description) {
