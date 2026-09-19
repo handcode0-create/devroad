@@ -163,6 +163,156 @@ export default function Show({
                             </section>
                         )}
 
+                        {hasExercise && (
+                            <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
+                                        <CheckCircle2 size={18} />
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300">
+                                                Exercice pratique
+                                            </p>
+
+                                            {exerciseCompleted && (
+                                                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-400">
+                                                    Validé
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h2 className="mt-1 text-lg font-bold text-white">
+                                            {step.exercise.title}
+                                        </h2>
+
+                                        <p className="mt-3 text-sm leading-7 text-slate-400">
+                                            {step.exercise.description}
+                                        </p>
+
+                                        <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                                                Indice
+                                            </p>
+                                            <p className="mt-2 text-xs leading-5 text-slate-500">
+                                                {step.exercise.hint}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => changeExercise(!exerciseCompleted)}
+                                            className={[
+                                                "mt-5 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition",
+                                                exerciseCompleted
+                                                    ? "border border-white/[0.08] bg-white/[0.04] text-slate-300 hover:bg-white/[0.07]"
+                                                    : "bg-violet-500/15 text-violet-200 hover:bg-violet-500/20",
+                                            ].join(" ")}
+                                        >
+                                            <Check size={16} />
+                                            {exerciseCompleted
+                                                ? "Réouvrir l'exercice"
+                                                : "J'ai réalisé l'exercice"}
+                                        </button>
+
+                                        {exerciseCompleted && step.exercise.solution && (
+                                            <details className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                                                <summary className="cursor-pointer text-xs font-bold text-slate-300">
+                                                    Voir une solution possible
+                                                </summary>
+
+                                                <pre className="mt-4 overflow-x-auto whitespace-pre-wrap text-xs leading-6 text-slate-400">
+                                                    {step.exercise.solution}
+                                                </pre>
+                                            </details>
+                                        )}
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        <section className="rounded-3xl border border-[#FF6A00]/10 bg-[#FF6A00]/[0.035] p-5 sm:p-6">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
+                                        <BookPlus size={18} />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#FF8A3D]">
+                                            Tes notes
+                                        </p>
+                                        <p className="mt-1 text-sm font-bold text-white">
+                                            Garde une trace de ce que tu viens d'apprendre.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMemoForm((value) => !value)}
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-4 py-2.5 text-sm font-bold text-[#FF8A3D] transition hover:bg-[#FF6A00]/15"
+                                >
+                                    <BookPlus size={16} />
+                                    {showMemoForm ? "Fermer" : "Créer un mémo"}
+                                </button>
+                            </div>
+
+                            {showMemoForm && (
+                                <form onSubmit={createMemo} className="mt-5 space-y-4">
+                                    <div>
+                                        <label className="mb-2 block text-xs font-semibold text-slate-300" htmlFor="lesson-memo-title">
+                                            Titre
+                                        </label>
+                                        <input
+                                            id="lesson-memo-title"
+                                            value={memoForm.data.title}
+                                            onChange={(event) => memoForm.setData("title", event.target.value)}
+                                            className="w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#FF6A00]/50"
+                                        />
+                                        {memoForm.errors.title && (
+                                            <p className="mt-1.5 text-xs text-red-400">{memoForm.errors.title}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-2 block text-xs font-semibold text-slate-300" htmlFor="lesson-memo-content">
+                                            Contenu
+                                        </label>
+                                        <textarea
+                                            id="lesson-memo-content"
+                                            rows={10}
+                                            value={memoForm.data.content}
+                                            onChange={(event) => memoForm.setData("content", event.target.value)}
+                                            className="w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-3 py-3 font-mono text-xs leading-6 text-white outline-none focus:border-[#FF6A00]/50"
+                                        />
+                                        {memoForm.errors.content && (
+                                            <p className="mt-1.5 text-xs text-red-400">{memoForm.errors.content}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <button
+                                            type="submit"
+                                            disabled={memoForm.processing}
+                                            className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:opacity-50"
+                                        >
+                                            {memoForm.processing ? "Création..." : "Enregistrer le mémo"}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowMemoForm(false)}
+                                            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
+                                        >
+                                            Annuler
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </section>
+
                         {!blocked && (
                             <section className="rounded-2xl border border-white/[0.06] bg-[#111D2D] p-4 sm:p-5">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -178,7 +328,10 @@ export default function Show({
 
                                     <button
                                         type="button"
-                                        disabled={statusLoading}
+                                        disabled={
+                                            statusLoading ||
+                                            (hasExercise && !exerciseCompleted && !completed)
+                                        }
                                         onClick={() =>
                                             changeStatus(
                                                 completed
@@ -203,7 +356,9 @@ export default function Show({
                                                 <Check size={17} />
                                                 {completed
                                                     ? "Remettre en cours"
-                                                    : "Marquer comme terminée"}
+                                                    : hasExercise && !exerciseCompleted
+                                                      ? "Valide l'exercice pour terminer"
+                                                      : "Marquer comme terminée"}
                                             </>
                                         )}
                                     </button>
@@ -352,4 +507,22 @@ function StatusBadge({ status }) {
             {label}
         </span>
     );
+}
+
+function buildMemoContent(step) {
+    const parts = [];
+
+    if (step.objective) {
+        parts.push(`## Objectif\n\n${step.objective}`);
+    }
+
+    if (step.content) {
+        parts.push(step.content);
+    }
+
+    if (step.code_example) {
+        parts.push(`## Exemple de code\n\n\`\`\`\n${step.code_example}\n\`\`\``);
+    }
+
+    return parts.join("\n\n");
 }
