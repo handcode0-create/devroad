@@ -612,3 +612,93 @@
         color: #FFFFFF;
     }
 }
+
+/*
+ * Theme v2 — utility-level compatibility
+ *
+ * Some legacy/shared components still use Tailwind gray/white utilities.
+ * Keep them synchronized with the selected application theme as well.
+ */
+@layer components {
+    html[data-theme='light'] .theme-light .bg-white {
+        background-color: #FFFFFF !important;
+    }
+
+    html[data-theme='light'] .theme-light .bg-gray-100,
+    html[data-theme='light'] .theme-light .bg-gray-50 {
+        background-color: #F8FAFC !important;
+    }
+
+    html[data-theme='light'] .theme-light .bg-gray-800,
+    html[data-theme='light'] .theme-light .bg-gray-900 {
+        background-color: #FFFFFF !important;
+    }
+
+    html[data-theme='light'] .theme-light .text-gray-800,
+    html[data-theme='light'] .theme-light .text-gray-900 {
+        color: #0F172A !important;
+    }
+
+    html[data-theme='light'] .theme-light .text-gray-700 {
+        color: #334155 !important;
+    }
+
+    html[data-theme='light'] .theme-light .text-gray-600,
+    html[data-theme='light'] .theme-light .text-gray-500 {
+        color: #64748B !important;
+    }
+
+    html[data-theme='light'] .theme-light .border-gray-100,
+    html[data-theme='light'] .theme-light .border-gray-200,
+    html[data-theme='light'] .theme-light .border-gray-300 {
+        border-color: #CBD5E1 !important;
+    }
+
+    html[data-theme='light'] .theme-light .hover\:bg-gray-50:hover,
+    html[data-theme='light'] .theme-light .hover\:bg-gray-100:hover {
+        background-color: #F1F5F9 !important;
+    }
+
+    html[data-theme='light'] .theme-light .hover\:text-gray-700:hover {
+        color: #0F172A !important;
+    }
+
+    html[data-theme='dark'] .theme-light .bg-white {
+        background-color: #0D1725 !important;
+    }
+
+    html[data-theme='dark'] .theme-light .bg-gray-50,
+    html[data-theme='dark'] .theme-light .bg-gray-100 {
+        background-color: #08111F !important;
+    }
+
+    html[data-theme='dark'] .theme-light .bg-gray-800,
+    html[data-theme='dark'] .theme-light .bg-gray-900 {
+        background-color: #0D1725 !important;
+    }
+
+    html[data-theme='dark'] .theme-light .text-gray-900,
+    html[data-theme='dark'] .theme-light .text-gray-800 {
+        color: #FFFFFF !important;
+    }
+
+    html[data-theme='dark'] .theme-light .text-gray-700 {
+        color: #CBD5E1 !important;
+    }
+
+    html[data-theme='dark'] .theme-light .text-gray-600,
+    html[data-theme='dark'] .theme-light .text-gray-500 {
+        color: #94A3B8 !important;
+    }
+
+    html[data-theme='dark'] .theme-light .border-gray-100,
+    html[data-theme='dark'] .theme-light .border-gray-200,
+    html[data-theme='dark'] .theme-light .border-gray-300 {
+        border-color: rgba(255, 255, 255, 0.10) !important;
+    }
+
+    html[data-theme='dark'] .theme-light .hover\:bg-gray-50:hover,
+    html[data-theme='dark'] .theme-light .hover\:bg-gray-100:hover {
+        background-color: rgba(255, 255, 255, 0.06) !important;
+    }
+}
