@@ -6,134 +6,101 @@ export default function Welcome() {
         <>
             <Head title="Bienvenue sur DevRoad" />
 
-            <main className="min-h-[100dvh] overflow-hidden bg-[#0B0B0B] text-white">
-                <div className="relative min-h-[100dvh] bg-[radial-gradient(circle_at_75%_25%,rgba(255,106,0,.10),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(255,106,0,.06),transparent_30%),linear-gradient(135deg,#0B0B0B_0%,#0D1016_52%,#08090C_100%)]">
-                    <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.018)_1px,transparent_1px)] [background-size:72px_72px]" />
-                    <div className="pointer-events-none absolute -right-40 top-20 h-[520px] w-[520px] rounded-full bg-[#FF6A00]/[0.07] blur-[120px]" />
+            <main className="min-h-[100dvh] bg-[#0B0B0B] text-white">
+                <div className="mx-auto min-h-[100dvh] w-full max-w-[430px] overflow-hidden bg-[#0B0B0B]">
+                    <div className="relative aspect-[9/16] min-h-[100dvh] max-h-none overflow-hidden bg-[radial-gradient(circle_at_70%_30%,rgba(255,106,0,.10),transparent_25%),linear-gradient(145deg,#0B0B0B,#101217_58%,#08090C)]">
+                        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,.025)_42%,transparent_75%)]" />
 
-                    <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[1500px] flex-col px-5 pb-6 pt-6 sm:px-8 sm:pt-8 lg:px-12 xl:px-16">
-                        <header className="flex items-center justify-between">
-                            <Link href="/" className="flex min-h-11 items-center gap-3">
-                                <img
-                                    src="/icondevroad.png"
-                                    alt="DevRoad"
-                                    className="h-10 w-10 object-contain sm:h-11 sm:w-11"
-                                />
-                                <span className="text-xl font-extrabold tracking-[-0.04em] sm:text-2xl">
-                                    Dev<span className="text-[#FF6A00]">Road</span>
+                        {/* iOS-style status bar */}
+                        <div className="relative z-20 flex h-[52px] items-center justify-between px-6 pt-2 text-[15px] font-semibold">
+                            <span>9:41</span>
+                            <div className="flex items-center gap-1.5 text-xs">
+                                <span className="tracking-[-.18em]">▮▮▮</span>
+                                <span>Wi‑Fi</span>
+                                <span className="rounded-[4px] border border-white/30 px-1 py-[1px] text-[9px]">44</span>
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 flex h-[calc(100%-52px)] flex-col px-5 pb-7">
+                            {/* Brand header */}
+                            <header className="flex items-center justify-between pt-5">
+                                <Link href="/" className="flex items-center gap-3">
+                                    <img
+                                        src="/icondevroad.png"
+                                        alt="DevRoad"
+                                        className="h-10 w-10 object-contain"
+                                    />
+                                    <span className="text-[23px] font-extrabold tracking-[-0.045em]">
+                                        Dev<span className="text-[#FF6A00]">Road</span>
+                                    </span>
+                                </Link>
+
+                                <span className="rounded-full border border-white/[0.10] bg-white/[0.035] px-5 py-3 text-[15px] font-semibold shadow-[0_8px_30px_rgba(0,0,0,.18)] backdrop-blur-xl">
+                                    2025
                                 </span>
-                            </Link>
+                            </header>
 
-                            <span className="rounded-full border border-white/[0.09] bg-white/[0.035] px-4 py-2 text-sm font-semibold text-white/90 backdrop-blur-xl sm:px-5 sm:py-2.5">
-                                2025
-                            </span>
-                        </header>
+                            {/* Image / visual area — deliberately close to the reference composition */}
+                            <div className="relative mt-7 h-[34%] min-h-[250px] overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#111] shadow-[0_25px_60px_rgba(0,0,0,.35)]">
+                                <div className="absolute inset-0 grid grid-cols-2 gap-1.5 p-1.5">
+                                    <VisualTile className="row-span-2" variant="laptop" />
+                                    <VisualTile variant="notebook" />
+                                    <VisualTile variant="phone" />
+                                    <VisualTile variant="headphones" />
+                                </div>
 
-                        <section className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[.9fr_1.1fr] lg:gap-16 lg:py-12">
-                            <div className="mx-auto w-full max-w-[620px]">
-                                <div className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-white/[0.07] bg-white/[0.035] px-4 py-2.5 text-sm font-medium text-white/90 shadow-[0_10px_30px_rgba(0,0,0,.18)] backdrop-blur-xl">
-                                    <span className="h-2.5 w-2.5 rounded-full bg-[#FF6A00] shadow-[0_0_14px_rgba(255,106,0,.65)]" />
+                                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0B0B0B] to-transparent" />
+
+                                <div className="absolute bottom-5 left-5 flex items-center gap-2 rounded-full border border-white/[0.12] bg-black/55 px-3 py-2 backdrop-blur-xl">
+                                    <img src="/icondevroad.png" alt="" className="h-5 w-5 object-contain" />
+                                    <span className="text-[10px] font-semibold text-white/75">Build • Learn • Ship</span>
+                                </div>
+                            </div>
+
+                            {/* Welcome content */}
+                            <section className="flex flex-1 flex-col justify-center pt-7 text-center">
+                                <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-4 py-2 text-xs font-medium text-white/80 backdrop-blur-xl">
+                                    <span className="h-2 w-2 rounded-full bg-[#FF6A00] shadow-[0_0_12px_rgba(255,106,0,.75)]" />
                                     Bienvenue
                                 </div>
 
-                                <h1 className="text-[clamp(3.2rem,7vw,6.5rem)] font-black leading-[.9] tracking-[-0.065em]">
+                                <h1 className="mt-5 text-[clamp(2.45rem,10vw,3.5rem)] font-black leading-[.92] tracking-[-0.065em]">
                                     Welcome to
                                     <span className="block text-[#FF6A00]">DevRoad</span>
                                 </h1>
 
-                                <p className="mt-7 max-w-[580px] text-base leading-7 text-[#A5A9B4] sm:text-lg sm:leading-8 lg:text-xl">
+                                <p className="mx-auto mt-4 max-w-[350px] text-[13px] leading-5 text-white/50">
                                     Votre espace tout-en-un pour organiser,
                                     planifier et réaliser vos projets plus
-                                    facilement. Des idées claires, une meilleure
-                                    productivité et un avenir plus structuré.
+                                    facilement.
                                 </p>
 
-                                <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:gap-x-10 sm:gap-y-6">
-                                    <Feature icon={CheckSquare} label={<>Organisez<br />vos projets</>} tone="orange" />
-                                    <Feature icon={Users} label={<>Collaborez<br />en équipe</>} tone="green" />
-                                    <Feature icon={Lightbulb} label={<>Boostez<br />votre productivité</>} tone="purple" />
-                                    <Feature icon={Target} label={<>Atteignez<br />vos objectifs</>} tone="pink" />
+                                <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 text-left">
+                                    <Feature icon={CheckSquare} text="Organisez vos projets" tone="orange" />
+                                    <Feature icon={Users} text="Collaborez en équipe" tone="green" />
+                                    <Feature icon={Lightbulb} text="Boostez votre productivité" tone="purple" />
+                                    <Feature icon={Target} text="Atteignez vos objectifs" tone="pink" />
                                 </div>
+                            </section>
 
+                            <div className="pt-4">
                                 <Link
                                     href={route('login')}
-                                    className="group mt-9 flex min-h-[62px] w-full items-center justify-center gap-5 rounded-full border border-white/[0.06] bg-white/[0.96] px-7 text-base font-bold text-[#0B0B0B] shadow-[0_14px_45px_rgba(0,0,0,.32)] transition hover:-translate-y-0.5 hover:bg-white sm:min-h-[68px] sm:text-lg"
+                                    className="group flex h-[58px] w-full items-center justify-center gap-5 rounded-full border border-[#FF6A00]/45 bg-[#111] text-base font-bold text-white shadow-[0_0_32px_rgba(255,106,0,.12)] transition hover:border-[#FF6A00] hover:bg-[#161616]"
                                 >
                                     <span>Suivant</span>
-                                    <ArrowRight size={22} className="transition-transform group-hover:translate-x-1" />
+                                    <ArrowRight size={22} className="text-[#FF6A00] transition-transform group-hover:translate-x-1" />
                                 </Link>
 
-                                <div className="mt-7 flex items-center gap-2">
-                                    <span className="h-2.5 w-7 rounded-full bg-[#FF6A00] shadow-[0_0_14px_rgba(255,106,0,.55)]" />
-                                    <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-                                    <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                                <div className="mt-5 flex justify-center gap-2">
+                                    <span className="h-2 w-7 rounded-full bg-[#FF6A00] shadow-[0_0_12px_rgba(255,106,0,.5)]" />
+                                    <span className="h-2 w-2 rounded-full bg-white/20" />
+                                    <span className="h-2 w-2 rounded-full bg-white/20" />
                                 </div>
+
+                                <div className="mx-auto mt-5 h-1 w-32 rounded-full bg-white/80" />
                             </div>
-
-                            <div className="relative mx-auto flex w-full max-w-[700px] items-center justify-center lg:min-h-[650px]">
-                                <div className="absolute h-[72%] w-[62%] rounded-full bg-[#FF6A00]/[0.09] blur-[100px]" />
-
-                                <div className="relative w-[min(100%,440px)] rotate-[-2deg] rounded-[42px] border border-white/[0.12] bg-[#161616] p-2.5 shadow-[0_45px_100px_rgba(0,0,0,.60)] sm:p-3">
-                                    <div className="overflow-hidden rounded-[34px] border border-white/[0.08] bg-[#0F0F0F]">
-                                        <div className="relative aspect-[9/16]">
-                                            <div className="absolute left-1/2 top-3 z-10 h-7 w-28 -translate-x-1/2 rounded-full bg-black shadow-lg" />
-
-                                            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_50%_25%,rgba(255,106,0,.13),transparent_27%),#0D0D0D] px-7 pb-7 pt-12 sm:px-9">
-                                                <div className="flex items-center justify-between text-[10px] text-white/45">
-                                                    <span>10:41</span>
-                                                    <span>● ● ▰</span>
-                                                </div>
-
-                                                <div className="flex flex-1 flex-col items-center justify-center text-center">
-                                                    <img
-                                                        src="/icondevroad.png"
-                                                        alt=""
-                                                        className="mb-7 h-20 w-20 object-contain drop-shadow-[0_0_30px_rgba(255,106,0,.22)]"
-                                                    />
-
-                                                    <h2 className="text-3xl font-black tracking-[-0.045em]">
-                                                        Welcome to
-                                                        <span className="block text-[#FF6A00]">DevRoad</span>
-                                                    </h2>
-
-                                                    <p className="mt-4 max-w-[270px] text-xs leading-5 text-white/50">
-                                                        Votre allié pour transformer vos idées
-                                                        en projets concrets.
-                                                    </p>
-
-                                                    <div className="mt-8 w-full rounded-full border border-white/[0.10] bg-white/[0.025] px-5 py-3 text-xs text-white/45">
-                                                        Votre route commence ici
-                                                    </div>
-                                                </div>
-
-                                                <Link
-                                                    href={route('login')}
-                                                    className="flex h-12 items-center justify-center rounded-full border border-[#FF6A00]/50 bg-[#111] text-sm font-semibold text-white shadow-[0_0_30px_rgba(255,106,0,.10)]"
-                                                >
-                                                    Suivant
-                                                    <ArrowRight size={17} className="ml-2 text-[#FF6A00]" />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="absolute -bottom-2 -left-2 hidden w-[220px] rotate-[5deg] rounded-3xl border border-white/[0.08] bg-[#121212]/90 p-5 shadow-2xl backdrop-blur-xl sm:block lg:left-0">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-white/35">
-                                        DevRoad
-                                    </p>
-                                    <p className="mt-2 text-sm font-semibold leading-5 text-white/80">
-                                        Construisez. Apprenez. Avancez.
-                                    </p>
-                                    <div className="mt-4 h-1 w-12 rounded-full bg-[#FF6A00]" />
-                                </div>
-                            </div>
-                        </section>
-
-                        <footer className="flex items-center justify-between border-t border-white/[0.06] pt-5 text-xs text-white/35">
-                            <span>© DevRoad</span>
-                            <span className="hidden sm:inline">La route vers vos projets.</span>
-                        </footer>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -141,7 +108,56 @@ export default function Welcome() {
     );
 }
 
-function Feature({ icon: Icon, label, tone }) {
+function VisualTile({ variant, className = '' }) {
+    const content = {
+        laptop: (
+            <>
+                <div className="absolute left-[-15%] top-[12%] h-[42%] w-[120%] -rotate-[13deg] rounded-[18px] border border-white/10 bg-[#222] shadow-2xl">
+                    <div className="absolute inset-[10%] rounded-xl bg-[#090909] shadow-inner">
+                        <div className="absolute inset-x-5 top-5 h-2 rounded bg-[#FF6A00]/70" />
+                        <div className="absolute left-5 top-12 h-1.5 w-24 rounded bg-white/15" />
+                        <div className="absolute left-5 top-[70px] h-1.5 w-32 rounded bg-white/10" />
+                    </div>
+                </div>
+                <div className="absolute bottom-5 left-5 text-[10px] font-semibold text-white/40">IDEAS → BUILD</div>
+            </>
+        ),
+        notebook: (
+            <>
+                <div className="absolute inset-5 rotate-[8deg] rounded-2xl bg-[#181818] p-4 shadow-2xl">
+                    <p className="text-[12px] font-semibold text-white/70">Ideas</p>
+                    <p className="mt-1 text-[12px] text-white/45">Plan</p>
+                    <p className="text-[12px] text-white/45">Build</p>
+                    <p className="text-[12px] font-bold text-[#FF6A00]">Grow</p>
+                    <span className="absolute bottom-3 right-3 h-1 w-7 rounded bg-[#FF6A00]" />
+                </div>
+            </>
+        ),
+        phone: (
+            <>
+                <div className="absolute left-1/2 top-1/2 h-[82%] w-[44%] -translate-x-1/2 -translate-y-1/2 rotate-[10deg] rounded-[20px] border border-white/15 bg-[#171717] shadow-2xl">
+                    <div className="absolute left-1/2 top-2 h-4 w-12 -translate-x-1/2 rounded-full bg-black" />
+                    <div className="absolute inset-x-3 bottom-3 top-8 rounded-[14px] bg-[radial-gradient(circle_at_50%_35%,rgba(255,106,0,.22),transparent_30%),#0D0D0D]" />
+                    <div className="absolute bottom-7 left-1/2 h-1 w-12 -translate-x-1/2 rounded bg-white/30" />
+                </div>
+            </>
+        ),
+        headphones: (
+            <>
+                <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-[11px] border-[#252525] shadow-[0_0_25px_rgba(255,106,0,.18)]" />
+                <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF6A00]/70" />
+            </>
+        ),
+    };
+
+    return (
+        <div className={`relative overflow-hidden rounded-[24px] bg-[#151515] ${className}`}>
+            {content[variant]}
+        </div>
+    );
+}
+
+function Feature({ icon: Icon, text, tone }) {
     const tones = {
         orange: 'border-orange-500/10 bg-orange-500/[0.08] text-[#FF6A00]',
         green: 'border-emerald-400/10 bg-emerald-400/[0.08] text-emerald-400',
@@ -150,12 +166,12 @@ function Feature({ icon: Icon, label, tone }) {
     };
 
     return (
-        <div className="flex min-w-0 items-center gap-3">
-            <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${tones[tone]}`}>
-                <Icon size={21} strokeWidth={2} />
+        <div className="flex min-w-0 items-center gap-2.5">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${tones[tone]}`}>
+                <Icon size={18} strokeWidth={2} />
             </span>
-            <span className="text-sm font-medium leading-5 text-white/85 sm:text-base">
-                {label}
+            <span className="text-[11px] font-medium leading-4 text-white/80">
+                {text}
             </span>
         </div>
     );
