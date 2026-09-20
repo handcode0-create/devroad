@@ -330,7 +330,7 @@ APP_KEY=<clé générée localement>
 APP_URL=https://<domaine-railway>
 
 DB_CONNECTION=pgsql
-DB_URL=<URL PostgreSQL Railway>
+DB_URL=${{Postgres.DATABASE_URL}}
 
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
@@ -339,26 +339,44 @@ SESSION_SAME_SITE=lax
 
 CACHE_STORE=database
 QUEUE_CONNECTION=database
-
 FILESYSTEM_DISK=local
 
 LOG_CHANNEL=stderr
 LOG_LEVEL=error
+
+PORT=8080
 ```
 
 **Ne mets jamais `APP_KEY`, un mot de passe PostgreSQL ou une clé privée dans Git.**
 
-Railway peut également fournir une référence de variable vers PostgreSQL plutôt que de copier manuellement la chaîne de connexion.
+`DB_URL` doit pointer vers l’URL PostgreSQL du service Railway. Si ton service PostgreSQL porte un autre nom que `Postgres`, adapte la référence, par exemple `${MonPostgres.DATABASE_URL}`.
 
-### Commandes Railway
+Railway injecte normalement `PORT`. Pour ce déploiement, fixe aussi explicitement `PORT=8080` afin d’aligner la variable de healthcheck avec le port cible Networking.
 
-Dans **Settings → Build**, utiliser :
+### Configuration Railway
 
-```text
-composer install --no-dev --optimize-autoloader && npm ci && npm run build
+Le dépôt contient désormais `railway.json`. Il définit le builder Dockerfile, le pre-deploy, le healthcheck `/up` et la politique de redémarrage.
+
+D’après la configuration Railway, laisse les commandes personnalisées vides afin que le Dockerfile fournisse sa propre commande de démarrage :
+
+- **Custom Build Command** : laisser vide ;
+- **Custom Start Command** : laisser vide ;
+- **Healthcheck Path** : `/up` ;
+- **Healthcheck Timeout** : `120` secondes ;
+- **Networking → Target Port** : `8080` ;
+- **Variables → PORT** : `8080`.
+
+Le Dockerfile contient le serveur PHP intégré et doit donc être la source de la commande de démarrage :
+
+```dockerfile
+CMD ["sh", "-c", "exec php -S 0.0.0.0:${PORT:-8080} -t public docker/router.php"]
 ```
 
-Dans **Settings → Deploy → Pre-deploy Command** :
+Railway utilise la variable `PORT` pour le healthcheck. Pour une image Docker, une commande de démarrage configurée dans Railway peut remplacer le `CMD` du Dockerfile ; il faut donc laisser le champ personnalisé vide ici.
+
+### Pre-deploy
+
+Dans **Settings → Deploy → Pre-deploy Command**, laisser la configuration issue de `railway.json` :
 
 ```bash
 sh scripts/railway-predeploy.sh
@@ -375,35 +393,26 @@ php artisan view:cache
 
 La migration précède le nettoyage du cache car DevRoad utilise actuellement le cache et les sessions en base de données.
 
-Aucun seeder n'est exécuté automatiquement.
+Aucun seeder n’est exécuté automatiquement.
 
-Dans **Settings → Deploy → Start Command** :
+### HTTPS et proxies
 
-```bash
-php artisan serve --host=0.0.0.0 --port=$PORT
+Railway termine HTTPS devant le conteneur. Laravel doit donc faire confiance aux en-têtes `X-Forwarded-Proto` et `X-Forwarded-For` pour générer des URLs HTTPS et détecter correctement les requêtes sécurisées.
+
+Cette configuration est présente dans `bootstrap/app.php` :
+
+```php
+$middleware->trustProxies(at: '*');
 ```
 
-Le service doit écouter sur `0.0.0.0:$PORT`.
-
-Health check recommandé :
-
-```text
-/up
-```
-
-Laravel expose déjà cette route dans `bootstrap/app.php`.
-
-### HTTPS
-
-Après le déploiement, utiliser **Networking → Generate Domain** dans Railway. Railway fournit alors une URL publique HTTPS.
-
-Définir ensuite cette URL exacte dans :
+Après le déploiement, utiliser **Networking → Generate Domain** puis définir cette URL exacte dans :
 
 ```text
 APP_URL=https://...
 ```
 
 Puis redéployer.
+
 
 ### Base de données, sessions et cache
 
