@@ -23,24 +23,13 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-/*
-|--------------------------------------------------------------------------
-| SEO
-|--------------------------------------------------------------------------
-*/
-
 Route::get('/sitemap.xml', function () {
-    $urls = [
-        route('home'),
-    ];
-
+    $urls = [route('home')];
     $xml = '<?xml version="1.0" encoding="UTF-8"?>';
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-
     foreach ($urls as $url) {
         $xml .= '<url><loc>' . e($url) . '</loc></url>';
     }
-
     $xml .= '</urlset>';
 
     return response($xml, 200, [
@@ -80,6 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{project}/stop', [SandboxController::class, 'stop'])->name('stop');
         Route::post('/{project}/restart', [SandboxController::class, 'restart'])->name('restart');
         Route::post('/{project}/command', [SandboxController::class, 'command'])->middleware('throttle:30,1')->name('command');
+        Route::post('/{project}/terminal', [SandboxController::class, 'terminal'])->middleware('throttle:20,1')->name('terminal');
         Route::get('/{project}/status', [SandboxController::class, 'status'])->name('status');
     });
 
@@ -99,16 +89,15 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{project}', [DevLabProjectController::class, 'update'])->name('update');
         Route::delete('/{project}', [DevLabProjectController::class, 'destroy'])->name('destroy');
         Route::post('/{project}/duplicate', [DevLabProjectController::class, 'duplicate'])->name('duplicate');
-
         Route::post('/{project}/files', [DevLabFileController::class, 'store'])->name('files.store');
         Route::patch('/{project}/files/{file}', [DevLabFileController::class, 'update'])->name('files.update');
         Route::delete('/{project}/files/{file}', [DevLabFileController::class, 'destroy'])->name('files.destroy');
     });
+
     Route::resource('roadmaps', RoadmapController::class);
     Route::resource('roadmaps.steps', RoadmapStepController::class)->only(['store', 'update', 'destroy'])->shallow();
     Route::get('steps/{step}', [RoadmapStepController::class, 'show'])->name('steps.show');
     Route::patch('steps/{step}/status', [RoadmapStepController::class, 'updateStatus'])->name('steps.status');
-    Route::patch('steps/{step}/exercise', [RoadmapStepController::class, 'updateExercise'])->name('steps.exercise');
     Route::post('steps/{step}/run', [RoadmapStepController::class, 'runCode'])->name('steps.run');
     Route::post('steps/{step}/memo', [MemoController::class, 'storeFromStep'])->name('steps.memo');
     Route::resource('memos', MemoController::class);
