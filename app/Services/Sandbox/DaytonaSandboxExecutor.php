@@ -22,8 +22,9 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         }
 
         $sandbox = $this->api()->post('/sandbox/' . rawurlencode($providerId) . '/start')->throw()->json();
+        $this->startServer($project->fresh(), $sandbox);
 
-        return $this->syncInstance($project, $sandbox, true);
+        return $this->syncInstance($project->fresh(), $sandbox, true);
     }
 
     public function stop(SandboxProject $project): SandboxInstance
@@ -176,6 +177,58 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             'target' => config('sandbox.default_region'),
             'toolboxProxyUrl' => $toolboxUrl,
         ], true);
+    }
+
+    private function startServer(SandboxProject $project, array $sandbox): void
+    {
+        $definition = config('sandbox.templates.' . $project->template);
+
+        if (! is_array($definition)) {
+            throw new RuntimeException('Template Sandbox introuvable.');
+        }
+
+        $providerId = $sandbox['id'] ?? $this->providerId($project);
+        $toolboxUrl = $sandbox['toolboxProxyUrl']
+            ?? ($project->metadata['daytona_toolbox_url'] ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId));
+
+        $sessionId = 'devroad-server';
+        $this->execute(
+            $toolboxUrl,
+            '/process/session',
+            ['sessionId' => $sessionId]
+        );
+
+        $server = $this->execute(
+            $toolboxUrl,
+            '/process/session/' . rawurlencode($sessionId) . '/exec',
+            [
+                'command' => 'cd workspace && ' . $definition['serve'],
+                'runAsync' => true,
+            ]
+        );
+
+        $preview = $this->api()
+            ->get(
+                '/sandbox/' . rawurlencode($providerId) . '/ports/' . $definition['port'] . '/signed-preview-url',
+                ['expiresInSeconds' => 3600]
+            )
+            ->throw()
+            ->json();
+
+        $metadata = $project->metadata ?? [];
+        $metadata['server_session_id'] = $sessionId;
+        $metadata['server_command_id'] = $server['cmdId'] ?? $server['id'] ?? null;
+        $metadata['server_port'] = $definition['port'];
+        $metadata['daytona_toolbox_url'] = $toolboxUrl;
+        $metadata['preview_url'] = $preview['url'] ?? null;
+        $metadata['preview_token'] = $preview['token'] ?? null;
+
+        $project->updateQuietly([
+            'status' => 'running',
+            'preview_url' => $preview['url'] ?? null,
+            'last_started_at' => now(),
+            'metadata' => $metadata,
+        ]);
     }
 
     private function syncInstance(SandboxProject $project, array $sandbox, bool $started): SandboxInstance
