@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 import { Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
-import EditorTabs from "@/Components/DevLab/EditorTabs";
-import CodeEditor from "@/Components/DevLab/CodeEditor";
-import FileExplorer from "@/Components/DevLab/FileExplorer";
 import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
 
 const API="/devlab/projects";
