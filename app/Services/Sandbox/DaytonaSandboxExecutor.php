@@ -7,6 +7,7 @@ use App\Exceptions\SandboxRuntimeUnavailable;
 use App\Models\SandboxInstance;
 use App\Models\SandboxProject;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -21,7 +22,27 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             return $this->provision($project);
         }
 
-        $sandbox = $this->api()->post('/sandbox/' . rawurlencode($providerId) . '/start')->throw()->json();
+        $project->updateQuietly([
+            'status' => 'starting',
+            'metadata' => array_merge($project->metadata ?? [], [
+                'startup_phase' => 'provisioning',
+                'startup_error' => null,
+            ]),
+        ]);
+
+        $sandbox = $this->api()
+            ->post('/sandbox/' . rawurlencode($providerId) . '/start')
+            ->throw()
+            ->json();
+
+        $sandbox = $this->waitUntilStarted($providerId, $sandbox);
+
+        $project->updateQuietly([
+            'metadata' => array_merge($project->fresh()->metadata ?? [], [
+                'startup_phase' => 'starting_server',
+            ]),
+        ]);
+
         $this->startServer($project->fresh(), $sandbox);
 
         return $this->syncInstance($project->fresh(), $sandbox, true);
@@ -43,6 +64,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
     public function restart(SandboxProject $project): SandboxInstance
     {
         $this->stop($project);
+
         return $this->start($project);
     }
 
@@ -116,12 +138,24 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             throw new RuntimeException('Template Sandbox introuvable.');
         }
 
+        $project->updateQuietly([
+            'status' => 'starting',
+            'metadata' => array_merge($project->metadata ?? [], [
+                'startup_phase' => 'provisioning',
+                'startup_error' => null,
+            ]),
+        ]);
+
+        $resources = config('sandbox.resources');
+
         $sandbox = $this->api()->post('/sandbox', [
             'name' => $this->providerName($project),
             'image' => $definition['image'],
             'target' => config('sandbox.default_region'),
             'public' => false,
-            'resources' => config('sandbox.resources'),
+            'cpu' => (int) ($resources['cpu'] ?? 1),
+            'memory' => (int) ($resources['memory'] ?? 1),
+            'disk' => (int) ($resources['disk'] ?? 3),
             'autoStopInterval' => 60,
             'labels' => [
                 'devroad_project_id' => (string) $project->id,
@@ -139,14 +173,15 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         $toolboxUrl = $sandbox['toolboxProxyUrl']
             ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId);
 
-        $metadata = $project->metadata ?? [];
+        $metadata = $project->fresh()->metadata ?? [];
         $metadata['startup_phase'] = 'provisioning';
         $metadata['daytona_sandbox_id'] = $providerId;
         $metadata['daytona_toolbox_url'] = $toolboxUrl;
 
         $project->updateQuietly(['metadata' => $metadata]);
 
-        $this->syncInstance($project, $sandbox, true);
+        $sandbox = $this->waitUntilStarted($providerId, $sandbox);
+        $this->syncInstance($project->fresh(), $sandbox, true);
 
         $project->updateQuietly([
             'status' => 'starting',
@@ -163,7 +198,9 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
         if (($bootstrap['exitCode'] ?? 1) !== 0) {
             $project->updateQuietly(['status' => 'error']);
-            throw new RuntimeException('Initialisation du projet échouée : ' . ($bootstrap['result'] ?? 'erreur inconnue'));
+            throw new RuntimeException(
+                'Initialisation du projet échouée : ' . ($bootstrap['result'] ?? 'erreur inconnue')
+            );
         }
 
         $project->updateQuietly([
@@ -199,6 +236,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
         $metadata['preview_url'] = $preview['url'] ?? null;
         $metadata['preview_token'] = $preview['token'] ?? null;
+        $metadata['startup_phase'] = 'ready';
 
         $project->updateQuietly([
             'status' => 'running',
@@ -225,7 +263,8 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
         $providerId = $sandbox['id'] ?? $this->providerId($project);
         $toolboxUrl = $sandbox['toolboxProxyUrl']
-            ?? ($project->metadata['daytona_toolbox_url'] ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId));
+            ?? ($project->metadata['daytona_toolbox_url']
+                ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId));
 
         $sessionId = 'devroad-server';
         $this->execute(
@@ -258,6 +297,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         $metadata['daytona_toolbox_url'] = $toolboxUrl;
         $metadata['preview_url'] = $preview['url'] ?? null;
         $metadata['preview_token'] = $preview['token'] ?? null;
+        $metadata['startup_phase'] = 'ready';
 
         $project->updateQuietly([
             'status' => 'running',
@@ -265,6 +305,58 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             'last_started_at' => now(),
             'metadata' => $metadata,
         ]);
+    }
+
+    private function waitUntilStarted(string $providerId, array $initialSandbox, int $timeout = 180): array
+    {
+        $sandbox = $initialSandbox;
+        $startedAt = microtime(true);
+
+        while (true) {
+            $state = strtolower((string) ($sandbox['state'] ?? ''));
+
+            if (in_array($state, ['started', 'running'], true)) {
+                return $sandbox;
+            }
+
+            if ($state === 'error') {
+                throw new RuntimeException(
+                    'Daytona a placé le Sandbox en erreur : ' . $this->sandboxError($sandbox)
+                );
+            }
+
+            if ((microtime(true) - $startedAt) >= $timeout) {
+                throw new RuntimeException(
+                    'Le Sandbox Daytona n’est pas prêt après ' . $timeout . ' secondes (état : ' . ($state ?: 'inconnu') . ').'
+                );
+            }
+
+            sleep(2);
+
+            try {
+                $sandbox = $this->api()
+                    ->get('/sandbox/' . rawurlencode($providerId))
+                    ->throw()
+                    ->json();
+            } catch (RequestException $exception) {
+                $message = $exception->response
+                    ? mb_substr($exception->response->body(), 0, 1200)
+                    : $exception->getMessage();
+
+                throw new RuntimeException('Impossible de vérifier l’état Daytona : ' . $message, 0, $exception);
+            }
+        }
+    }
+
+    private function sandboxError(array $sandbox): string
+    {
+        foreach (['error', 'message', 'errorMessage', 'reason'] as $key) {
+            if (isset($sandbox[$key]) && is_scalar($sandbox[$key])) {
+                return mb_substr((string) $sandbox[$key], 0, 1200);
+            }
+        }
+
+        return 'raison inconnue';
     }
 
     private function syncInstance(SandboxProject $project, array $sandbox, bool $started): SandboxInstance
