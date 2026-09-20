@@ -172,6 +172,48 @@ class DevLabProjectTest extends TestCase
         $this->actingAs($user)->postJson(route('devlab.projects.files.store', $project), ['path' => '.env', 'content' => 'APP_KEY=secret'])->assertStatus(422);
     }
 
+
+    public function test_un_fichier_peut_etre_vide_et_sauvegarde(): void
+    {
+        $user = User::factory()->create();
+        $project = $user->devLabProjects()->create(['name' => 'Vide', 'template' => 'html', 'runtime' => 'browser']);
+        $file = $project->files()->create(['path' => 'index.html', 'content' => '<h1>ok</h1>', 'size' => 11]);
+
+        $this->actingAs($user)
+            ->patchJson(route('devlab.projects.files.update', [$project, $file]), [
+                'path' => 'index.html',
+                'content' => '',
+            ])
+            ->assertOk()
+            ->assertJsonPath('file.content', '');
+
+        $this->assertDatabaseHas('devlab_files', ['id' => $file->id, 'content' => '']);
+    }
+
+    public function test_les_chemins_windows_et_env_imbriques_sont_refuses(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.import-legacy'), [
+                'name' => 'Import invalide',
+                'template' => 'html',
+                'files' => [
+                    ['path' => 'C:/secret.txt', 'content' => 'secret'],
+                ],
+            ])
+            ->assertStatus(422);
+
+        $project = $user->devLabProjects()->create(['name' => 'Sécurité', 'template' => 'html', 'runtime' => 'browser']);
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.files.store', $project), [
+                'path' => 'config/.env.local',
+                'content' => 'APP_KEY=secret',
+            ])
+            ->assertStatus(422);
+    }
+
     public function test_un_fichier_ne_peut_pas_etre_utilise_via_un_autre_projet(): void
     {
         $user = User::factory()->create();
