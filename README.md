@@ -328,6 +328,7 @@ APP_ENV=production
 APP_DEBUG=false
 APP_KEY=<clé générée localement>
 APP_URL=https://<domaine-railway>
+APP_LOCALE=fr
 
 DB_CONNECTION=pgsql
 DB_URL=${{Postgres.DATABASE_URL}}
