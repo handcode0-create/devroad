@@ -146,7 +146,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
         : files;
 
     const editorView = (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col">
             <div className="border-b border-white/[0.06] bg-[#0D1725] p-2">
                 <EditorTabs
                     files={files}
@@ -188,7 +188,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                     Enregistrer
                 </button>
             </div>
-        </>
+        </div>
     );
 
     const previewView = runtime === "browser" ? (
@@ -245,9 +245,9 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                         onImport={() => importRef.current?.click()}
                     />
 
-                    <section className="min-h-0 min-w-0 overflow-hidden bg-[#06101A]">
+                    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#06101A]">
                         {editorView}
-                        <div className="hidden lg:block">
+                        <div className="hidden h-48 shrink-0 lg:block">
                             {terminalView}
                         </div>
                     </section>
