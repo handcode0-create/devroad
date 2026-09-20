@@ -60,6 +60,13 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
         return data.project;
     }
 
+    const startupMessages = {
+        provisioning: "Création de l’environnement…",
+        installing: "Installation des dépendances…",
+        starting_server: "Démarrage du serveur…",
+        ready: "Environnement prêt.",
+    };
+
     async function waitForStartup(projectId) {
         const startedAt = Date.now();
 
@@ -73,6 +80,10 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
                 if (data.project.status === "running") {
                     setMessage("Environnement prêt.");
                     return;
+                }
+
+                if (data.project.status === "starting") {
+                    setMessage(startupMessages[data.phase] || "Préparation de l’environnement…");
                 }
 
                 if (data.project.status === "error") {
