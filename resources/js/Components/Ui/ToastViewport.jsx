@@ -113,7 +113,7 @@ function Toast({ type, message, onDismiss }) {
         <div
             className={[
                 'pointer-events-auto flex items-start gap-3 rounded-2xl border p-4 shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl',
-                config.className,
+                config.className, `theme-toast-${type}`,
             ].join(' ')}
         >
             <Icon size={18} className="mt-0.5 shrink-0" />
