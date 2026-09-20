@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Clipboard, FileCode2, Trash2 } from "lucide-react";
 
 const HTML_TAGS = [
@@ -73,9 +73,10 @@ function completionData(content, cursor, language) {
         const blockEnd = before.lastIndexOf("}");
         if (blockStart < blockEnd) return null;
 
-        const match = before.match(/(?:^|[;{\s])([A-Za-z-]*)$/);
+        const match = before.match(/(?:^|[;{\s])([A-Za-z-]+)$/);
         if (!match) return null;
         const query = match[1] ?? "";
+        if (!query) return null;
         const items = CSS_PROPERTIES.filter((property) => property.startsWith(query.toLowerCase())).slice(0, 8);
         if (!items.length) return null;
 
@@ -129,15 +130,55 @@ export default function CodeEditor({
 }) {
     const [selectedCompletion, setSelectedCompletion] = useState(0);
     const [cursorPosition, setCursorPosition] = useState(0);
+    const [completionPosition, setCompletionPosition] = useState({ top: 12, left: 12 });
+    const editorContainerRef = useRef(null);
     const language = useMemo(() => languageFor(activeFile), [activeFile]);
     const completions = useMemo(
         () => completionData(currentFile?.content ?? "", cursorPosition, language),
-        [currentFile?.content, language, editorRef?.current?.selectionStart]
+        [currentFile?.content, cursorPosition, language]
     );
+
+    function updateCursorState(textarea = editorRef.current) {
+        if (!textarea) return;
+
+        const cursor = textarea.selectionStart ?? 0;
+        setCursorPosition(cursor);
+
+        const value = textarea.value ?? "";
+        const beforeCursor = value.slice(0, cursor);
+        const lineIndex = beforeCursor.split("\n").length - 1;
+        const columnIndex = beforeCursor.length - (beforeCursor.lastIndexOf("\n") + 1);
+
+        const lineHeight = 24;
+        const charWidth = 7.2;
+        const padding = 16;
+        const container = editorContainerRef.current;
+
+        if (!container) return;
+
+        const maxLeft = Math.max(12, container.clientWidth - 292);
+        const maxTop = Math.max(12, container.clientHeight - 190);
+
+        setCompletionPosition({
+            left: Math.min(
+                maxLeft,
+                Math.max(12, padding + (columnIndex * charWidth) - textarea.scrollLeft),
+            ),
+            top: Math.min(
+                maxTop,
+                Math.max(12, padding + (lineIndex * lineHeight) - textarea.scrollTop + 4),
+            ),
+        });
+    }
 
     useEffect(() => {
         setSelectedCompletion(0);
     }, [completions?.query, activeFile]);
+
+    useEffect(() => {
+        setCursorPosition(0);
+        setCompletionPosition({ top: 12, left: 12 });
+    }, [activeFile]);
 
     function applyCompletion(item) {
         const textarea = editorRef.current;
@@ -154,6 +195,7 @@ export default function CodeEditor({
             textarea.focus();
             const nextCursor = completions.replaceStart + result.cursorOffset;
             textarea.setSelectionRange(nextCursor, nextCursor);
+            updateCursorState(textarea);
         });
     }
 
@@ -217,7 +259,7 @@ export default function CodeEditor({
                 </div>
             </div>
 
-            <div className="relative flex min-h-0 flex-1 bg-[#06101A]">
+            <div ref={editorContainerRef} className="relative flex min-h-0 flex-1 bg-[#06101A]">
                 <div className="w-11 shrink-0 overflow-hidden border-r border-white/[0.04] bg-[#08111C] py-3 text-right font-mono text-[10px] leading-6 text-slate-700">
                     {Array.from({ length: lineCount }, (_, index) => (
                         <div key={index} className="pr-2">{index + 1}</div>
@@ -227,7 +269,15 @@ export default function CodeEditor({
                 <textarea
                     ref={editorRef}
                     value={currentFile?.content ?? ""}
-                    onChange={(event) => onChange(event.target.value)}
+                    onChange={(event) => {
+                        const textarea = event.currentTarget;
+                        onChange(event.target.value);
+                        requestAnimationFrame(() => updateCursorState(textarea));
+                    }}
+                    onSelect={(event) => updateCursorState(event.currentTarget)}
+                    onClick={(event) => updateCursorState(event.currentTarget)}
+                    onKeyUp={(event) => updateCursorState(event.currentTarget)}
+                    onScroll={(event) => updateCursorState(event.currentTarget)}
                     onKeyDown={handleKeyDown}
                     spellCheck={false}
                     autoCapitalize="off"
@@ -237,7 +287,10 @@ export default function CodeEditor({
                 />
 
                 {completions && (
-                    <div className="absolute right-2 top-2 z-20 w-[min(280px,calc(100%-16px))] overflow-hidden rounded-xl border border-white/[0.08] bg-[#0B1523] shadow-2xl">
+                    <div
+                        className="absolute z-20 w-[min(280px,calc(100%-16px))] overflow-hidden rounded-xl border border-white/[0.08] bg-[#0B1523] shadow-2xl"
+                        style={{ left: completionPosition.left, top: completionPosition.top }}
+                    >
                         <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-600">
                             <span>Complétion {completions.label}</span>
                             <span className="flex items-center gap-1"><ChevronDown size={11} /> ↑↓ · Tab</span>
