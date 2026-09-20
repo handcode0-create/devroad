@@ -117,7 +117,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                 const rawPath = file.webkitRelativePath || file.name;
                 const path = rawPath.replace(/\\/g, "/").replace(/^\.\//, "");
 
-                if (!path || path.includes("..") || path.startsWith("/") || /^[A-Za-z]:\\//.test(path)) continue;
+                if (!path || path.includes("..") || path.startsWith("/") || /^[A-Za-z]:\//.test(path)) continue;
                 if (/(^|\\/)(?:\.env|\.git|node_modules|vendor|storage)(?:\\/|$)/i.test(path)) continue;
 
                 imported.push({
