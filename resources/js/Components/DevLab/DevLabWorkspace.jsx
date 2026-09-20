@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Monitor, Play, Terminal as TerminalIcon } from "lucide-react";
+import { ChevronDown, GripHorizontal, Monitor, Play, Terminal as TerminalIcon } from "lucide-react";
 import EditorTabs from "@/Components/DevLab/EditorTabs";
 import CodeEditor from "@/Components/DevLab/CodeEditor";
 import FileExplorer from "@/Components/DevLab/FileExplorer";
@@ -17,6 +17,10 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
     const [panel, setPanel] = useState("editor");
     const [previewVersion, setPreviewVersion] = useState(0);
     const [importing, setImporting] = useState(false);
+    const [mobileSheetHeight, setMobileSheetHeight] = useState(68);
+    const [mobileSheetDragging, setMobileSheetDragging] = useState(false);
+    const mobileSheetRef = useRef(null);
+    const mobileSheetDragRef = useRef(null);
     const editorRef = useRef(null);
     const importRef = useRef(null);
 
@@ -59,14 +63,77 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
             .replace("</body>", "<script>" + js.replaceAll("</script>", "") + "</script></body>");
     }, [files, current, draft]);
 
+    function getMobileSheetExpandedHeight() {
+        if (typeof window === "undefined") return 420;
+        return Math.min(Math.max(Math.round(window.innerHeight * 0.55), 320), 560);
+    }
+
+    function openMobileSheet() {
+        setMobileSheetHeight(getMobileSheetExpandedHeight());
+    }
+
+    function closeMobileSheet() {
+        setMobileSheetHeight(68);
+    }
+
+    function selectMobilePanel(nextPanel) {
+        setPanel(nextPanel);
+        if (nextPanel === "editor") {
+            closeMobileSheet();
+            requestAnimationFrame(() => editorRef.current?.focus());
+            return;
+        }
+        openMobileSheet();
+    }
+
     function refreshPreview() {
         setPreviewVersion((value) => value + 1);
         setPanel("preview");
+        openMobileSheet();
     }
 
     function closePreview() {
         setPanel("editor");
+        closeMobileSheet();
         requestAnimationFrame(() => editorRef.current?.focus());
+    }
+
+    function handleMobileSheetPointerDown(event) {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+
+        mobileSheetDragRef.current = {
+            startY: event.clientY,
+            startHeight: mobileSheetHeight,
+        };
+        setMobileSheetDragging(true);
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+
+    function handleMobileSheetPointerMove(event) {
+        const drag = mobileSheetDragRef.current;
+        if (!drag) return;
+
+        const expandedHeight = getMobileSheetExpandedHeight();
+        const nextHeight = Math.min(
+            expandedHeight,
+            Math.max(68, drag.startHeight + (drag.startY - event.clientY)),
+        );
+
+        setMobileSheetHeight(nextHeight);
+    }
+
+    function handleMobileSheetPointerEnd(event) {
+        const drag = mobileSheetDragRef.current;
+        if (!drag) return;
+
+        const expandedHeight = getMobileSheetExpandedHeight();
+        const midpoint = 68 + ((expandedHeight - 68) * 0.42);
+        const shouldExpand = mobileSheetHeight >= midpoint;
+
+        mobileSheetDragRef.current = null;
+        setMobileSheetDragging(false);
+        setMobileSheetHeight(shouldExpand ? expandedHeight : 68);
+        event.currentTarget.releasePointerCapture?.(event.pointerId);
     }
 
     async function save() {
@@ -257,32 +324,80 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                     </aside>
                 </div>
 
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:hidden">
-                    <div className="min-h-0 flex-1 overflow-hidden bg-[#06101A]">
-                        {panel === "editor" && editorView}
-                        {panel === "preview" && <div className="h-full overflow-auto bg-[#050B12]">{previewView}</div>}
-                        {panel === "terminal" && <div className="h-full overflow-hidden bg-[#050B12]">{terminalView}</div>}
+                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden lg:hidden">
+                    <div className="min-h-0 flex-1 overflow-hidden bg-[#06101A] pb-[68px]">
+                        {editorView}
                     </div>
 
-                    <div className="flex shrink-0 border-t border-white/[0.07] bg-[#0D1725] p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
-                        {[
-                            ["editor", "Éditeur"],
-                            ["preview", "Aperçu"],
-                            ["terminal", "Terminal"],
-                        ].map(([key, label]) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setPanel(key)}
-                                className={
-                                    "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold " +
-                                    (panel === key ? "bg-[#FF6A00] text-[#08111F]" : "text-slate-500")
-                                }
-                            >
-                                {key === "terminal" && <TerminalIcon size={13} />}
-                                {label}
-                            </button>
-                        ))}
+                    <div
+                        ref={mobileSheetRef}
+                        className={
+                            "absolute inset-x-0 bottom-0 z-[70] flex flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-white/[0.08] bg-[#07111D]/[0.98] shadow-[0_-16px_50px_rgba(0,0,0,0.38)] backdrop-blur-xl " +
+                            (mobileSheetDragging ? "" : "transition-[height] duration-200 ease-out")
+                        }
+                        style={{
+                            height: mobileSheetHeight,
+                            touchAction: "none",
+                        }}
+                    >
+                        <div
+                            className="flex shrink-0 cursor-grab touch-none items-center justify-center px-4 py-2 active:cursor-grabbing"
+                            onPointerDown={handleMobileSheetPointerDown}
+                            onPointerMove={handleMobileSheetPointerMove}
+                            onPointerUp={handleMobileSheetPointerEnd}
+                            onPointerCancel={handleMobileSheetPointerEnd}
+                            role="separator"
+                            aria-label="Faire glisser le panneau inférieur"
+                            aria-orientation="horizontal"
+                        >
+                            <div className="flex h-6 w-full items-center justify-center rounded-xl">
+                                <GripHorizontal size={22} className="text-slate-600" />
+                            </div>
+                        </div>
+
+                        <div className="flex shrink-0 border-b border-white/[0.06] bg-[#0D1725]/90 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+                            {[
+                                ["editor", "Éditeur"],
+                                ["preview", "Aperçu"],
+                                ["terminal", "Terminal"],
+                            ].map(([key, label]) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => selectMobilePanel(key)}
+                                    className={
+                                        "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold " +
+                                        (panel === key ? "bg-[#FF6A00] text-[#08111F]" : "text-slate-500")
+                                    }
+                                >
+                                    {key === "terminal" && <TerminalIcon size={13} />}
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-hidden bg-[#050B12]">
+                            {panel === "preview" && (
+                                <div className="h-full overflow-auto">
+                                    {previewView}
+                                </div>
+                            )}
+                            {panel === "terminal" && (
+                                <div className="h-full overflow-hidden">
+                                    {terminalView}
+                                </div>
+                            )}
+                            {panel === "editor" && (
+                                <div className="flex h-full items-center justify-center px-8 text-center">
+                                    <div>
+                                        <ChevronDown size={18} className="mx-auto rotate-180 text-slate-700" />
+                                        <p className="mt-2 text-[11px] text-slate-600">
+                                            Faites glisser vers le haut pour ouvrir le panneau.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
