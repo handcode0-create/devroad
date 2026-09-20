@@ -349,7 +349,7 @@ PORT=8080
 
 **Ne mets jamais `APP_KEY`, un mot de passe PostgreSQL ou une clé privée dans Git.**
 
-`DB_URL` doit pointer vers l’URL PostgreSQL du service Railway. Si ton service PostgreSQL porte un autre nom que `Postgres`, adapte la référence, par exemple `${MonPostgres.DATABASE_URL}`.
+`DB_URL` doit pointer vers l’URL PostgreSQL du service Railway. Si ton service PostgreSQL porte un autre nom que `Postgres`, adapte la référence, par exemple `${{MonPostgres.DATABASE_URL}}`.
 
 Railway injecte normalement `PORT`. Pour ce déploiement, fixe aussi explicitement `PORT=8080` afin d’aligner la variable de healthcheck avec le port cible Networking.
 
