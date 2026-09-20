@@ -1,5 +1,18 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+
+function OnboardingProgress() {
+    const { url } = usePage();
+    const step = url.startsWith('/register') ? 3 : 2;
+
+    return (
+        <div className="mt-7 flex items-center justify-center gap-3" aria-label={`Étape ${step} sur 3`}>
+            <span className={`h-2.5 rounded-full ${step === 1 ? 'w-8 bg-[#FF6A00]' : 'w-2.5 bg-white/25'}`} />
+            <span className={`h-2.5 rounded-full ${step === 2 ? 'w-8 bg-[#FF6A00]' : 'w-2.5 bg-white/25'}`} />
+            <span className={`h-2.5 rounded-full ${step === 3 ? 'w-8 bg-[#FF6A00]' : 'w-2.5 bg-white/25'}`} />
+        </div>
+    );
+}
 
 export default function GuestLayout({ children, title, description }) {
     return (
@@ -70,6 +83,8 @@ export default function GuestLayout({ children, title, description }) {
                         <div className="rounded-3xl border border-white/[0.08] bg-[#0D1220]/90 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-7">
                             {children}
                         </div>
+
+                        <OnboardingProgress />
                     </div>
                 </main>
             </div>
