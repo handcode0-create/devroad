@@ -9,7 +9,7 @@ export default function Welcome() {
             <main className="relative min-h-[100dvh] overflow-hidden bg-[#0B0B0B] text-white">
                 {/* Full-screen splash artwork */}
                 <img
-                    src="/devroad-splash-bg.webp"
+                    src="https://i.ibb.co/nN1K8BBp/64-FDEBF3-54-EF-4-C0-C-AE1-D-2-F66195-B8375.png"
                     alt=""
                     aria-hidden="true"
                     className="absolute inset-0 h-full w-full object-cover object-top"
