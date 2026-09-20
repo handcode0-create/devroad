@@ -52,7 +52,7 @@ class DevLabFileController extends Controller
         $validated = $request->validate([
             'path' => ['required', 'string', 'max:' . self::MAX_PATH_LENGTH,
                 Rule::unique('devlab_files', 'path')->where(fn ($query) => $query->where('devlab_project_id', $project->id))->ignore($file?->id)],
-            'content' => ['required', 'string', 'max:' . self::MAX_FILE_SIZE],
+            'content' => ['present', 'string', 'max:' . self::MAX_FILE_SIZE],
         ]);
         $path = str_replace('\\', '/', trim($validated['path']));
         if ($path === '' || str_starts_with($path, '/') || preg_match('/^[A-Za-z]:\//', $path)
