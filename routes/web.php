@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DevLabController;
 use App\Http\Controllers\DevLabFileController;
 use App\Http\Controllers\DevLabProjectController;
+use App\Http\Controllers\SandboxController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -68,6 +69,18 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/devlab', DevLabController::class)->name('devlab');
+    Route::get('/sandbox', [SandboxController::class, 'index'])->name('sandbox');
+
+    Route::prefix('sandbox/projects')->name('sandbox.projects.')->group(function () {
+        Route::post('/', [SandboxController::class, 'store'])->name('store');
+        Route::get('/{project}', [SandboxController::class, 'show'])->name('show');
+        Route::patch('/{project}', [SandboxController::class, 'update'])->name('update');
+        Route::delete('/{project}', [SandboxController::class, 'destroy'])->name('destroy');
+        Route::post('/{project}/start', [SandboxController::class, 'start'])->name('start');
+        Route::post('/{project}/stop', [SandboxController::class, 'stop'])->name('stop');
+        Route::post('/{project}/restart', [SandboxController::class, 'restart'])->name('restart');
+        Route::get('/{project}/status', [SandboxController::class, 'status'])->name('status');
+    });
 
     Route::prefix('devlab/projects')->name('devlab.projects.')->group(function () {
         Route::get('/', [DevLabProjectController::class, 'index'])->name('index');
