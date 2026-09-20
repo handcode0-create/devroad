@@ -42,17 +42,13 @@ export default function GuestLayout({ children, title, description }) {
             />
 
             <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1180px] flex-col px-5 py-6 sm:px-8 lg:px-10">
-                <header className="flex items-center justify-between">
+                <header className="flex items-center">
                     <Link href="/" className="group inline-flex items-center gap-2.5">
                         <ApplicationLogo className="h-9 w-9 object-contain drop-shadow-[0_0_18px_rgba(255,106,0,.25)]" />
                         <span className="text-xl font-extrabold tracking-[-0.04em]">
                             Dev<span className="text-[#FF6A00]">Road</span>
                         </span>
                     </Link>
-
-                    <span className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs font-semibold text-white/70 backdrop-blur-xl">
-                        2025
-                    </span>
                 </header>
 
                 <main className="flex flex-1 items-center justify-center py-8 sm:py-12">
@@ -103,6 +99,15 @@ export default function GuestLayout({ children, title, description }) {
                         <p className="mt-5 text-center text-[11px] leading-5 text-white/30">
                             Tes données sont protégées et utilisées uniquement pour ton expérience DevRoad.
                         </p>
+
+                        <a
+                            href="https://handcode.site"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex w-full items-center justify-center text-[11px] font-medium tracking-wide text-white/30 transition hover:text-white/65"
+                        >
+                            Propulsed by <span className="ml-1 text-white/50">handCode</span>
+                        </a>
                     </div>
                 </main>
             </div>
