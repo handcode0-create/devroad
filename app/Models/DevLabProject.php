@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class DevLabProject extends Model
+{
+    use HasFactory;
+
+    public const TEMPLATES = ['html', 'node', 'php', 'laravel'];
+    public const RUNTIMES = ['browser', 'server'];
+
+    protected $fillable = ['name', 'template', 'runtime', 'description', 'last_opened_at'];
+
+    protected $casts = ['last_opened_at' => 'datetime'];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(DevLabFile::class, 'devlab_project_id')->orderBy('path');
+    }
+}
