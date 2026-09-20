@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Bell,
     CircleHelp,
@@ -91,8 +91,7 @@ export default function Edit({
         setData('light_mode', value);
         document.documentElement.dataset.theme = value ? 'light' : 'dark';
 
-        patch(route('profile.theme'), {
-            data: { light_mode: value },
+        router.patch(route('profile.theme'), { light_mode: value }, {
             preserveScroll: true,
             preserveState: true,
         });
