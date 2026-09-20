@@ -16,12 +16,15 @@ COPY postcss.config.js ./
 COPY tailwind.config.js ./
 COPY jsconfig.json ./
 
+ENV NODE_OPTIONS=--max-old-space-size=768
+
 RUN npm run build
 
 
 FROM php:8.2-cli-bookworm AS php-builder
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV MAKEFLAGS=-j2
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -33,7 +36,7 @@ RUN apt-get update \
         libonig-dev \
         libxml2-dev \
         libcurl4-openssl-dev \
-    && docker-php-ext-install -j"$(nproc)" \
+    && docker-php-ext-install -j2 \
         bcmath \
         curl \
         intl \
