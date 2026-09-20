@@ -214,6 +214,7 @@ class SandboxController extends Controller
             'project' => $freshProject,
             'instance' => $instance,
             'runtime_available' => true,
+            'phase' => $freshProject->metadata['startup_phase'] ?? null,
             'error' => $freshProject->status === 'error'
                 ? ($freshProject->metadata['startup_error'] ?? null)
                 : null,
