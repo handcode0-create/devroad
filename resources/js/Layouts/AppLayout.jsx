@@ -2,7 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
 import ToastViewport from '@/Components/Ui/ToastViewport';
-import { Code2 } from 'lucide-react';
+import { Box, Code2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function AppLayout({ children }) {
@@ -65,6 +65,9 @@ export default function AppLayout({ children }) {
                         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                             <Link href="/devlab" className="touch-target flex items-center justify-center rounded-xl bg-[#FF6A00] text-[#08111F] shadow-[0_8px_18px_rgba(255,106,0,0.22)]" aria-label="DevLab">
                                 <Code2 size={18} />
+                            </Link>
+                            <Link href="/sandbox" className="touch-target flex items-center justify-center rounded-xl bg-[#101A2A] text-[#FF8A3D]" aria-label="Sandbox">
+                                <Box size={18} />
                             </Link>
                             <Link href="/search" className="touch-target flex items-center justify-center rounded-xl bg-[#101A2A] text-slate-300" aria-label="Rechercher">
                                 <Icon name="search" size={18} />
