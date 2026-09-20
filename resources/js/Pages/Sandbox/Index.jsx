@@ -8,6 +8,7 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
     const [create, setCreate] = useState(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const [selected, setSelected] = useState(null);
 
     async function request(url, options = {}) {
         const response = await fetch(url, {
@@ -54,6 +55,31 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
         try {
             const data = await request("/sandbox/projects/" + project.id + "/" + action, { method: "POST" });
             setItems((current) => current.map((item) => item.id === project.id ? { ...item, ...data.project } : item));
+        } catch (error) {
+            setMessage(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function command(project, value) {
+        if (!value.trim()) return;
+
+        setLoading(true);
+        setMessage("");
+        try {
+            const data = await request("/sandbox/projects/" + project.id + "/command", {
+                method: "POST",
+                body: JSON.stringify({ command: value, timeout: 120 }),
+            });
+            setSelected((current) => ({
+                ...(current ?? project),
+                terminal: {
+                    command: value,
+                    output: data.output ?? "",
+                    exit_code: data.exit_code,
+                },
+            }));
         } catch (error) {
             setMessage(error.message);
         } finally {
@@ -155,6 +181,15 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
                                     </button>
                                 </div>
 
+                                {project.status === "running" && (
+                                    <TerminalBox
+                                        project={project}
+                                        loading={loading}
+                                        result={selected?.id === project.id ? selected.terminal : null}
+                                        onRun={command}
+                                    />
+                                )}
+
                                 {project.preview_url && (
                                     <a href={project.preview_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#FF8A3D]">
                                         Ouvrir le preview <ExternalLink size={13} />
@@ -170,6 +205,49 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
                 )}
             </div>
         </AppLayout>
+    );
+}
+
+
+function TerminalBox({ project, loading, result, onRun }) {
+    const [value, setValue] = useState("");
+
+    function submit(event) {
+        event.preventDefault();
+        onRun(project, value);
+        setValue("");
+    }
+
+    return (
+        <div className="mt-4 overflow-hidden rounded-xl border border-white/[0.07] bg-[#08111F]">
+            <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2">
+                <SquareTerminal size={14} className="text-[#FF8A3D]" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Terminal Sandbox</span>
+            </div>
+            <form onSubmit={submit} className="flex items-center gap-2 p-2">
+                <span className="font-mono text-xs text-[#FF6A00]">$</span>
+                <input
+                    value={value}
+                    onChange={(event) => setValue(event.target.value)}
+                    placeholder="npm run build"
+                    className="min-w-0 flex-1 bg-transparent font-mono text-xs text-slate-200 outline-none placeholder:text-slate-700"
+                    aria-label={"Commande terminal de " + project.name}
+                />
+                <button
+                    type="submit"
+                    disabled={loading || !value.trim()}
+                    className="rounded-lg bg-white/[0.06] px-2.5 py-1.5 text-[10px] font-semibold text-slate-300 disabled:opacity-30"
+                >
+                    Exécuter
+                </button>
+            </form>
+            {result && (
+                <pre className="max-h-40 overflow-auto border-t border-white/[0.06] p-3 font-mono text-[10px] leading-5 text-slate-400">
+{result.output || "(aucune sortie)"}
+{result.exit_code !== null && result.exit_code !== undefined ? "\n\nexit " + result.exit_code : ""}
+                </pre>
+            )}
+        </div>
     );
 }
 
