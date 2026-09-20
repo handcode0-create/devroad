@@ -12,6 +12,8 @@ import {
     ShieldCheck,
     Target,
     UserRound,
+    Sun,
+    Moon,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -70,6 +72,7 @@ export default function Edit({
         preferred_technology: preferences.preferred_technology ?? '',
         email_notifications: preferences.email_notifications ?? true,
         learning_reminders: preferences.learning_reminders ?? true,
+        light_mode: preferences.light_mode ?? false,
     });
 
     const [openFaq, setOpenFaq] = useState(0);
@@ -207,6 +210,14 @@ export default function Edit({
                                 description="Activer les rappels liés à ton objectif quotidien."
                                 checked={Boolean(data.learning_reminders)}
                                 onChange={(value) => setData('learning_reminders', value)}
+                            />
+
+                            <ToggleRow
+                                icon={data.light_mode ? Sun : Moon}
+                                title="Mode clair"
+                                description="Utiliser une interface claire au lieu du thème sombre."
+                                checked={Boolean(data.light_mode)}
+                                onChange={(value) => setData('light_mode', value)}
                             />
                         </div>
 
