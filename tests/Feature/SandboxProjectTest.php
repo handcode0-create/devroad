@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SandboxProjectTest extends TestCase
@@ -99,6 +100,66 @@ class SandboxProjectTest extends TestCase
             'id' => $project->id,
             'status' => 'stopped',
         ]);
+    }
+
+    public function test_daytona_peut_provisionner_un_sandbox_isole(): void
+    {
+        config()->set('sandbox.enabled', true);
+        config()->set('sandbox.driver', 'daytona');
+        config()->set('sandbox.api_key', 'test-key');
+        config()->set('sandbox.default_region', 'us');
+
+        Http::fake([
+            'https://app.daytona.io/api/sandbox' => Http::response([
+                'id' => 'sbx_test_123',
+                'state' => 'started',
+                'target' => 'us',
+                'cpu' => 1,
+                'memory' => 2,
+                'disk' => 5,
+                'toolboxProxyUrl' => 'https://proxy.app.daytona.io/toolbox/sbx_test_123',
+            ], 200),
+            'https://app.daytona.io/api/sandbox/sbx_test_123/ports/5173/signed-preview-url*' => Http::response([
+                'url' => 'https://5173-sbx_test_123.proxy.daytona.work',
+                'token' => 'preview-token',
+            ], 200),
+            'https://proxy.app.daytona.io/toolbox/sbx_test_123/process/execute' => Http::response([
+                'result' => '',
+                'exitCode' => 0,
+            ], 200),
+            'https://proxy.app.daytona.io/toolbox/sbx_test_123/process/session' => Http::response([], 200),
+            'https://proxy.app.daytona.io/toolbox/sbx_test_123/process/session/devroad-server/exec' => Http::response([
+                'cmdId' => 'cmd_123',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $project = $user->sandboxProjects()->create([
+            'name' => 'React Daytona',
+            'template' => 'react',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'stopped',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/sandbox/projects/' . $project->id . '/start')
+            ->assertOk()
+            ->assertJsonPath('project.status', 'running')
+            ->assertJsonPath('project.preview_url', 'https://5173-sbx_test_123.proxy.daytona.work')
+            ->assertJsonPath('instance.driver', 'daytona');
+
+        $this->assertDatabaseHas('sandbox_projects', [
+            'id' => $project->id,
+            'status' => 'running',
+            'preview_url' => 'https://5173-sbx_test_123.proxy.daytona.work',
+        ]);
+
+        Http::assertSent(fn ($request) =>
+            $request->url() === 'https://app.daytona.io/api/sandbox'
+            && $request->hasHeader('Authorization', 'Bearer test-key')
+            && $request->data()['image'] === 'node:22-bookworm'
+        );
     }
 
     public function test_la_page_sandbox_expose_les_templates_et_l_etat_du_runtime(): void
