@@ -4,6 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#08111F">
+        <meta name="application-name" content="{{ config('app.name', 'DevRoad') }}">
+        <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'DevRoad') }}">
+        <meta name="description" content="DevRoad — apprenez, planifiez et construisez vos projets de développement.">
         <link rel="icon" type="image/png" href="/icondevroad.png">
         <link rel="apple-touch-icon" href="/icondevroad.png">
 

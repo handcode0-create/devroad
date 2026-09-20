@@ -18,7 +18,43 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
-});
+})->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| SEO
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        route('home'),
+    ];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+    foreach ($urls as $url) {
+        $xml .= '<url><loc>' . e($url) . '</loc></url>';
+    }
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200, [
+        'Content-Type' => 'application/xml; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->name('sitemap');
+
+Route::get('/robots.txt', function () {
+    $sitemap = route('sitemap');
+
+    return response(
+        "# DevRoad\nUser-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /profile\nDisallow: /devlab\nDisallow: /memos\nDisallow: /roadmaps\nDisallow: /steps\nSitemap: {$sitemap}\n",
+        200,
+        ['Content-Type' => 'text/plain; charset=UTF-8']
+    );
+})->name('robots');
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
@@ -26,42 +62,19 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-
-    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])
-        ->name('profile.preferences');
-
+    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
     Route::get('/devlab', DevLabController::class)->name('devlab');
-
     Route::resource('roadmaps', RoadmapController::class);
-
-    Route::resource('roadmaps.steps', RoadmapStepController::class)
-        ->only(['store', 'update', 'destroy'])
-        ->shallow();
-
-    Route::get('steps/{step}', [RoadmapStepController::class, 'show'])
-        ->name('steps.show');
-
-    Route::patch('steps/{step}/status', [RoadmapStepController::class, 'updateStatus'])
-        ->name('steps.status');
-
-    Route::patch('steps/{step}/exercise', [RoadmapStepController::class, 'updateExercise'])
-        ->name('steps.exercise');
-
-    Route::post('steps/{step}/run', [RoadmapStepController::class, 'runCode'])
-        ->name('steps.run');
-
-    Route::post('steps/{step}/memo', [MemoController::class, 'storeFromStep'])
-        ->name('steps.memo');
-
+    Route::resource('roadmaps.steps', RoadmapStepController::class)->only(['store', 'update', 'destroy'])->shallow();
+    Route::get('steps/{step}', [RoadmapStepController::class, 'show'])->name('steps.show');
+    Route::patch('steps/{step}/status', [RoadmapStepController::class, 'updateStatus'])->name('steps.status');
+    Route::patch('steps/{step}/exercise', [RoadmapStepController::class, 'updateExercise'])->name('steps.exercise');
+    Route::post('steps/{step}/run', [RoadmapStepController::class, 'runCode'])->name('steps.run');
+    Route::post('steps/{step}/memo', [MemoController::class, 'storeFromStep'])->name('steps.memo');
     Route::resource('memos', MemoController::class);
-
-    Route::patch('memos/{memo}/favorite', [MemoController::class, 'toggleFavorite'])
-        ->name('memos.favorite');
-
+    Route::patch('memos/{memo}/favorite', [MemoController::class, 'toggleFavorite'])->name('memos.favorite');
     Route::get('search', SearchController::class)->name('search');
 });
 
