@@ -122,7 +122,8 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                 const rawPath = file.webkitRelativePath || file.name;
                 const path = rawPath.replace(/\\/g, "/").replace(/^\.\//, "");
 
-                if (!path || path.includes("..") || path.startsWith("/") || /^[A-Za-z]:\\//.test(path)) continue;
+                const isWindowsAbsolutePath = path.length >= 3 && path[1] === ":" && path[2] === "/" && ((path.charCodeAt(0) >= 65 && path.charCodeAt(0) <= 90) || (path.charCodeAt(0) >= 97 && path.charCodeAt(0) <= 122));
+                if (!path || path.includes("..") || path.startsWith("/") || isWindowsAbsolutePath) continue;
                 const blockedSegments = path.split("/").map((segment) => segment.toLowerCase());
                 if (blockedSegments.some((segment) => [".env", ".git", "node_modules", "vendor", "storage"].includes(segment))) continue;
 
