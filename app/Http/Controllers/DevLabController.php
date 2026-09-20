@@ -63,7 +63,16 @@ class DevLabController extends Controller
             ];
         })->values();
 
+        $projects = $request->user()
+            ->devLabProjects()
+            ->withCount('files')
+            ->latest('last_opened_at')
+            ->latest('id')
+            ->get(['id', 'name', 'template', 'runtime', 'description', 'last_opened_at']);
+
         return Inertia::render('DevLab/Index', [
+            'projects' => $projects,
+
             'roadmaps' => $roadmaps,
             'active_roadmap' => $selectedRoadmap
                 ? [
