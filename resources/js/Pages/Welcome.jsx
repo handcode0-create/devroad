@@ -45,10 +45,6 @@ export default function Welcome() {
                                 Dev<span className="text-[#FF6A00]">Road</span>
                             </span>
                         </Link>
-
-                        <span className="mt-5 rounded-full border border-white/15 bg-black/30 px-6 py-3 text-[15px] font-semibold shadow-lg backdrop-blur-xl">
-                            2025
-                        </span>
                     </header>
 
                     <section className="mt-auto w-full shrink-0 pb-7 pt-[24vh]">
@@ -78,6 +74,15 @@ export default function Welcome() {
                         <OnboardingProgress />
 
                         <div className="mx-auto mt-5 h-1 w-32 rounded-full bg-white/85" />
+
+                        <a
+                            href="https://handcode.site"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-4 inline-flex items-center justify-center text-[11px] font-medium tracking-wide text-white/35 transition hover:text-white/70"
+                        >
+                            Propulsed by <span className="ml-1 text-white/55">handCode</span>
+                        </a>
                     </section>
                 </div>
             </main>
