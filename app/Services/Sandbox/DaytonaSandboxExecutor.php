@@ -289,7 +289,11 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
     private function execute(string $toolboxUrl, string $path, array $payload, string $method = 'post'): array
     {
-        $response = $this->toolbox()->{$method}(rtrim($toolboxUrl, '/') . $path, $payload);
+        $timeout = isset($payload['timeout'])
+            ? max(30, min((int) $payload['timeout'] + 30, 960))
+            : 30;
+
+        $response = $this->toolbox($timeout)->{$method}(rtrim($toolboxUrl, '/') . $path, $payload);
         $response->throw();
 
         return $response->json() ?? [];
@@ -305,12 +309,12 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             ->retry(2, 500);
     }
 
-    private function toolbox(): PendingRequest
+    private function toolbox(int $timeout = 30): PendingRequest
     {
         return Http::withToken((string) config('sandbox.api_key'))
             ->acceptJson()
             ->asJson()
-            ->timeout(30)
+            ->timeout($timeout)
             ->retry(2, 500);
     }
 
