@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'enabled' => (bool) env('DEVROAD_SANDBOX_ENABLED', false),
+    'enabled' => filter_var(env('DEVROAD_SANDBOX_ENABLED', false), FILTER_VALIDATE_BOOL),
     'driver' => env('DEVROAD_SANDBOX_DRIVER', 'unavailable'),
     'default_region' => env('DEVROAD_SANDBOX_REGION', 'auto'),
 
