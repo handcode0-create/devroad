@@ -162,6 +162,48 @@ class SandboxProjectTest extends TestCase
         );
     }
 
+    public function test_une_commande_est_executee_uniquement_dans_le_sandbox_daytona(): void
+    {
+        config()->set('sandbox.enabled', true);
+        config()->set('sandbox.driver', 'daytona');
+        config()->set('sandbox.api_key', 'test-key');
+
+        Http::fake([
+            'https://proxy.app.daytona.io/toolbox/sbx_cmd/process/execute' => Http::response([
+                'result' => "Node v22",
+                'exitCode' => 0,
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $project = $user->sandboxProjects()->create([
+            'name' => 'Node',
+            'template' => 'node',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'running',
+            'metadata' => [
+                'daytona_sandbox_id' => 'sbx_cmd',
+                'daytona_toolbox_url' => 'https://proxy.app.daytona.io/toolbox/sbx_cmd',
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/sandbox/projects/' . $project->id . '/command', [
+                'command' => 'node --version',
+                'timeout' => 30,
+            ])
+            ->assertOk()
+            ->assertJsonPath('output', 'Node v22')
+            ->assertJsonPath('exit_code', 0);
+
+        Http::assertSent(fn ($request) =>
+            str_ends_with($request->url(), '/process/execute')
+            && $request->data()['command'] === 'node --version'
+            && $request->data()['cwd'] === 'workspace'
+        );
+    }
+
     public function test_la_page_sandbox_expose_les_templates_et_l_etat_du_runtime(): void
     {
         $user = User::factory()->create();
