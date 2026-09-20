@@ -208,10 +208,15 @@ class SandboxController extends Controller
 
         $project->updateQuietly(['status' => $instance->status]);
 
+        $freshProject = $project->fresh();
+
         return response()->json([
-            'project' => $project->fresh(),
+            'project' => $freshProject,
             'instance' => $instance,
             'runtime_available' => true,
+            'error' => $freshProject->status === 'error'
+                ? ($freshProject->metadata['startup_error'] ?? null)
+                : null,
         ]);
     }
 
