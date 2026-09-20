@@ -43,5 +43,7 @@ class DeploymentConfigurationTest extends TestCase
         $this->assertSame('DOCKERFILE', $config['build']['builder'] ?? null);
         $this->assertSame('Dockerfile', $config['build']['dockerfilePath'] ?? null);
         $this->assertSame('/up', $config['deploy']['healthcheckPath'] ?? null);
+        $this->assertStringContainsString('php -S 0.0.0.0:${PORT:-8080}', $config['deploy']['startCommand'] ?? '');
+        $this->assertStringNotContainsString('\\${PORT:-8080}', $config['deploy']['startCommand'] ?? '');
     }
 }
