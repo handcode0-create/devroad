@@ -144,6 +144,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                 type="file"
                 multiple
                 webkitdirectory=""
+                disabled={importing}
                 className="hidden"
                 onChange={handleImport}
             />
