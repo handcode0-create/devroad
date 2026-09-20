@@ -216,7 +216,7 @@ export default function CodeEditor({
                 </div>
             </div>
 
-            <div className="relative flex h-[min(390px,45vh)] min-h-0 bg-[#06101A] lg:h-[390px]">
+            <div className="relative flex min-h-0 flex-1 bg-[#06101A]">
                 <div className="w-11 shrink-0 overflow-hidden border-r border-white/[0.04] bg-[#08111C] py-3 text-right font-mono text-[10px] leading-6 text-slate-700">
                     {Array.from({ length: lineCount }, (_, index) => (
                         <div key={index} className="pr-2">{index + 1}</div>
