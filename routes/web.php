@@ -10,6 +10,8 @@ use App\Http\Controllers\MemoController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DevLabController;
+use App\Http\Controllers\DevLabFileController;
+use App\Http\Controllers\DevLabProjectController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -66,6 +68,19 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/devlab', DevLabController::class)->name('devlab');
+
+    Route::prefix('devlab/projects')->name('devlab.projects.')->group(function () {
+        Route::get('/', [DevLabProjectController::class, 'index'])->name('index');
+        Route::post('/', [DevLabProjectController::class, 'store'])->name('store');
+        Route::get('/{project}', [DevLabProjectController::class, 'show'])->name('show');
+        Route::patch('/{project}', [DevLabProjectController::class, 'update'])->name('update');
+        Route::delete('/{project}', [DevLabProjectController::class, 'destroy'])->name('destroy');
+        Route::post('/{project}/duplicate', [DevLabProjectController::class, 'duplicate'])->name('duplicate');
+
+        Route::post('/{project}/files', [DevLabFileController::class, 'store'])->name('files.store');
+        Route::patch('/{project}/files/{file}', [DevLabFileController::class, 'update'])->name('files.update');
+        Route::delete('/{project}/files/{file}', [DevLabFileController::class, 'destroy'])->name('files.destroy');
+    });
     Route::resource('roadmaps', RoadmapController::class);
     Route::resource('roadmaps.steps', RoadmapStepController::class)->only(['store', 'update', 'destroy'])->shallow();
     Route::get('steps/{step}', [RoadmapStepController::class, 'show'])->name('steps.show');
