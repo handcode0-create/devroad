@@ -204,6 +204,64 @@ class SandboxProjectTest extends TestCase
         );
     }
 
+
+    public function test_un_terminal_pty_genere_un_token_signe_sans_exposer_la_cle_daytona(): void
+    {
+        config()->set('sandbox.enabled', true);
+        config()->set('sandbox.driver', 'daytona');
+        config()->set('sandbox.bridge_url', 'https://terminal.devroad.test');
+        config()->set('sandbox.bridge_secret', 'bridge-secret');
+
+        $user = User::factory()->create();
+        $project = $user->sandboxProjects()->create([
+            'name' => 'PTY',
+            'template' => 'node',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'running',
+            'metadata' => [
+                'daytona_sandbox_id' => 'sbx_pty',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson('/sandbox/projects/' . $project->id . '/terminal')
+            ->assertOk()
+            ->assertJsonStructure(['url', 'expires_at']);
+
+        $url = $response->json('url');
+
+        $this->assertStringStartsWith('wss://terminal.devroad.test/terminal?token=', $url);
+        $this->assertStringNotContainsString('bridge-secret', $url);
+        $this->assertStringNotContainsString('test-key', $url);
+    }
+
+    public function test_un_utilisateur_ne_peut_pas_obtenir_le_terminal_pty_d_un_autre(): void
+    {
+        config()->set('sandbox.enabled', true);
+        config()->set('sandbox.driver', 'daytona');
+        config()->set('sandbox.bridge_url', 'https://terminal.devroad.test');
+        config()->set('sandbox.bridge_secret', 'bridge-secret');
+
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+
+        $project = $owner->sandboxProjects()->create([
+            'name' => 'Privé',
+            'template' => 'node',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'running',
+            'metadata' => [
+                'daytona_sandbox_id' => 'sbx_private',
+            ],
+        ]);
+
+        $this->actingAs($intruder)
+            ->postJson('/sandbox/projects/' . $project->id . '/terminal')
+            ->assertForbidden();
+    }
+
     public function test_la_page_sandbox_expose_les_templates_et_l_etat_du_runtime(): void
     {
         $user = User::factory()->create();

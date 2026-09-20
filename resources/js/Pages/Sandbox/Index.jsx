@@ -1,6 +1,6 @@
 import { Head } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Box, CircleStop, ExternalLink, LoaderCircle, Play, Plus, RotateCcw, SquareTerminal, Trash2 } from "lucide-react";
 
 export default function Index({ projects = [], templates = {}, runtime_enabled = false }) {
@@ -209,44 +209,138 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
 }
 
 
-function TerminalBox({ project, loading, result, onRun }) {
+function TerminalBox({ project }) {
     const [value, setValue] = useState("");
+    const [output, setOutput] = useState("");
+    const [status, setStatus] = useState("connexion");
+    const socketRef = React.useRef(null);
+    const outputRef = React.useRef(null);
+
+    React.useEffect(() => {
+        let cancelled = false;
+
+        async function connect() {
+            try {
+                const response = await fetch("/sandbox/projects/" + project.id + "/terminal", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content ?? "",
+                    },
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) throw new Error(data.message ?? "Terminal indisponible.");
+                if (cancelled) return;
+
+                const socket = new WebSocket(data.url);
+                socketRef.current = socket;
+
+                socket.onopen = () => setStatus("connecté");
+                socket.onclose = () => setStatus("déconnecté");
+                socket.onerror = () => setStatus("erreur");
+                socket.onmessage = (event) => {
+                    if (typeof event.data !== "string") return;
+                    try {
+                        const message = JSON.parse(event.data);
+                        if (message.type === "ready") {
+                            setStatus("connecté");
+                            return;
+                        }
+                        if (message.type === "error") {
+                            setOutput((current) => current + "\n[DevRoad] " + message.message + "\n");
+                            setStatus("erreur");
+                            return;
+                        }
+                    } catch {
+                        // Daytona PTY output is raw terminal data.
+                    }
+                    setOutput((current) => current + event.data);
+                };
+            } catch (error) {
+                if (!cancelled) {
+                    setStatus("indisponible");
+                    setOutput((current) => current + "\n[DevRoad] " + error.message + "\n");
+                }
+            }
+        }
+
+        connect();
+
+        return () => {
+            cancelled = true;
+            socketRef.current?.close();
+            socketRef.current = null;
+        };
+    }, [project.id]);
+
+    React.useEffect(() => {
+        if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }, [output]);
 
     function submit(event) {
         event.preventDefault();
-        onRun(project, value);
+        const command = value.trim();
+        if (!command || socketRef.current?.readyState !== WebSocket.OPEN) return;
+
+        socketRef.current.send(command + "\n");
         setValue("");
+    }
+
+    function handleKeyDown(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            event.currentTarget.form?.requestSubmit();
+        }
+        if (event.ctrlKey && event.key.toLowerCase() === "c") {
+            event.preventDefault();
+            socketRef.current?.send("\u0003");
+        }
     }
 
     return (
         <div className="mt-4 overflow-hidden rounded-xl border border-white/[0.07] bg-[#08111F]">
-            <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2">
-                <SquareTerminal size={14} className="text-[#FF8A3D]" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Terminal Sandbox</span>
+            <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+                <div className="flex items-center gap-2">
+                    <SquareTerminal size={14} className="text-[#FF8A3D]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Terminal PTY</span>
+                </div>
+                <span className={"text-[10px] font-semibold " + (status === "connecté" ? "text-emerald-400" : "text-slate-600")}>
+                    {status}
+                </span>
             </div>
-            <form onSubmit={submit} className="flex items-center gap-2 p-2">
-                <span className="font-mono text-xs text-[#FF6A00]">$</span>
+
+            <pre
+                ref={outputRef}
+                className="h-48 overflow-auto whitespace-pre-wrap p-3 font-mono text-[11px] leading-5 text-slate-300"
+                aria-live="polite"
+            >
+                {output || "Connexion au terminal…"}
+            </pre>
+
+            <form onSubmit={submit} className="flex items-center gap-2 border-t border-white/[0.06] p-2">
+                <span className="font-mono text-xs text-[#FF6A00]">›</span>
                 <input
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
-                    placeholder="npm run build"
-                    className="min-w-0 flex-1 bg-transparent font-mono text-xs text-slate-200 outline-none placeholder:text-slate-700"
-                    aria-label={"Commande terminal de " + project.name}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Tape une commande…"
+                    disabled={status !== "connecté"}
+                    className="min-w-0 flex-1 bg-transparent font-mono text-xs text-slate-200 outline-none placeholder:text-slate-700 disabled:opacity-50"
+                    aria-label={"Entrée terminal de " + project.name}
+                    autoComplete="off"
+                    spellCheck="false"
                 />
                 <button
                     type="submit"
-                    disabled={loading || !value.trim()}
+                    disabled={status !== "connecté" || !value.trim()}
                     className="rounded-lg bg-white/[0.06] px-2.5 py-1.5 text-[10px] font-semibold text-slate-300 disabled:opacity-30"
                 >
-                    Exécuter
+                    Entrée
                 </button>
             </form>
-            {result && (
-                <pre className="max-h-40 overflow-auto border-t border-white/[0.06] p-3 font-mono text-[10px] leading-5 text-slate-400">
-{result.output || "(aucune sortie)"}
-{result.exit_code !== null && result.exit_code !== undefined ? "\n\nexit " + result.exit_code : ""}
-                </pre>
-            )}
         </div>
     );
 }

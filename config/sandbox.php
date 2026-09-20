@@ -7,6 +7,8 @@ return [
     'api_url' => rtrim(env('DAYTONA_API_URL', 'https://app.daytona.io/api'), '/'),
     'toolbox_url' => rtrim(env('DAYTONA_TOOLBOX_URL', 'https://proxy.app.daytona.io/toolbox'), '/'),
     'api_key' => env('DAYTONA_API_KEY'),
+    'bridge_url' => rtrim(env('DEVROAD_SANDBOX_BRIDGE_URL', ''), '/'),
+    'bridge_secret' => env('DEVROAD_SANDBOX_BRIDGE_SECRET'),
 
     'resources' => [
         'cpu' => (int) env('DEVROAD_SANDBOX_CPU', 1),
