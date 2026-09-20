@@ -8,6 +8,7 @@ export default function CodeEditor({
     onChange,
     onCopy,
     onDelete,
+    editorRef,
 }) {
     return (
         <>
@@ -49,6 +50,7 @@ export default function CodeEditor({
                 </div>
 
                 <textarea
+                    ref={editorRef}
                     value={currentFile?.content ?? ""}
                     onChange={(event) => onChange(event.target.value)}
                     spellCheck={false}
