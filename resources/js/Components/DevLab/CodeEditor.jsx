@@ -127,10 +127,10 @@ export default function CodeEditor({
     onDelete,
     editorRef,
 }) {
-    const [selectedCompletion, setSelectedCompletion] = useState(0);
+    const [selectedCompletion, setSelectedCompletion] = useState(0);\n    const [cursorPosition, setCursorPosition] = useState(0);
     const language = useMemo(() => languageFor(activeFile), [activeFile]);
     const completions = useMemo(
-        () => completionData(currentFile?.content ?? "", editorRef?.current?.selectionStart ?? 0, language),
+        () => completionData(currentFile?.content ?? "", cursorPosition, language),
         [currentFile?.content, language, editorRef?.current?.selectionStart]
     );
 
