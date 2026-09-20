@@ -39,7 +39,7 @@ return [
             'version' => '22',
             'image' => 'node:22-bookworm',
             'port' => 3000,
-            'bootstrap' => 'cd workspace && npm init -y && printf \'console.log("DevRoad Node.js Sandbox");\\n\' > index.js && npm pkg set scripts.start="node index.js"',
+            'bootstrap' => 'npm init -y && printf \'console.log("DevRoad Node.js Sandbox");\\n\' > index.js && npm pkg set scripts.start="node index.js"',
             'serve' => 'npm start',
         ],
         'php' => [
@@ -48,7 +48,7 @@ return [
             'version' => '8.3',
             'image' => 'php:8.3-cli-bookworm',
             'port' => 8000,
-            'bootstrap' => 'mkdir -p workspace/public && printf \'<?php\\nheader("Content-Type: text/html; charset=UTF-8");\\necho "<h1>DevRoad PHP Sandbox</h1>";\\n\' > workspace/public/index.php',
+            'bootstrap' => 'mkdir -p public && printf \'<?php\\nheader("Content-Type: text/html; charset=UTF-8");\\necho "<h1>DevRoad PHP Sandbox</h1>";\\n\' > public/index.php',
             'serve' => 'php -S 0.0.0.0:8000 -t public',
         ],
         'laravel' => [
