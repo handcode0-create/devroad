@@ -53,7 +53,7 @@ Route::get('/robots.txt', function () {
     $sitemap = route('sitemap');
 
     return response(
-        "# DevRoad\nUser-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /profile\nDisallow: /devlab\nDisallow: /memos\nDisallow: /roadmaps\nDisallow: /steps\nSitemap: {$sitemap}\n",
+        "# DevRoad\nUser-agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /profile\nDisallow: /devlab\nDisallow: /sandbox\nDisallow: /memos\nDisallow: /roadmaps\nDisallow: /steps\nSitemap: {$sitemap}\n",
         200,
         ['Content-Type' => 'text/plain; charset=UTF-8']
     );
