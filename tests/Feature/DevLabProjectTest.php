@@ -148,6 +148,12 @@ class DevLabProjectTest extends TestCase
         $this->assertDatabaseCount('devlab_projects', 0);
     }
 
+    public function test_les_modeles_devlab_utilisent_les_tables_persistantes(): void
+    {
+        $this->assertSame('devlab_projects', (new \\App\\Models\\DevLabProject())->getTable());
+        $this->assertSame('devlab_files', (new \\App\\Models\\DevLabFile())->getTable());
+    }
+
     public function test_un_projet_peut_etre_renomme_et_duplique(): void
     {
         $user = User::factory()->create();
