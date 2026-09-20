@@ -572,3 +572,6 @@ Les points suivants ne peuvent pas être déclarés validés depuis GitHub seul 
 - disponibilité réelle du runtime DevLab.
 
 Le déploiement ne sera considéré comme réussi qu'après exécution effective des commandes de validation et vérification de l'URL HTTPS.
+
+
+<!-- DevLab production build verification trigger. -->
