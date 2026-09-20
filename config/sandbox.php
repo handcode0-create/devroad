@@ -55,7 +55,7 @@ return [
             'label' => 'Laravel',
             'runtime' => 'php',
             'version' => '8.3',
-            'image' => 'composer:2',
+            'image' => 'serversideup/php:8.3-cli',
             'port' => 8000,
             'bootstrap' => 'composer create-project laravel/laravel .',
             'serve' => 'php artisan serve --host=0.0.0.0 --port=8000',
