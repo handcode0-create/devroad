@@ -7,7 +7,7 @@ const API="/devlab/projects";
 
 export default function DevLabShell({ initialProjects=[], initialProjectId=null }) {
  const [projects,setProjects]=useState(initialProjects),[project,setProject]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState(""),[create,setCreate]=useState(false),[drawer,setDrawer]=useState(false);
- async function request(url,options={}){const method=(options.method||"GET").toLowerCase();const response=await axios.request({url,method,data:options.body?JSON.parse(options.body):undefined,headers:{Accept:"application/json","X-Requested-With":"XMLHttpRequest",...(options.headers??{})},withCredentials:true,withXSRFToken:true});return response.data}
+ async function request(url,options={}){const method=(options.method||"GET").toLowerCase();const headers={Accept:"application/json","X-Requested-With":"XMLHttpRequest",...(options.headers??{})};if(["post","put","patch","delete"].includes(method)){const csrf=await axios.get("/devlab/projects/csrf-token",{headers:{Accept:"application/json"},withCredentials:true,withXSRFToken:true});headers["X-CSRF-TOKEN"]=csrf.data.token;}const response=await axios.request({url,method,data:options.body?JSON.parse(options.body):undefined,headers,withCredentials:true,withXSRFToken:true});return response.data}
  useEffect(()=>{void migrateLegacyWorkspaces()},[]);
  useEffect(()=>{if(initialProjectId){void open(initialProjectId)}},[initialProjectId]);
 
