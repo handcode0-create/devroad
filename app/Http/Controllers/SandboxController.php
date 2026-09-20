@@ -27,8 +27,7 @@ class SandboxController extends Controller
         return Inertia::render('Sandbox/Index', [
             'projects' => $projects,
             'templates' => $templates->all(),
-            'runtime_enabled' => (bool) config('sandbox.enabled'),
-            'runtime_driver' => config('sandbox.driver'),
+            ...$this->runtimeStatus(),
         ]);
     }
 
@@ -190,11 +189,11 @@ class SandboxController extends Controller
     {
         $this->authorize('view', $project);
 
-        if (! config('sandbox.enabled')) {
-            return response()->json([
+        if (! $this->runtimeStatus()['runtime_configured']) {
+            return response()->json(array_merge([
                 'project' => $project,
                 'runtime_available' => false,
-            ]);
+            ], $this->runtimeStatus()));
         }
 
         try {
@@ -229,7 +228,7 @@ class SandboxController extends Controller
     ): JsonResponse {
         $this->authorize('run', $project);
 
-        if (! config('sandbox.enabled')) {
+        if (! $this->runtimeStatus()['runtime_configured']) {
             return $this->runtimeUnavailable();
         }
 
@@ -277,10 +276,39 @@ class SandboxController extends Controller
 
     private function runtimeUnavailable(): JsonResponse
     {
+        $status = $this->runtimeStatus();
+
         return response()->json([
-            'message' => 'Le runtime Sandbox n’est pas encore configuré sur cet environnement.',
+            'message' => $status['runtime_message'],
             'runtime_available' => false,
+            ...$status,
         ], 503);
+    }
+
+    private function runtimeStatus(): array
+    {
+        $enabled = (bool) config('sandbox.enabled');
+        $driver = (string) config('sandbox.driver');
+        $apiKey = config('sandbox.api_key');
+
+        $configured = $enabled
+            && $driver === 'daytona'
+            && is_string($apiKey)
+            && trim($apiKey) !== '';
+
+        $message = match (true) {
+            ! $enabled => 'Le runtime Sandbox est désactivé sur cet environnement.',
+            $driver !== 'daytona' => 'Le runtime Sandbox est configuré avec un exécuteur indisponible.',
+            ! is_string($apiKey) || trim($apiKey) === '' => 'La clé API Daytona n’est pas configurée sur cet environnement.',
+            default => 'Le runtime Daytona est prêt.',
+        };
+
+        return [
+            'runtime_enabled' => $enabled,
+            'runtime_driver' => $driver,
+            'runtime_configured' => $configured,
+            'runtime_message' => $message,
+        ];
     }
 
     private function base64UrlEncode(string $value): string
