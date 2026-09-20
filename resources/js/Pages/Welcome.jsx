@@ -4,11 +4,21 @@ import OnboardingSwipe from '@/Components/OnboardingSwipe';
 
 function OnboardingProgress() {
     return (
-        <div className="mt-6 flex items-center justify-center gap-3" aria-label="Étape 1 sur 3">
-            <span className="h-2.5 w-8 rounded-full bg-[#FF6A00] shadow-[0_0_14px_rgba(255,106,0,.45)]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
-            <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
-        </div>
+        <ol
+            aria-label="Étape 1 sur 3"
+            className="mt-6 flex items-center justify-center gap-2"
+        >
+            {[0, 1, 2].map((item) => (
+                <li
+                    key={item}
+                    aria-current={item === 0 ? 'step' : undefined}
+                    className={
+                        'h-2 rounded-full transition-all duration-300 ' +
+                        (item === 0 ? 'w-6 bg-[#FF6A00]' : 'w-2 bg-white/25')
+                    }
+                />
+            ))}
+        </ol>
     );
 }
 
@@ -84,7 +94,6 @@ export default function Welcome() {
 
                             <OnboardingProgress />
 
-                            <div className="mx-auto mt-5 h-1 w-32 rounded-full bg-white/85" />
 
                             <a
                                 href="https://handcode.site"
