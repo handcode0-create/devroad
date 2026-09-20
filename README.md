@@ -366,13 +366,13 @@ D’après la configuration Railway, laisse les commandes personnalisées vides 
 - **Networking → Target Port** : `8080` ;
 - **Variables → PORT** : `8080`.
 
-Le Dockerfile contient le serveur PHP intégré et doit donc être la source de la commande de démarrage :
+Le dépôt définit aussi explicitement la commande de démarrage dans `railway.json` afin de ne pas dépendre d'un override conservé dans le service Railway :
 
-```dockerfile
-CMD ["sh", "-c", "exec php -S 0.0.0.0:${PORT:-8080} -t public docker/router.php"]
+```json
+"startCommand": "sh -c 'exec php -S 0.0.0.0:${PORT:-8080} -t public docker/router.php'"
 ```
 
-Railway utilise la variable `PORT` pour le healthcheck. Pour une image Docker, une commande de démarrage configurée dans Railway peut remplacer le `CMD` du Dockerfile ; il faut donc laisser le champ personnalisé vide ici.
+Le Dockerfile contient la même commande dans son `CMD`. Railway utilise alors la configuration de `railway.json` pour le déploiement, tandis que le champ **Custom Start Command** du dashboard reste vide.
 
 ### Pre-deploy
 
