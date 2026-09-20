@@ -84,6 +84,48 @@ class SandboxController extends Controller
         return response()->json(['project' => $project->fresh()]);
     }
 
+    public function terminal(Request $request, SandboxProject $project): JsonResponse
+    {
+        $this->authorize('run', $project);
+
+        $secret = config('sandbox.bridge_secret');
+        $bridgeUrl = config('sandbox.bridge_url');
+        $sandboxId = $project->metadata['daytona_sandbox_id'] ?? null;
+
+        if (
+            ! config('sandbox.enabled')
+            || config('sandbox.driver') !== 'daytona'
+            || ! is_string($secret) || $secret === ''
+            || ! is_string($bridgeUrl) || $bridgeUrl === ''
+            || ! is_string($sandboxId) || $sandboxId === ''
+            || $project->status !== 'running'
+        ) {
+            return $this->runtimeUnavailable();
+        }
+
+        $payload = [
+            'user_id' => (int) $request->user()->id,
+            'project_id' => (int) $project->id,
+            'sandbox_id' => $sandboxId,
+            'session_id' => 'devroad-terminal-' . $project->id,
+            'exp' => now()->addMinutes(5)->timestamp,
+        ];
+
+        $encoded = $this->base64UrlEncode(json_encode($payload, JSON_THROW_ON_ERROR));
+        $signature = hash_hmac('sha256', $encoded, $secret);
+
+        $wsUrl = preg_replace(
+            ['#^https://#', '#^http://#'],
+            ['wss://', 'ws://'],
+            $bridgeUrl
+        );
+
+        return response()->json([
+            'url' => rtrim($wsUrl, '/') . '/terminal?token=' . rawurlencode($encoded . '.' . $signature),
+            'expires_at' => $payload['exp'],
+        ]);
+    }
+
     public function command(Request $request, SandboxProject $project, SandboxExecutor $executor): JsonResponse
     {
         $this->authorize('run', $project);
@@ -208,5 +250,10 @@ class SandboxController extends Controller
             'message' => 'Le runtime Sandbox n’est pas encore configuré sur cet environnement.',
             'runtime_available' => false,
         ], 503);
+    }
+
+    private function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 }
