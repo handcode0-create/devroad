@@ -21,7 +21,10 @@ export default function AppLayout({ children }) {
     }, []);
 
     return (
-        <div className="min-h-[100dvh] overflow-x-clip bg-[#08111F] text-white">
+        <div className={[
+            'min-h-[100dvh] overflow-x-clip bg-[#08111F] text-white',
+            user?.light_mode ? 'theme-light' : '',
+        ].join(' ')} data-theme={user?.light_mode ? 'light' : 'dark'}>
             {navigating && (
                 <div className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-transparent">
                     <div className="h-full w-1/3 animate-pulse bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)]" />
