@@ -11,6 +11,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
+use Illuminate\Http\Client\RequestException;
 
 class StartSandboxJob implements ShouldQueue
 {
@@ -37,17 +38,30 @@ class StartSandboxJob implements ShouldQueue
     {
         $project = SandboxProject::query()->find($this->projectId);
 
-        if (! $project || in_array($project->status, ['running', 'starting'], true) === false) {
+        if (! $project || in_array($project->status, ['running'], true)) {
             return;
         }
+
+        $project->updateQuietly([
+            'status' => 'starting',
+            'metadata' => array_merge($project->metadata ?? [], [
+                'startup_error' => null,
+            ]),
+        ]);
 
         try {
             $executor->start($project->fresh());
         } catch (Throwable $exception) {
+            $message = $exception->getMessage();
+
+            if ($exception instanceof RequestException && $exception->response) {
+                $message .= ' | Daytona: ' . mb_substr($exception->response->body(), 0, 1800);
+            }
+
             $project->fresh()?->update([
-                'status' => 'error',
-                'metadata' => array_merge($project->metadata ?? [], [
-                    'startup_error' => mb_substr($exception->getMessage(), 0, 2000),
+                'status' => $this->attempts() >= $this->tries ? 'error' : 'starting',
+                'metadata' => array_merge($project->fresh()->metadata ?? [], [
+                    'startup_error' => mb_substr($message, 0, 2000),
                 ]),
             ]);
 
