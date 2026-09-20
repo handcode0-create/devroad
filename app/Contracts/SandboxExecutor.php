@@ -15,5 +15,7 @@ interface SandboxExecutor
 
     public function status(SandboxProject $project): SandboxInstance;
 
+    public function executeCommand(SandboxProject $project, string $command, int $timeout = 120): array;
+
     public function destroy(SandboxProject $project): void;
 }
