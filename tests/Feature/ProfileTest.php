@@ -74,6 +74,7 @@ class ProfileTest extends TestCase
                 'preferred_technology' => 'laravel',
                 'email_notifications' => false,
                 'learning_reminders' => true,
+                'light_mode' => true,
             ]);
 
         $response
@@ -89,6 +90,7 @@ class ProfileTest extends TestCase
         $this->assertSame('laravel', $user->preferred_technology);
         $this->assertFalse($user->email_notifications);
         $this->assertTrue($user->learning_reminders);
+        $this->assertTrue($user->light_mode);
     }
 
     public function test_invalid_profile_preferences_are_rejected(): void

@@ -31,6 +31,7 @@ class ProfileController extends Controller
                 'preferred_technology' => $user->preferred_technology,
                 'email_notifications' => $user->email_notifications,
                 'learning_reminders' => $user->learning_reminders,
+                'light_mode' => $user->light_mode,
             ],
             'technologies' => collect(config('devroad.technologies', []))
                 ->map(fn ($label, $value) => [

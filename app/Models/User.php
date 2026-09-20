@@ -29,6 +29,7 @@ class User extends Authenticatable
         'preferred_technology',
         'email_notifications',
         'learning_reminders',
+        'light_mode',
     ];
 
     /**
@@ -55,6 +56,7 @@ class User extends Authenticatable
             'weekly_goal_sessions' => 'integer',
             'email_notifications' => 'boolean',
             'learning_reminders' => 'boolean',
+            'light_mode' => 'boolean',
         ];
     }
 

@@ -25,6 +25,7 @@ class UpdateProfilePreferencesRequest extends FormRequest
             ],
             'email_notifications' => ['boolean'],
             'learning_reminders' => ['boolean'],
+            'light_mode' => ['boolean'],
         ];
     }
 }
