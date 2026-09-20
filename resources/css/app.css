@@ -1,3 +1,77 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        min-width: 320px;
+        background: #08111F;
+        color-scheme: dark;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        min-width: 320px;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background: #08111F;
+        @apply antialiased;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    a {
+        touch-action: manipulation;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    @media (min-width: 640px) {
+        input,
+        select,
+        textarea {
+            font-size: inherit;
+        }
+    }
+}
+
+@layer utilities {
+    .safe-pb {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .safe-bottom {
+        bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .scrollbar-none {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+
+    .touch-target {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .mobile-page-gutter {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
