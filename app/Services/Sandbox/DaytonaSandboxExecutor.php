@@ -140,12 +140,20 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId);
 
         $metadata = $project->metadata ?? [];
+        $metadata['startup_phase'] = 'provisioning';
         $metadata['daytona_sandbox_id'] = $providerId;
         $metadata['daytona_toolbox_url'] = $toolboxUrl;
 
         $project->updateQuietly(['metadata' => $metadata]);
 
         $this->syncInstance($project, $sandbox, true);
+
+        $project->updateQuietly([
+            'status' => 'starting',
+            'metadata' => array_merge($project->fresh()->metadata ?? [], [
+                'startup_phase' => 'installing',
+            ]),
+        ]);
 
         $bootstrap = $this->execute($toolboxUrl, '/process/execute', [
             'command' => $definition['bootstrap'],
@@ -157,6 +165,12 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             $project->updateQuietly(['status' => 'error']);
             throw new RuntimeException('Initialisation du projet échouée : ' . ($bootstrap['result'] ?? 'erreur inconnue'));
         }
+
+        $project->updateQuietly([
+            'metadata' => array_merge($project->fresh()->metadata ?? [], [
+                'startup_phase' => 'starting_server',
+            ]),
+        ]);
 
         $sessionId = 'devroad-server';
         $this->execute($toolboxUrl, '/process/session', ['sessionId' => $sessionId]);
