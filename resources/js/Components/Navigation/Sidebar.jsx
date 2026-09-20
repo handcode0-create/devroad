@@ -111,7 +111,7 @@ export default function Sidebar({ user }) {
                                     className={[
                                         "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200",
                                         active
-                                            ? "bg-[#FF6A00] text-white shadow-[0_6px_20px_rgba(255,106,0,0.28)]"
+                                            ? "bg-[#FF6A00] text-white theme-brand-contrast shadow-[0_6px_20px_rgba(255,106,0,0.28)]"
                                             : "bg-white/[0.04] text-slate-400 group-hover:bg-white/[0.07] group-hover:text-white",
                                     ].join(" ")}
                                 >
@@ -146,7 +146,7 @@ export default function Sidebar({ user }) {
                         href="/roadmaps/create"
                         className="group flex items-center gap-3 rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.07] p-3 transition-all duration-200 hover:border-[#FF6A00]/40 hover:bg-[#FF6A00]/[0.11]"
                     >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6A00] text-white shadow-[0_8px_20px_rgba(255,106,0,0.25)]">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6A00] text-white theme-brand-contrast shadow-[0_8px_20px_rgba(255,106,0,0.25)]">
                             <Plus size={18} strokeWidth={2.2} />
                         </span>
 
@@ -228,7 +228,7 @@ function UserAvatar({ user }) {
         .join("");
 
     return (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-gradient-to-br from-[#FF8A3D] to-[#FF6A00] text-xs font-bold text-white shadow-[0_4px_15px_rgba(255,106,0,0.18)]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-gradient-to-br from-[#FF8A3D] to-[#FF6A00] text-xs font-bold text-white theme-avatar shadow-[0_4px_15px_rgba(255,106,0,0.18)]">
             {user?.avatar ? (
                 <img
                     src={user.avatar}
