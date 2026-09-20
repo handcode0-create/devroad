@@ -11,6 +11,14 @@ export default function AppLayout({ children }) {
     const user = auth?.user;
 
     useEffect(() => {
+        document.documentElement.dataset.theme = user?.light_mode ? 'light' : 'dark';
+
+        return () => {
+            document.documentElement.dataset.theme = 'dark';
+        };
+    }, [user?.light_mode]);
+
+    useEffect(() => {
         const removeStartListener = router.on('start', () => setNavigating(true));
         const removeFinishListener = router.on('finish', () => setNavigating(false));
 
