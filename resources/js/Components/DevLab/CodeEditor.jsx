@@ -175,6 +175,11 @@ export default function CodeEditor({
         setSelectedCompletion(0);
     }, [completions?.query, activeFile]);
 
+    useEffect(() => {
+        setCursorPosition(0);
+        setCompletionPosition({ top: 12, left: 12 });
+    }, [activeFile]);
+
     function applyCompletion(item) {
         const textarea = editorRef.current;
         if (!textarea || !completions) return;
@@ -190,6 +195,7 @@ export default function CodeEditor({
             textarea.focus();
             const nextCursor = completions.replaceStart + result.cursorOffset;
             textarea.setSelectionRange(nextCursor, nextCursor);
+            updateCursorState(textarea);
         });
     }
 
@@ -264,8 +270,9 @@ export default function CodeEditor({
                     ref={editorRef}
                     value={currentFile?.content ?? ""}
                     onChange={(event) => {
+                        const textarea = event.currentTarget;
                         onChange(event.target.value);
-                        requestAnimationFrame(() => updateCursorState(event.currentTarget));
+                        requestAnimationFrame(() => updateCursorState(textarea));
                     }}
                     onSelect={(event) => updateCursorState(event.currentTarget)}
                     onClick={(event) => updateCursorState(event.currentTarget)}
