@@ -31,7 +31,7 @@ export default function Register() {
         >
             <Head title="Créer un compte" />
 
-            <form onSubmit={submit} className="space-y-4.5">
+            <form onSubmit={submit} className="space-y-5">
                 <div>
                     <InputLabel
                         htmlFor="name"
