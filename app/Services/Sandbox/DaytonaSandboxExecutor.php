@@ -319,8 +319,8 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             ->withToken((string) config('sandbox.api_key'))
             ->acceptJson()
             ->asJson()
-            ->timeout(30)
-            ->retry(2, 500);
+            ->timeout(120)
+            ->retry(3, 1000);
     }
 
     private function toolbox(int $timeout = 30): PendingRequest
