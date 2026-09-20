@@ -85,4 +85,4 @@ ENV APP_DEBUG=false
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=\$PORT"]
+CMD ["sh", "-c", "exec php -S 0.0.0.0:${PORT:-8080} -t public docker/router.php"]
