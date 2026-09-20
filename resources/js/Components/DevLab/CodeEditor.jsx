@@ -306,7 +306,7 @@ export default function CodeEditor({
                     <pre
                         ref={highlightRef}
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-0 top-0 m-0 min-w-full whitespace-pre p-4 font-mono text-[12px] leading-6 text-slate-300"
+                        className="devlab-syntax pointer-events-none absolute left-0 top-0 m-0 min-w-full whitespace-pre p-4 font-mono text-[12px] leading-6"
                         style={{ willChange: "transform" }}
                     ><code dangerouslySetInnerHTML={{ __html: highlightedCode }} /></pre>
 
