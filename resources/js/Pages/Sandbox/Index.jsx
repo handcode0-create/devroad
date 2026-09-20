@@ -3,7 +3,7 @@ import AppLayout from "@/Layouts/AppLayout";
 import React, { useState } from "react";
 import { Box, CircleStop, ExternalLink, LoaderCircle, Play, Plus, RotateCcw, SquareTerminal, Trash2 } from "lucide-react";
 
-export default function Index({ projects = [], templates = {}, runtime_enabled = false }) {
+export default function Index({ projects = [], templates = {}, runtime_configured = false, runtime_message = "" }) {
     const [items, setItems] = useState(projects);
     const [create, setCreate] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -185,9 +185,9 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
                     </button>
                 </header>
 
-                {!runtime_enabled && (
+                {!runtime_configured && (
                     <div className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.06] p-4 text-sm text-amber-200">
-                        Le gestionnaire de runtime est installé, mais l’exécuteur isolé n’est pas encore activé sur cet environnement.
+                        {runtime_message || "Le runtime Sandbox n’est pas encore prêt sur cet environnement."}
                     </div>
                 )}
 
