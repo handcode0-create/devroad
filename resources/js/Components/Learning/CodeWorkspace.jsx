@@ -272,6 +272,509 @@ export default function CodeWorkspace({ workspace, stepId }) {
 
     function isValidWorkspacePath(path) {
         return (
+            path &&
+            !path.includes("..") &&
+            !path.startsWith(".") &&
+            !/[<>:"|?*\\]/.test(path)
+        );
+    }
+
+    function createFile() {
+        const normalized = normalizeWorkspacePath(newFilePath);
+
+        if (!normalized) {
+            setCreateFileError("Indique le nom du fichier.");
+            return;
+        }
+
+        if (!isValidWorkspacePath(normalized)) {
+            setCreateFileError("Le chemin du fichier est invalide.");
+            return;
+        }
+
+        if (files.some((file) => file.path === normalized)) {
+            setCreateFileError("Ce fichier existe déjà.");
+            return;
+        }
+
+        setFiles((current) => [
+            ...current,
+            {
+                path: normalized,
+                content: "",
+            },
+        ]);
+        setActiveFile(normalized);
+        pushTerminal("✓ Fichier créé : " + normalized);
+        closeCreateFileModal();
+    }
+
+    function importFiles(event) {
+        const selectedFiles = Array.from(event.target.files ?? []);
+
+        if (selectedFiles.length === 0) {
+            return;
+        }
+
+        let imported = 0;
+        let rejected = 0;
+
+        selectedFiles.forEach((file) => {
+            if (file.size > 300 * 1024) {
+                rejected += 1;
+                return;
+            }
+
+            const relativePath =
+                file.webkitRelativePath || file.name;
+            const normalized = normalizeWorkspacePath(relativePath);
+
+            if (!isValidWorkspacePath(normalized)) {
+                rejected += 1;
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const content = typeof reader.result === "string"
+                    ? reader.result
+                    : "";
+
+                setFiles((current) => {
+                    const exists = current.some(
+                        (item) => item.path === normalized,
+                    );
+
+                    if (exists) {
+                        return current.map((item) =>
+                            item.path === normalized
+                                ? { ...item, content }
+                                : item,
+                        );
+                    }
+
+                    return [...current, { path: normalized, content }];
+                });
+
+                setActiveFile(normalized);
+                imported += 1;
+
+                pushTerminal("✓ Importé : " + normalized);
+
+                if (imported + rejected === selectedFiles.length) {
+                    if (rejected > 0) {
+                        pushTerminal(
+                            "⚠ " +
+                                rejected +
+                                " fichier(s) ignoré(s) : taille ou chemin invalide.",
+                        );
+                    }
+                }
+            };
+
+            reader.onerror = () => {
+                rejected += 1;
+                pushTerminal("✕ Impossible de lire : " + normalized);
+            };
+
+            reader.readAsText(file);
+        });
+
+        event.target.value = "";
+    }
+
+    function deleteFile() {
+        if (files.length <= 1) {
+            pushTerminal("✕ Le dernier fichier ne peut pas être supprimé.");
+            return;
+        }
+
+        if (!window.confirm("Supprimer " + activeFile + " ?")) {
+            return;
+        }
+
+        const nextFiles = files.filter((file) => file.path !== activeFile);
+
+        setFiles(nextFiles);
+        setActiveFile(nextFiles[0].path);
+        pushTerminal("✓ Fichier supprimé : " + activeFile);
+    }
+
+    function runPreview() {
+        setPanel("preview");
+        setPreviewVersion((value) => value + 1);
+        pushTerminal("▶ Aperçu actualisé.");
+    }
+
+    async function runServer(commandOverride = null) {
+        if (running) {
+            return;
+        }
+
+        setRunning(true);
+        setPanel("terminal");
+
+        const commandToRun =
+            commandOverride ??
+            workspace.run_command ??
+            "run";
+
+        pushTerminal(
+            "",
+            "$ " + commandToRun,
+            "Exécution avec le runtime " +
+                workspace.label +
+                " de DevRoad...",
+        );
+
+        try {
+            const response = await fetch("/steps/" + stepId + "/run", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") ?? "",
+                },
+                body: JSON.stringify({
+                    language: workspace.language,
+                    command: commandToRun,
+                    file_path: activeFile,
+                    code: currentFile?.content ?? "",
+                    files,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.stdout) {
+                pushTerminal(result.stdout);
+            }
+
+            if (result.stderr) {
+                pushTerminal(result.stderr);
+            }
+
+            if (!result.stdout && !result.stderr) {
+                pushTerminal(
+                    result.status === "success"
+                        ? "✓ Processus terminé sans sortie."
+                        : "Aucune sortie.",
+                );
+            }
+
+            pushTerminal(
+                "Processus terminé · code " +
+                    (result.exit_code ?? "n/a") +
+                    " · " +
+                    (result.duration_ms ?? 0) +
+                    " ms",
+            );
+        } catch (error) {
+            pushTerminal(
+                "✕ Impossible d’exécuter le runtime DevRoad.",
+            );
+        } finally {
+            setRunning(false);
+        }
+    }
+
+
+    function runJavaScript() {
+        if (workspace.language !== "javascript") {
+            pushTerminal(
+                "ℹ L’exécution navigateur est disponible pour JavaScript.",
+            );
+            return;
+        }
+
+        setPanel("terminal");
+        pushTerminal("▶ Exécution JavaScript dans un iframe sandbox...");
+
+        const iframe = document.createElement("iframe");
+
+        iframe.setAttribute("sandbox", "allow-scripts");
+        iframe.style.position = "fixed";
+        iframe.style.width = "1px";
+        iframe.style.height = "1px";
+        iframe.style.opacity = "0";
+        iframe.style.pointerEvents = "none";
+
+        const safeCode = currentFile?.content ?? "";
+
+        iframe.srcdoc = `
+            <!doctype html>
+            <html>
+                <body>
+                    <script>
+                        const send = (type, value) => {
+                            parent.postMessage({
+                                source: "devroad-ide",
+                                type,
+                                value: String(value)
+                            }, "*");
+                        };
+
+                        console.log = (...values) => send("log", values.join(" "));
+                        console.warn = (...values) => send("log", values.join(" "));
+                        console.error = (...values) => send("error", values.join(" "));
+
+                        try {
+                            ${safeCode}
+                        } catch (error) {
+                            send("error", error?.stack || error);
+                        }
+                    <\/script>
+                </body>
+            </html>
+        `;
+
+        document.body.appendChild(iframe);
+
+        window.setTimeout(() => {
+            iframe.remove();
+        }, 1800);
+    }
+
+    function submitCommand(event) {
+        event.preventDefault();
+
+        const value = command.trim();
+
+        if (!value) {
+            return;
+        }
+
+        setCommand("");
+
+        if (value === "clear") {
+            setTerminal([]);
+            return;
+        }
+
+        if (
+            workspace.runtime === "server" &&
+            /^(node|npm)(?:\s|$)/i.test(value) &&
+            workspace.language !== "node"
+        ) {
+            pushTerminal(
+                "⚠ Runtime actif : " + workspace.label,
+                "La commande « " +
+                    value +
+                    " » nécessite un environnement Node.js.",
+                "Sélectionne une roadmap Node.js dans le sélecteur de runtime.",
+            );
+            return;
+        }
+
+        if (
+            workspace.runtime === "server" &&
+            /^php(?:\s|$)|^composer(?:\s|$)/i.test(value) &&
+            workspace.language !== "php" &&
+            workspace.language !== "laravel"
+        ) {
+            pushTerminal(
+                "⚠ Runtime actif : " + workspace.label,
+                "Cette commande nécessite un environnement PHP/Laravel.",
+            );
+            return;
+        }
+
+        if (value === "help") {
+            pushTerminal(
+                "",
+                ...(TERMINAL_HELP[workspace.language] ??
+                    TERMINAL_HELP.browser),
+            );
+            return;
+        }
+
+        if (value === "reset") {
+            resetWorkspace();
+            return;
+        }
+
+        if (value === "save") {
+            saveWorkspace();
+            return;
+        }
+
+        if (workspace.runtime === "server") {
+            runServer(value === "run" ? workspace.run_command : value);
+            return;
+        }
+
+        pushTerminal("$ " + value);
+
+        if (value === "pwd") {
+            pushTerminal("/devroad/" + workspace.language);
+            return;
+        }
+
+        if (value === "ls") {
+            pushTerminal(...files.map((file) => file.path));
+            return;
+        }
+
+        if (value.startsWith("cat ")) {
+            const path = value.slice(4).trim();
+            const target = files.find((file) => file.path === path);
+
+            if (!target) {
+                pushTerminal("cat: " + path + ": fichier introuvable");
+                return;
+            }
+
+            pushTerminal(...target.content.split("\n"));
+            return;
+        }
+
+        if (value.startsWith("touch ")) {
+            const path = value.slice(6).trim();
+
+            if (!path || files.some((file) => file.path === path)) {
+                pushTerminal("touch: fichier invalide ou déjà existant");
+                return;
+            }
+
+            setFiles((current) => [...current, { path, content: "" }]);
+            pushTerminal("✓ " + path);
+            return;
+        }
+
+        if (value.startsWith("mkdir ")) {
+            pushTerminal(
+                "✓ Dossier virtuel créé : " + value.slice(6).trim(),
+            );
+            return;
+        }
+
+        if (value.startsWith("rm ")) {
+            const path = value.slice(3).trim();
+
+            if (!files.some((file) => file.path === path)) {
+                pushTerminal("rm: " + path + ": fichier introuvable");
+                return;
+            }
+
+            if (files.length <= 1) {
+                pushTerminal("rm: impossible de supprimer le dernier fichier");
+                return;
+            }
+
+            const nextFiles = files.filter((file) => file.path !== path);
+            setFiles(nextFiles);
+
+            if (activeFile === path) {
+                setActiveFile(nextFiles[0].path);
+            }
+
+            pushTerminal("✓ supprimé : " + path);
+            return;
+        }
+
+        if (value === "preview" || value === "run") {
+            if (value === "run") {
+                runJavaScript();
+            } else {
+                runPreview();
+            }
+            return;
+        }
+
+        if (value === "reset") {
+            resetWorkspace();
+            return;
+        }
+
+        if (value === "save") {
+            saveWorkspace();
+            return;
+        }
+
+        if (
+            value.startsWith("php artisan") ||
+            value.startsWith("composer") ||
+            value === "npm run build"
+        ) {
+            pushTerminal(
+                "ℹ Le terminal Laravel complet nécessite un sandbox serveur.",
+                "Le mode navigateur reste disponible pour éditer, sauvegarder et prévisualiser.",
+            );
+            return;
+        }
+
+        pushTerminal(
+            "commande inconnue : " + value,
+            "Utilise « help » pour voir les commandes disponibles.",
+        );
+    }
+
+    function buildPreviewDocument() {
+        const htmlFile =
+            files.find((file) => file.path.endsWith(".html")) ?? null;
+        const cssFiles = files.filter((file) => file.path.endsWith(".css"));
+        const jsFiles = files.filter((file) => file.path.endsWith(".js"));
+
+        if (htmlFile) {
+            let html = htmlFile.content;
+
+            if (cssFiles.length > 0 && !html.includes("</head>")) {
+                html = cssFiles
+                    .map((file) => "<style>" + file.content + "</style>")
+                    .join("\n") + html;
+            } else {
+                for (const file of cssFiles) {
+                    html = html.replace(
+                        "</head>",
+                        "<style>" + file.content + "</style></head>",
+                    );
+                }
+            }
+
+            for (const file of jsFiles) {
+                html = html.replace(
+                    "</body>",
+                    "<script>" + file.content + "</script></body>",
+                );
+            }
+
+            return securePreview(html);
+        }
+
+        if (workspace.language === "css") {
+            return securePreview(
+                "<!doctype html><html><head><style>" +
+                    (currentFile?.content ?? "") +
+                    "</style></head><body><main><h1>DevRoad</h1><p>Prévisualisation CSS</p><button>Continuer</button></main></body></html>",
+            );
+        }
+
+        if (workspace.language === "javascript") {
+            return securePreview(
+                "<!doctype html><html><body><main id=\"app\"></main><script>" +
+                    (currentFile?.content ?? "") +
+                    "</script></body></html>",
+            );
+        }
+
+        return securePreview(
+            "<!doctype html><html><body style=\"font-family:system-ui;padding:2rem\"><h2>Prévisualisation indisponible</h2><p>Le navigateur ne peut pas exécuter directement Laravel/PHP.</p></body></html>",
+        );
+    }
+
+    function securePreview(html) {
+        return html.replace(
+            "<head>",
+            "<head><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:\">",
+        );
+    }
+
+    return (
         <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#09111D] shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
             <input
                 ref={importInputRef}
@@ -492,7 +995,6 @@ export default function CodeWorkspace({ workspace, stepId }) {
                                         {createFileError}
                                     </p>
                                 )}
-
                             </div>
 
                             <div className="flex justify-end gap-2">
