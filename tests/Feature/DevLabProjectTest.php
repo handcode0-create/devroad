@@ -150,8 +150,8 @@ class DevLabProjectTest extends TestCase
 
     public function test_les_modeles_devlab_utilisent_les_tables_persistantes(): void
     {
-        $this->assertSame('devlab_projects', (new \\App\\Models\\DevLabProject())->getTable());
-        $this->assertSame('devlab_files', (new \\App\\Models\\DevLabFile())->getTable());
+        $this->assertSame('devlab_projects', (new \App\Models\DevLabProject())->getTable());
+        $this->assertSame('devlab_files', (new \App\Models\DevLabFile())->getTable());
     }
 
     public function test_un_projet_peut_etre_renomme_et_duplique(): void
@@ -222,5 +222,23 @@ class DevLabProjectTest extends TestCase
         $file = $first->files()->create(['path' => 'index.html', 'content' => 'A', 'size' => 1]);
         $this->actingAs($user)->patchJson(route('devlab.projects.files.update', [$second, $file]), ['path' => 'index.html', 'content' => 'B'])->assertNotFound();
         $this->assertDatabaseHas('devlab_files', ['id' => $file->id, 'content' => 'A']);
+    }
+
+    public function test_un_fichier_vide_peut_etre_importe_depuis_l_ancien_workspace(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.import-legacy'), [
+                'name' => 'Import avec fichier vide',
+                'template' => 'html',
+                'files' => [
+                    ['path' => 'index.html', 'content' => '<h1>ok</h1>'],
+                    ['path' => 'style.css', 'content' => ''],
+                ],
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('devlab_files', ['path' => 'style.css', 'content' => '', 'size' => 0]);
     }
 }

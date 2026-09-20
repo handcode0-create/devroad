@@ -166,13 +166,14 @@ class DevLabProjectController extends Controller
             'template' => ['required', 'string', 'in:' . implode(',', DevLabProject::TEMPLATES)],
             'files' => ['required', 'array', 'min:1', 'max:100'],
             'files.*.path' => ['required', 'string', 'max:180'],
-            'files.*.content' => ['present', 'string', 'max:' . (512 * 1024)],
+            'files.*.content' => ['present', 'nullable', 'string', 'max:' . (512 * 1024)],
         ]);
 
         $paths = [];
         $totalSize = 0;
 
         foreach ($validated['files'] as &$file) {
+            $file['content'] = $file['content'] ?? '';
             $path = str_replace('\\', '/', trim($file['path']));
 
             $segments = array_values(array_filter(explode('/', $path), static fn (string $segment): bool => $segment !== ''));

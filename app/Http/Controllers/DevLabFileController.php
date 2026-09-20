@@ -52,7 +52,9 @@ class DevLabFileController extends Controller
         $validated = $request->validate([
             'path' => ['required', 'string', 'max:' . self::MAX_PATH_LENGTH,
                 Rule::unique('devlab_files', 'path')->where(fn ($query) => $query->where('devlab_project_id', $project->id))->ignore($file?->id)],
-            'content' => ['present', 'string', 'max:' . self::MAX_FILE_SIZE],
+            // nullable : le middleware ConvertEmptyStringsToNull transforme '' en null,
+            // or un fichier vide est valide (l'utilisateur peut tout effacer).
+            'content' => ['present', 'nullable', 'string', 'max:' . self::MAX_FILE_SIZE],
         ]);
         $path = str_replace('\\', '/', trim($validated['path']));
         if ($path === '' || str_starts_with($path, '/') || preg_match('/^[A-Za-z]:\//', $path)
@@ -61,6 +63,7 @@ class DevLabFileController extends Controller
             abort(422, 'Chemin de fichier invalide.');
         }
         $validated['path'] = $path;
+        $validated['content'] = $validated['content'] ?? '';
         return $validated;
     }
 }
