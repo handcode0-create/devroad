@@ -77,4 +77,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(DevLabProject::class);
     }
+
+    public function sandboxProjects(): HasMany
+    {
+        return $this->hasMany(SandboxProject::class);
+    }
 }
