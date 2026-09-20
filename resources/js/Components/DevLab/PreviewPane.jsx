@@ -10,9 +10,9 @@ function secureSrcDoc(srcDoc) {
     return meta + srcDoc;
 }
 
-import { Eye, Play } from "lucide-react";
+import { Eye, Play, X } from "lucide-react";
 
-export default function PreviewPane({ previewVersion, srcDoc, onRefresh }) {
+export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose }) {
     return (
         <div className="bg-[#050B12] p-2">
             <div className="mb-2 flex items-center justify-between px-2">
@@ -23,14 +23,27 @@ export default function PreviewPane({ previewVersion, srcDoc, onRefresh }) {
                     </span>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={onRefresh}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-2.5 py-2 text-[10px] font-bold text-[#08111F]"
-                >
-                    <Play size={11} fill="currentColor" />
-                    Actualiser
-                </button>
+                <div className="flex items-center gap-1.5">
+                    <button
+                        type="button"
+                        onClick={onRefresh}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-2.5 py-2 text-[10px] font-bold text-[#08111F]"
+                    >
+                        <Play size={11} fill="currentColor" />
+                        Actualiser
+                    </button>
+                    {onClose && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.08] hover:text-white"
+                            aria-label="Fermer l'aperçu"
+                            title="Retour à l'éditeur"
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             <iframe
