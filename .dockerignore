@@ -1,0 +1,21 @@
+# Le contexte de build n'a besoin ni de l'historique Git, ni des dépendances
+# installées en local (elles sont reconstruites dans l'image), ni de secrets.
+.git
+.github
+.idea
+.vscode
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+
+# Ne jamais copier un .env local dans l'image
+.env
+.env.*
+!.env.example
+
+# Caches générés en local : ils contiendraient la configuration du poste de dev
+bootstrap/cache/*.php
+.phpunit.result.cache
+**/*.log
