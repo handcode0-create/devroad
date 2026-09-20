@@ -71,6 +71,13 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('devlab/projects')->name('devlab.projects.')->group(function () {
         Route::get('/', [DevLabProjectController::class, 'index'])->name('index');
+        Route::get('/csrf-token', function (\Illuminate\Http\Request $request) {
+            return response()->json(
+                ['token' => $request->session()->token()],
+                200,
+                ['Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0']
+            );
+        })->name('csrf-token');
         Route::post('/', [DevLabProjectController::class, 'store'])->name('store');
         Route::post('/import-legacy', [DevLabProjectController::class, 'importLegacy'])->name('import-legacy');
         Route::post('/for-step/{step}', [DevLabProjectController::class, 'openForStep'])->name('for-step');
