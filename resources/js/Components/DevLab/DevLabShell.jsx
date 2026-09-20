@@ -1,9 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Code2, Copy, FilePlus2, FolderOpen, MoreVertical, Pencil, Plus, Save, Trash2, X } from "lucide-react";
-import EditorTabs from "@/Components/DevLab/EditorTabs";
-import CodeEditor from "@/Components/DevLab/CodeEditor";
-import FileExplorer from "@/Components/DevLab/FileExplorer";
-import PreviewPane from "@/Components/DevLab/PreviewPane";
+import { useEffect, useState } from "react";
+import { Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
+import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
 
 const API="/devlab/projects";
 
@@ -54,7 +51,29 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
    <button onClick={()=>setCreate(true)} className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 text-xs font-bold text-[#08111F]"><Plus size={15}/> Nouveau</button>
   </header>
   {error&&<div className="absolute left-1/2 top-16 z-[70] -translate-x-1/2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-xs text-red-300">{error}<button onClick={()=>setError("")} className="ml-3"><X size={13}/></button></div>}
-  {project?<ProjectWorkspace project={project} onSave={saveFile} onNewFile={newFile} onDelete={deleteFile}/>:<ProjectHome projects={projects} loading={loading} onOpen={open} onCreate={()=>setCreate(true)}/>}
+  {project?<DevLabWorkspace
+    project={project}
+    onSave={saveFile}
+    onNewFile={newFile}
+    onDelete={deleteFile}
+    onImportFiles={async (files) => {
+      for (const file of files) {
+        const existing = project.files?.find((item) => item.path === file.path);
+        if (existing) {
+          await saveFile(existing, { path: existing.path, content: file.content });
+        } else {
+          const response = await request(API + "/" + project.id + "/files", {
+            method: "POST",
+            body: JSON.stringify(file),
+          });
+          setProject((current) => ({
+            ...current,
+            files: [...current.files, response.file].sort((a, b) => a.path.localeCompare(b.path)),
+          }));
+        }
+      }
+    }}
+  />:<ProjectHome projects={projects} loading={loading} onOpen={open} onCreate={()=>setCreate(true)}/>}
   {drawer&&<Drawer projects={projects} onClose={()=>setDrawer(false)} onOpen={open} onCreate={()=>{setDrawer(false);setCreate(true)}}/>}
   {create&&<CreateModal loading={loading} onClose={()=>setCreate(false)} onCreate={createProject}/>}
  </div>;
@@ -78,4 +97,3 @@ function Drawer({projects,onClose,onOpen,onCreate}){return <div className="absol
 
 function CreateModal({loading,onClose,onCreate}){const [name,setName]=useState("Mon projet"),[template,setTemplate]=useState("html");return <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true"><div className="w-full max-w-md rounded-2xl border border-white/[.08] bg-[#0D1725] p-5"><div className="flex justify-between"><b>Nouveau projet</b><button onClick={onClose} aria-label="Fermer"><X size={16}/></button></div><label className="mt-5 block text-xs text-slate-400">Nom<input value={name} onChange={e=>setName(e.target.value)} className="mt-2 w-full rounded-xl border border-white/[.08] bg-[#08111F] p-3 text-sm outline-none focus:border-[#FF6A00]/50"/></label><label className="mt-4 block text-xs text-slate-400">Template<select value={template} onChange={e=>setTemplate(e.target.value)} className="mt-2 w-full rounded-xl border border-white/[.08] bg-[#08111F] p-3 text-sm outline-none"><option value="html">HTML / CSS / JavaScript</option><option value="node">Node.js</option><option value="php">PHP</option><option value="laravel">Laravel</option></select></label><div className="mt-5 flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 text-xs text-slate-500">Annuler</button><button disabled={loading||!name.trim()} onClick={()=>onCreate({name,template})} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] disabled:opacity-40">Créer</button></div></div></div>}
 
-function ProjectWorkspace({project,onSave,onNewFile,onDelete}){const files=project.files??[],[active,setActive]=useState(files[0]?.path??""),[draft,setDraft]=useState(files[0]?.content??""),[saved,setSaved]=useState(true),[panel,setPanel]=useState("editor");const current=files.find(f=>f.path===active)||files[0];useEffect(()=>{setActive(files[0]?.path??"")},[project.id]);useEffect(()=>{const f=files.find(x=>x.path===active)||files[0];setDraft(f?.content??"");setSaved(true)},[active,project.id]);useEffect(()=>{if(saved||!current)return;const timer=window.setTimeout(async()=>{try{await onSave(current,{path:current.path,content:draft});setSaved(true)}catch{}},900);return()=>window.clearTimeout(timer)},[draft,saved,current?.id,project.id]);const srcDoc=useMemo(()=>{const html=files.find(f=>f.path.toLowerCase()==="index.html")?.content||(current?.path.endsWith(".html")?draft:"");const css=files.find(f=>f.path.toLowerCase().endsWith(".css"))?.content||"";const js=files.find(f=>f.path.toLowerCase().endsWith(".js"))?.content||"";return html?html.replace("</head>","<style>"+css+"</style></head>").replace("</body>","<script>"+js.replaceAll("</script>","")+"</script></body>"):"<!doctype html><body><pre>Aucun aperçu HTML.</pre></body>"},[files,current,draft]);async function save(){if(current&&!saved){try{await onSave(current,{path:current.path,content:draft});setSaved(true)}catch{}}}return <div className="min-h-0 flex-1 overflow-hidden"><div className="grid h-full min-h-0 lg:grid-cols-[220px_minmax(0,1fr)_minmax(280px,34vw)]"><FileExplorer files={files} activeFile={active} onSelect={setActive} onCreate={onNewFile} onImport={()=>{}}/><section className="min-w-0 overflow-hidden bg-[#06101A]"><div className="border-b border-white/[.06] bg-[#0D1725] p-2"><EditorTabs files={files} activeFile={active} onSelect={setActive} onCreate={onNewFile} onImport={()=>{}}/></div><CodeEditor activeFile={active} currentFile={{...current,content:draft}} lineCount={Math.max(1,draft.split("\n").length)} copied={false} onChange={v=>{setDraft(v);setSaved(false)}} onCopy={()=>navigator.clipboard?.writeText(draft)} onDelete={()=>current&&onDelete(current)}/><div className="flex h-12 items-center justify-between border-t border-white/[.06] bg-[#0D1725] px-3"><span className="text-[10px] text-slate-600">{saved?"Enregistré":"Modifications non enregistrées"}</span><button onClick={save} disabled={saved} className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-3 py-2 text-[10px] font-bold text-[#08111F] disabled:opacity-30"><Save size={13}/> Enregistrer</button></div></section><aside className="hidden min-w-0 border-l border-white/[.06] bg-[#050B12] lg:block"><PreviewPane previewVersion={0} srcDoc={srcDoc} onRefresh={()=>{}}/></aside></div><div className="flex border-t border-white/[.07] bg-[#0D1725] p-2 lg:hidden"><button onClick={()=>setPanel("editor")} className={"flex-1 rounded-lg py-2 text-xs font-semibold "+(panel==="editor"?"bg-[#FF6A00] text-[#08111F]":"text-slate-500")}>Éditeur</button><button onClick={()=>setPanel("preview")} className={"flex-1 rounded-lg py-2 text-xs font-semibold "+(panel==="preview"?"bg-[#FF6A00] text-[#08111F]":"text-slate-500")}>Aperçu</button></div>{panel==="preview"&&<div className="absolute inset-x-0 bottom-0 z-30 bg-[#050B12] p-2 lg:hidden"><PreviewPane previewVersion={0} srcDoc={srcDoc} onRefresh={()=>{}}/></div>}</div>}

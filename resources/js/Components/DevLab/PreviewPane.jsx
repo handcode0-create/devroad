@@ -1,3 +1,15 @@
+const PREVIEW_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob: https:; font-src data: https:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+
+function secureSrcDoc(srcDoc) {
+    const meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"" + PREVIEW_CSP + "\">";
+
+    if (/<head[^>]*>/i.test(srcDoc)) {
+        return srcDoc.replace(/<head[^>]*>/i, (tag) => tag + meta);
+    }
+
+    return meta + srcDoc;
+}
+
 import { Eye, Play } from "lucide-react";
 
 export default function PreviewPane({ previewVersion, srcDoc, onRefresh }) {
@@ -25,7 +37,7 @@ export default function PreviewPane({ previewVersion, srcDoc, onRefresh }) {
                 key={previewVersion}
                 title="Prévisualisation DevRoad"
                 sandbox="allow-scripts"
-                srcDoc={srcDoc}
+                srcDoc={secureSrcDoc(srcDoc)}
                 className="h-[420px] w-full rounded-2xl border border-white/[0.06] bg-white"
             />
         </div>
