@@ -34,6 +34,11 @@ class UnavailableSandboxExecutor implements SandboxExecutor
         $this->unavailable();
     }
 
+    public function executeCommand(SandboxProject $project, string $command, int $timeout = 120): array
+    {
+        $this->unavailable();
+    }
+
     public function destroy(SandboxProject $project): void
     {
         $this->unavailable();

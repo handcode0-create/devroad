@@ -84,6 +84,31 @@ class SandboxController extends Controller
         return response()->json(['project' => $project->fresh()]);
     }
 
+    public function command(Request $request, SandboxProject $project, SandboxExecutor $executor): JsonResponse
+    {
+        $this->authorize('run', $project);
+
+        $validated = $request->validate([
+            'command' => ['required', 'string', 'max:4000'],
+            'timeout' => ['sometimes', 'integer', 'min:1', 'max:300'],
+        ]);
+
+        try {
+            $result = $executor->executeCommand(
+                $project,
+                $validated['command'],
+                (int) ($validated['timeout'] ?? 120)
+            );
+        } catch (SandboxRuntimeUnavailable) {
+            return $this->runtimeUnavailable();
+        }
+
+        return response()->json([
+            'output' => $result['output'],
+            'exit_code' => $result['exit_code'],
+        ]);
+    }
+
     public function destroy(Request $request, SandboxProject $project, SandboxExecutor $executor): JsonResponse
     {
         $this->authorize('delete', $project);

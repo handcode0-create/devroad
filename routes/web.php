@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{project}/start', [SandboxController::class, 'start'])->name('start');
         Route::post('/{project}/stop', [SandboxController::class, 'stop'])->name('stop');
         Route::post('/{project}/restart', [SandboxController::class, 'restart'])->name('restart');
+        Route::post('/{project}/command', [SandboxController::class, 'command'])->middleware('throttle:30,1')->name('command');
         Route::get('/{project}/status', [SandboxController::class, 'status'])->name('status');
     });
 
