@@ -115,3 +115,79 @@
         transition: none;
     }
 }
+
+/*
+ * DevLab — syntax highlighting
+ * PrismJS tokens are styled to match the Luxury Dark editor.
+ */
+@layer components {
+    .devlab-syntax {
+        color: #CBD5E1;
+    }
+
+    .devlab-syntax .token.comment,
+    .devlab-syntax .token.prolog,
+    .devlab-syntax .token.doctype,
+    .devlab-syntax .token.cdata {
+        color: #64748B;
+        font-style: italic;
+    }
+
+    .devlab-syntax .token.punctuation {
+        color: #94A3B8;
+    }
+
+    .devlab-syntax .token.property,
+    .devlab-syntax .token.tag,
+    .devlab-syntax .token.constant,
+    .devlab-syntax .token.symbol,
+    .devlab-syntax .token.deleted {
+        color: #60A5FA;
+    }
+
+    .devlab-syntax .token.boolean,
+    .devlab-syntax .token.number {
+        color: #FBBF24;
+    }
+
+    .devlab-syntax .token.selector,
+    .devlab-syntax .token.attr-name,
+    .devlab-syntax .token.string,
+    .devlab-syntax .token.char,
+    .devlab-syntax .token.builtin,
+    .devlab-syntax .token.inserted {
+        color: #86EFAC;
+    }
+
+    .devlab-syntax .token.operator,
+    .devlab-syntax .token.entity,
+    .devlab-syntax .token.url {
+        color: #F9A8D4;
+    }
+
+    .devlab-syntax .token.atrule,
+    .devlab-syntax .token.attr-value,
+    .devlab-syntax .token.keyword {
+        color: #C4B5FD;
+    }
+
+    .devlab-syntax .token.function,
+    .devlab-syntax .token.class-name {
+        color: #67E8F9;
+    }
+
+    .devlab-syntax .token.regex,
+    .devlab-syntax .token.important,
+    .devlab-syntax .token.variable {
+        color: #FDBA74;
+    }
+
+    .devlab-syntax .token.important,
+    .devlab-syntax .token.bold {
+        font-weight: 700;
+    }
+
+    .devlab-syntax .token.italic {
+        font-style: italic;
+    }
+}

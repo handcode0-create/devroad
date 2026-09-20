@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import Prism from "prismjs";
+import "prismjs/components/prism-jsx";
 import { Check, ChevronDown, Clipboard, FileCode2, Trash2 } from "lucide-react";
 
 const HTML_TAGS = [
@@ -41,6 +43,30 @@ function languageFor(path = "") {
     if (lower.endsWith(".css") || lower.endsWith(".scss")) return "css";
     if (lower.endsWith(".js") || lower.endsWith(".jsx") || lower.endsWith(".mjs") || lower.endsWith(".cjs")) return "javascript";
     return "plain";
+}
+function prismLanguageFor(path = "") {
+    const lower = path.toLowerCase();
+    if (lower.endsWith(".jsx")) return "jsx";
+    if (lower.endsWith(".html") || lower.endsWith(".htm") || lower.endsWith(".blade.php")) return "markup";
+    if (lower.endsWith(".css") || lower.endsWith(".scss")) return "css";
+    if (lower.endsWith(".js") || lower.endsWith(".mjs") || lower.endsWith(".cjs")) return "javascript";
+    return "plain";
+}
+
+function highlightCode(content, path) {
+    const language = prismLanguageFor(path);
+    if (language === "plain" || !Prism.languages[language]) {
+        return escapeHtml(content);
+    }
+
+    return Prism.highlight(content || " ", Prism.languages[language], language);
+}
+
+function escapeHtml(value = "") {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
 
 function completionData(content, cursor, language) {
@@ -132,10 +158,15 @@ export default function CodeEditor({
     const [cursorPosition, setCursorPosition] = useState(0);
     const [completionPosition, setCompletionPosition] = useState({ top: 12, left: 12 });
     const editorContainerRef = useRef(null);
+    const highlightRef = useRef(null);
     const language = useMemo(() => languageFor(activeFile), [activeFile]);
     const completions = useMemo(
         () => completionData(currentFile?.content ?? "", cursorPosition, language),
         [currentFile?.content, cursorPosition, language]
+    );
+    const highlightedCode = useMemo(
+        () => highlightCode(currentFile?.content ?? "", activeFile),
+        [currentFile?.content, activeFile]
     );
 
     function updateCursorState(textarea = editorRef.current) {
@@ -145,6 +176,11 @@ export default function CodeEditor({
         setCursorPosition(cursor);
 
         const value = textarea.value ?? "";
+
+        if (highlightRef.current) {
+            highlightRef.current.style.transform =
+                "translate(" + (-textarea.scrollLeft) + "px, " + (-textarea.scrollTop) + "px)";
+        }
         const beforeCursor = value.slice(0, cursor);
         const lineIndex = beforeCursor.split("\n").length - 1;
         const columnIndex = beforeCursor.length - (beforeCursor.lastIndexOf("\n") + 1);
@@ -266,25 +302,35 @@ export default function CodeEditor({
                     ))}
                 </div>
 
-                <textarea
-                    ref={editorRef}
-                    value={currentFile?.content ?? ""}
-                    onChange={(event) => {
-                        const textarea = event.currentTarget;
-                        onChange(event.target.value);
-                        requestAnimationFrame(() => updateCursorState(textarea));
-                    }}
-                    onSelect={(event) => updateCursorState(event.currentTarget)}
-                    onClick={(event) => updateCursorState(event.currentTarget)}
-                    onKeyUp={(event) => updateCursorState(event.currentTarget)}
-                    onScroll={(event) => updateCursorState(event.currentTarget)}
-                    onKeyDown={handleKeyDown}
-                    spellCheck={false}
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    className="min-w-0 flex-1 resize-none border-0 bg-[#06101A] p-4 font-mono text-[12px] leading-6 text-slate-300 outline-none focus:ring-0"
-                    aria-label={"Éditeur " + activeFile}
-                />
+                <div className="relative min-w-0 flex-1 overflow-hidden">
+                    <pre
+                        ref={highlightRef}
+                        aria-hidden="true"
+                        className="devlab-syntax pointer-events-none absolute left-0 top-0 m-0 min-w-full whitespace-pre p-4 font-mono text-[12px] leading-6"
+                        style={{ willChange: "transform" }}
+                    ><code dangerouslySetInnerHTML={{ __html: highlightedCode }} /></pre>
+
+                    <textarea
+                        ref={editorRef}
+                        value={currentFile?.content ?? ""}
+                        onChange={(event) => {
+                            const textarea = event.currentTarget;
+                            onChange(event.target.value);
+                            requestAnimationFrame(() => updateCursorState(textarea));
+                        }}
+                        onSelect={(event) => updateCursorState(event.currentTarget)}
+                        onClick={(event) => updateCursorState(event.currentTarget)}
+                        onKeyUp={(event) => updateCursorState(event.currentTarget)}
+                        onScroll={(event) => updateCursorState(event.currentTarget)}
+                        onKeyDown={handleKeyDown}
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        wrap="off"
+                        className="relative z-10 h-full w-full resize-none border-0 bg-transparent p-4 font-mono text-[12px] leading-6 text-transparent caret-[#FF6A00] outline-none selection:bg-[#FF6A00]/20 selection:text-transparent focus:ring-0"
+                        aria-label={"Éditeur " + activeFile}
+                    />
+                </div>
 
                 {completions && (
                     <div
