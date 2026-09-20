@@ -196,16 +196,45 @@ class SandboxController extends Controller
             ], $this->runtimeStatus()));
         }
 
+        $phase = $project->metadata['startup_phase'] ?? null;
+        $providerId = $project->metadata['daytona_sandbox_id'] ?? null;
+
+        if ($project->status === 'error' && ! empty($project->metadata['startup_error'])) {
+            return response()->json([
+                'project' => $project,
+                'runtime_available' => true,
+                'phase' => $phase,
+                'error' => $project->metadata['startup_error'],
+            ]);
+        }
+
+        if ($project->status === 'starting' && (! is_string($providerId) || $providerId === '')) {
+            return response()->json([
+                'project' => $project,
+                'runtime_available' => true,
+                'phase' => $phase ?? 'provisioning',
+                'error' => null,
+            ]);
+        }
+
         try {
             $instance = $executor->status($project);
         } catch (SandboxRuntimeUnavailable) {
             return response()->json([
                 'project' => $project,
                 'runtime_available' => false,
+                'phase' => $phase,
             ]);
         }
 
-        $project->updateQuietly(['status' => $instance->status]);
+        $remoteStatus = $instance->status;
+        $keepStarting = $project->status === 'starting'
+            && $remoteStatus === 'running'
+            && $phase !== 'ready';
+
+        if (! $keepStarting) {
+            $project->updateQuietly(['status' => $remoteStatus]);
+        }
 
         $freshProject = $project->fresh();
 
@@ -213,7 +242,7 @@ class SandboxController extends Controller
             'project' => $freshProject,
             'instance' => $instance,
             'runtime_available' => true,
-            'phase' => $freshProject->metadata['startup_phase'] ?? null,
+            'phase' => $freshProject->metadata['startup_phase'] ?? $phase,
             'error' => $freshProject->status === 'error'
                 ? ($freshProject->metadata['startup_error'] ?? null)
                 : null,

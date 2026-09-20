@@ -160,6 +160,104 @@ class SandboxProjectTest extends TestCase
         ]);
     }
 
+    public function test_daytona_attend_que_le_sandbox_soit_pret_avant_d_installer_le_template(): void
+    {
+        config()->set('sandbox.enabled', true);
+        config()->set('sandbox.driver', 'daytona');
+        config()->set('sandbox.api_key', 'test-key');
+        config()->set('sandbox.default_region', 'us');
+        config()->set('sandbox.resources', [
+            'cpu' => 2,
+            'memory' => 4,
+            'disk' => 8,
+        ]);
+
+        $statusCalls = 0;
+
+        Http::fake(function ($request) use (&$statusCalls) {
+            if ($request->method() === 'POST' && $request->url() === 'https://app.daytona.io/api/sandbox') {
+                return Http::response([
+                    'id' => 'sbx_wait',
+                    'state' => 'starting',
+                    'target' => 'us',
+                    'cpu' => 2,
+                    'memory' => 4,
+                    'disk' => 8,
+                    'toolboxProxyUrl' => 'https://proxy.app.daytona.io/toolbox/sbx_wait',
+                ], 200);
+            }
+
+            if ($request->method() === 'GET' && $request->url() === 'https://app.daytona.io/api/sandbox/sbx_wait') {
+                $statusCalls++;
+
+                return Http::response([
+                    'id' => 'sbx_wait',
+                    'state' => $statusCalls === 1 ? 'starting' : 'started',
+                    'target' => 'us',
+                    'cpu' => 2,
+                    'memory' => 4,
+                    'disk' => 8,
+                    'toolboxProxyUrl' => 'https://proxy.app.daytona.io/toolbox/sbx_wait',
+                ], 200);
+            }
+
+            if (str_ends_with($request->url(), '/process/execute')) {
+                return Http::response([
+                    'result' => '',
+                    'exitCode' => 0,
+                ], 200);
+            }
+
+            if (str_ends_with($request->url(), '/process/session')) {
+                return Http::response([], 200);
+            }
+
+            if (str_ends_with($request->url(), '/process/session/devroad-server/exec')) {
+                return Http::response([
+                    'cmdId' => 'cmd_wait',
+                ], 200);
+            }
+
+            if (str_contains($request->url(), '/signed-preview-url')) {
+                return Http::response([
+                    'url' => 'https://preview.test/sbx_wait',
+                    'token' => 'preview-token',
+                ], 200);
+            }
+
+            return Http::response([], 404);
+        });
+
+        $user = User::factory()->create();
+        $project = $user->sandboxProjects()->create([
+            'name' => 'React Daytona',
+            'template' => 'react',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'starting',
+        ]);
+
+        $instance = app(\App\Services\Sandbox\DaytonaSandboxExecutor::class)->start($project);
+
+        $this->assertSame('running', $instance->status);
+        $this->assertSame(2, $statusCalls);
+        $this->assertDatabaseHas('sandbox_projects', [
+            'id' => $project->id,
+            'status' => 'running',
+            'preview_url' => 'https://preview.test/sbx_wait',
+        ]);
+
+        Http::assertSent(function ($request) {
+            return $request->method() === 'POST'
+                && $request->url() === 'https://app.daytona.io/api/sandbox'
+                && $request->data()['cpu'] === 2
+                && $request->data()['memory'] === 4
+                && $request->data()['disk'] === 8
+                && ! array_key_exists('resources', $request->data());
+        });
+    }
+
+
     public function test_une_commande_est_executee_uniquement_dans_le_sandbox_daytona(): void
     {
         config()->set('sandbox.enabled', true);
