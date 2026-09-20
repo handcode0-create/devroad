@@ -49,12 +49,58 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
         }
     }
 
+    async function refreshProject(project) {
+        const data = await request("/sandbox/projects/" + project.id + "/status");
+        setItems((current) => current.map((item) => item.id === project.id ? { ...item, ...data.project } : item));
+
+        if (data.error) {
+            setMessage(data.error);
+        }
+
+        return data.project;
+    }
+
+    async function waitForStartup(projectId) {
+        const startedAt = Date.now();
+
+        while (Date.now() - startedAt < 20 * 60 * 1000) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            try {
+                const data = await request("/sandbox/projects/" + projectId + "/status");
+                setItems((current) => current.map((item) => item.id === projectId ? { ...item, ...data.project } : item));
+
+                if (data.project.status === "running") {
+                    setMessage("Environnement prêt.");
+                    return;
+                }
+
+                if (data.project.status === "error") {
+                    setMessage(data.error || "La préparation du Sandbox a échoué.");
+                    return;
+                }
+            } catch (error) {
+                setMessage(error.message);
+                return;
+            }
+        }
+
+        setMessage("Le démarrage du Sandbox prend trop de temps. Vérifie son état avant de relancer.");
+    }
+
     async function run(project, action) {
         setLoading(true);
         setMessage("");
         try {
             const data = await request("/sandbox/projects/" + project.id + "/" + action, { method: "POST" });
             setItems((current) => current.map((item) => item.id === project.id ? { ...item, ...data.project } : item));
+
+            if (action === "start" && data.queued) {
+                setMessage("Préparation de l’environnement…");
+                setLoading(false);
+                await waitForStartup(project.id);
+                return;
+            }
         } catch (error) {
             setMessage(error.message);
         } finally {
@@ -168,12 +214,16 @@ export default function Index({ projects = [], templates = {}, runtime_enabled =
                                         <button onClick={() => run(project, "stop")} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-white/[0.06] text-xs font-semibold text-slate-200">
                                             <CircleStop size={15} /> Arrêter
                                         </button>
+                                    ) : project.status === "starting" ? (
+                                        <div className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] text-xs font-semibold text-[#FFB078]">
+                                            <LoaderCircle size={15} className="animate-spin" /> Compilation…
+                                        </div>
                                     ) : (
                                         <button onClick={() => run(project, "start")} disabled={loading} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] text-xs font-bold text-[#08111F] disabled:opacity-50">
                                             {loading ? <LoaderCircle size={15} className="animate-spin" /> : <Play size={15} />} Démarrer
                                         </button>
                                     )}
-                                    <button onClick={() => run(project, "restart")} disabled={loading} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-white/[0.06] text-slate-300" aria-label="Redémarrer">
+                                    <button onClick={() => run(project, "restart")} disabled={loading || project.status === "starting"} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-white/[0.06] text-slate-300" aria-label="Redémarrer">
                                         <RotateCcw size={15} />
                                     </button>
                                     <button onClick={() => remove(project)} disabled={loading} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-red-500/[0.06] text-red-300" aria-label="Supprimer">
