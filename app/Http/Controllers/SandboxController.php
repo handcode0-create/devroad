@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\SandboxExecutor;
 use App\Exceptions\SandboxRuntimeUnavailable;
 use App\Models\SandboxProject;
+use App\Jobs\StartSandboxJob;
 use App\Services\Sandbox\SandboxTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -224,6 +225,30 @@ class SandboxController extends Controller
 
         if (! config('sandbox.enabled')) {
             return $this->runtimeUnavailable();
+        }
+
+        if ($action === 'start') {
+            if (in_array($project->status, ['starting', 'running'], true)) {
+                return response()->json([
+                    'project' => $project->fresh(),
+                    'queued' => false,
+                ], 200);
+            }
+
+            $project->update([
+                'status' => 'starting',
+                'last_started_at' => now(),
+                'metadata' => array_merge($project->metadata ?? [], [
+                    'startup_error' => null,
+                ]),
+            ]);
+
+            StartSandboxJob::dispatch($project->id);
+
+            return response()->json([
+                'project' => $project->fresh(),
+                'queued' => true,
+            ], 202);
         }
 
         try {
