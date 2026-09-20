@@ -191,3 +191,90 @@
         font-style: italic;
     }
 }
+
+
+/*
+ * DevRoad — light theme
+ * The orange brand accent remains unchanged; structural dark surfaces
+ * become neutral light surfaces when the user enables « Mode clair ».
+ */
+@layer base {
+    html[data-theme='light'],
+    html[data-theme='light'] body {
+        background: #F8FAFC;
+        color: #0F172A;
+        color-scheme: light;
+    }
+}
+
+@layer components {
+    .theme-light {
+        background: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+
+    .theme-light .bg-\[\#08111F\] {
+        background-color: #F8FAFC !important;
+    }
+
+    .theme-light .bg-\[\#0D1725\] {
+        background-color: #FFFFFF !important;
+    }
+
+    .theme-light .bg-\[\#101A2A\] {
+        background-color: #F1F5F9 !important;
+    }
+
+    .theme-light .bg-white\/\[0\.02\],
+    .theme-light .bg-white\/\[0\.03\],
+    .theme-light .bg-white\/\[0\.04\],
+    .theme-light .bg-white\/\[0\.06\] {
+        background-color: rgba(15, 23, 42, 0.035) !important;
+    }
+
+    .theme-light .border-white\/\[0\.06\],
+    .theme-light .border-white\/\[0\.07\],
+    .theme-light .border-white\/\[0\.08\],
+    .theme-light .border-white\/10 {
+        border-color: rgba(15, 23, 42, 0.10) !important;
+    }
+
+    .theme-light .text-white {
+        color: #0F172A !important;
+    }
+
+    .theme-light .text-slate-200 {
+        color: #334155 !important;
+    }
+
+    .theme-light .text-slate-300 {
+        color: #475569 !important;
+    }
+
+    .theme-light .text-slate-400 {
+        color: #64748B !important;
+    }
+
+    .theme-light .text-slate-500 {
+        color: #64748B !important;
+    }
+
+    .theme-light .text-slate-600 {
+        color: #475569 !important;
+    }
+
+    .theme-light .text-slate-700 {
+        color: #334155 !important;
+    }
+
+    .theme-light input,
+    .theme-light select,
+    .theme-light textarea {
+        color: #0F172A;
+    }
+
+    .theme-light input::placeholder,
+    .theme-light textarea::placeholder {
+        color: #94A3B8;
+    }
+}
