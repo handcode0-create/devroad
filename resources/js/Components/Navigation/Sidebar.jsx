@@ -5,6 +5,7 @@ import {
     CircleUserRound,
     FileText,
     Code2,
+    Box,
     LayoutDashboard,
     Plus,
     Search,
@@ -36,6 +37,11 @@ export default function Sidebar({ user }) {
             label: "DevLab",
             href: "/devlab",
             icon: Code2,
+        },
+        {
+            label: "Sandbox",
+            href: "/sandbox",
+            icon: Box,
         },
         {
             label: "Recherche",

@@ -1,0 +1,119 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class SandboxProjectTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_un_visiteur_ne_peut_pas_acceder_au_sandbox(): void
+    {
+        $this->get('/sandbox')->assertRedirect('/login');
+        $this->postJson('/sandbox/projects', [
+            'name' => 'React App',
+            'template' => 'react',
+        ])->assertUnauthorized();
+    }
+
+    public function test_un_projet_sandbox_est_cree_avec_un_template_valide(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/sandbox/projects', [
+                'name' => 'Mon Next',
+                'template' => 'nextjs',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('project.name', 'Mon Next')
+            ->assertJsonPath('project.template', 'nextjs')
+            ->assertJsonPath('project.runtime', 'node')
+            ->assertJsonPath('project.runtime_version', '22')
+            ->assertJsonPath('project.status', 'stopped');
+
+        $this->assertDatabaseHas('sandbox_projects', [
+            'user_id' => $user->id,
+            'name' => 'Mon Next',
+            'template' => 'nextjs',
+        ]);
+    }
+
+    public function test_un_template_invalide_est_refuse(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/sandbox/projects', [
+                'name' => 'Projet invalide',
+                'template' => 'python',
+            ])
+            ->assertStatus(422);
+
+        $this->assertDatabaseCount('sandbox_projects', 0);
+    }
+
+    public function test_un_utilisateur_ne_peut_pas_acceder_au_sandbox_d_un_autre(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+
+        $project = $owner->sandboxProjects()->create([
+            'name' => 'Privé',
+            'template' => 'react',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'stopped',
+        ]);
+
+        $this->actingAs($intruder)
+            ->getJson('/sandbox/projects/' . $project->id)
+            ->assertForbidden();
+
+        $this->actingAs($intruder)
+            ->postJson('/sandbox/projects/' . $project->id . '/start')
+            ->assertForbidden();
+    }
+
+    public function test_le_demarrage_reste_desactive_tant_que_le_runtime_n_est_pas_configure(): void
+    {
+        $user = User::factory()->create();
+
+        $project = $user->sandboxProjects()->create([
+            'name' => 'React',
+            'template' => 'react',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'stopped',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/sandbox/projects/' . $project->id . '/start')
+            ->assertStatus(503)
+            ->assertJsonPath('runtime_available', false);
+
+        $this->assertDatabaseHas('sandbox_projects', [
+            'id' => $project->id,
+            'status' => 'stopped',
+        ]);
+    }
+
+    public function test_la_page_sandbox_expose_les_templates_et_l_etat_du_runtime(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/sandbox')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Sandbox/Index')
+                ->has('templates.react')
+                ->has('templates.nextjs')
+                ->has('templates.laravel')
+                ->where('runtime_enabled', false)
+            );
+    }
+}
