@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RoadmapStep extends Model
 {
@@ -45,6 +46,11 @@ class RoadmapStep extends Model
         'exercise_completed_at' => 'datetime',
         'last_viewed_at' => 'datetime',
     ];
+
+    public function devLabProject(): HasOne
+    {
+        return $this->hasOne(DevLabProject::class);
+    }
 
     public function roadmap(): BelongsTo
     {
