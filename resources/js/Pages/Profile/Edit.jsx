@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Bell,
     CircleHelp,
@@ -86,6 +86,16 @@ export default function Edit({
     };
 
     const preferencesSaved = status === 'preferences-updated';
+
+    const toggleLightMode = (value) => {
+        setData('light_mode', value);
+        document.documentElement.dataset.theme = value ? 'light' : 'dark';
+
+        router.patch(route('profile.theme'), { light_mode: value }, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
 
     return (
         <AppLayout>
@@ -217,7 +227,7 @@ export default function Edit({
                                 title="Mode clair"
                                 description="Utiliser une interface claire au lieu du thème sombre."
                                 checked={Boolean(data.light_mode)}
-                                onChange={(value) => setData('light_mode', value)}
+                                onChange={toggleLightMode}
                             />
                         </div>
 

@@ -117,6 +117,26 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
     }
 
+    public function test_light_mode_can_be_toggled_without_submitting_other_preferences(): void
+    {
+        $user = User::factory()->create([
+            'light_mode' => false,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile/theme', [
+                'light_mode' => true,
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'theme-updated')
+            ->assertRedirect('/profile');
+
+        $this->assertTrue($user->refresh()->light_mode);
+    }
+
     public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();
