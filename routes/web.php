@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('roadmaps.steps', RoadmapStepController::class)->only(['store', 'update', 'destroy'])->shallow();
     Route::get('steps/{step}', [RoadmapStepController::class, 'show'])->name('steps.show');
     Route::patch('steps/{step}/status', [RoadmapStepController::class, 'updateStatus'])->name('steps.status');
+    Route::patch('steps/{step}/exercise', [RoadmapStepController::class, 'updateExercise'])->name('steps.exercise');
     Route::post('steps/{step}/run', [RoadmapStepController::class, 'runCode'])->name('steps.run');
     Route::post('steps/{step}/memo', [MemoController::class, 'storeFromStep'])->name('steps.memo');
     Route::resource('memos', MemoController::class);
