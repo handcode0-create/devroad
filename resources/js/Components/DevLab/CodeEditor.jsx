@@ -46,10 +46,10 @@ function languageFor(path = "") {
 function completionData(content, cursor, language) {
     if (language === "html") {
         const before = content.slice(0, cursor);
-        const match = before.match(/<\\/?([A-Za-z][\\w-]*)?$/);
+        const match = before.match(/<\/?([A-Za-z][\w-]*)?$/);
         if (!match) return null;
 
-        const closing = before.endsWith("</") || /<\\/[^>]*$/.test(before);
+        const closing = before.endsWith("</") || /<\/[^>]*$/.test(before);
         const query = match[1] ?? "";
         const items = HTML_TAGS.filter((tag) => tag.startsWith(query.toLowerCase())).slice(0, 8);
         if (!items.length) return null;
@@ -73,7 +73,7 @@ function completionData(content, cursor, language) {
         const blockEnd = before.lastIndexOf("}");
         if (blockStart < blockEnd) return null;
 
-        const match = before.match(/(?:^|[;{\\s])([A-Za-z-]*)$/);
+        const match = before.match(/(?:^|[;{\s])([A-Za-z-]*)$/);
         if (!match) return null;
         const query = match[1] ?? "";
         const items = CSS_PROPERTIES.filter((property) => property.startsWith(query.toLowerCase())).slice(0, 8);
@@ -92,7 +92,7 @@ function completionData(content, cursor, language) {
 
     if (language === "javascript") {
         const before = content.slice(0, cursor);
-        const match = before.match(/(?:^|[\\s.(,=;:{}])([A-Za-z_$][\\w$]*)$/);
+        const match = before.match(/(?:^|[\s.(,=;:{}])([A-Za-z_$][\w$]*)$/);
         if (!match) return null;
         const query = match[1] ?? "";
         if (query.length < 1) return null;
