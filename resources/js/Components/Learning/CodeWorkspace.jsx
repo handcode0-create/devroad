@@ -1,21 +1,20 @@
 import {
     Check,
-    ChevronDown,
-    Clipboard,
     Code2,
     Eye,
-    FileCode2,
     FilePlus2,
-    Folder,
-    FolderOpen,
     Play,
     RotateCcw,
     Save,
     Terminal,
-    Trash2,
-    Upload,
     X,
 } from "lucide-react";
+
+import CodeEditor from "@/Components/DevLab/CodeEditor";
+import EditorTabs from "@/Components/DevLab/EditorTabs";
+import FileExplorer from "@/Components/DevLab/FileExplorer";
+import PreviewPane from "@/Components/DevLab/PreviewPane";
+import TerminalPanel from "@/Components/DevLab/TerminalPanel";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const TERMINAL_HELP = {
@@ -837,147 +836,34 @@ export default function CodeWorkspace({ workspace, stepId }) {
                     </div>
                 </div>
 
-                <div className="flex gap-1 overflow-x-auto">
-                    {files.map((file) => (
-                        <button
-                            key={file.path}
-                            type="button"
-                            onClick={() => setActiveFile(file.path)}
-                            className={[
-                                "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold",
-                                activeFile === file.path
-                                    ? "bg-[#FF6A00] text-[#08111F]"
-                                    : "bg-white/[0.03] text-slate-500 hover:text-white",
-                            ].join(" ")}
-                        >
-                            <FileCode2 size={13} />
-                            {file.path}
-                        </button>
-                    ))}
-
-                    <button
-                        type="button"
-                        onClick={openCreateFileModal}
-                        className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[#FF8A3D]"
-                        aria-label="Nouveau fichier"
-                        title="Nouveau fichier"
-                    >
-                        <FilePlus2 size={14} />
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => importInputRef.current?.click()}
-                        className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[#FF8A3D]"
-                        aria-label="Importer des fichiers"
-                        title="Importer des fichiers"
-                    >
-                        <Upload size={14} />
-                    </button>
-                </div>
+                <EditorTabs
+                    files={files}
+                    activeFile={activeFile}
+                    onSelect={setActiveFile}
+                    onCreate={openCreateFileModal}
+                    onImport={() => importInputRef.current?.click()}
+                />
             </div>
 
             <div className="grid lg:grid-cols-[210px_minmax(0,1fr)]">
-                <aside className="hidden border-r border-white/[0.06] bg-[#07101A] lg:block">
-                    <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-3">
-                        <div className="flex items-center gap-2">
-                            <FolderOpen size={14} className="text-[#FF8A3D]" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">
-                                Explorateur
-                            </span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                            <button
-                                type="button"
-                                onClick={openCreateFileModal}
-                                className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.04] hover:text-white"
-                                aria-label="Créer un fichier"
-                                title="Créer un fichier"
-                            >
-                                <FilePlus2 size={14} />
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => importInputRef.current?.click()}
-                                className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.04] hover:text-[#FF8A3D]"
-                                aria-label="Importer des fichiers"
-                                title="Importer des fichiers"
-                            >
-                                <Upload size={14} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="max-h-[540px] overflow-y-auto p-2">
-                        {files.map((file) => (
-                            <button
-                                key={file.path}
-                                type="button"
-                                onClick={() => setActiveFile(file.path)}
-                                className={[
-                                    "mb-1 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[11px]",
-                                    activeFile === file.path
-                                        ? "bg-[#FF6A00]/10 text-[#FF8A3D]"
-                                        : "text-slate-500 hover:bg-white/[0.03] hover:text-white",
-                                ].join(" ")}
-                            >
-                                <Folder size={12} className="shrink-0" />
-                                <span className="truncate">{file.path}</span>
-                            </button>
-                        ))}
-                    </div>
-                </aside>
+                <FileExplorer
+                    files={files}
+                    activeFile={activeFile}
+                    onSelect={setActiveFile}
+                    onCreate={openCreateFileModal}
+                    onImport={() => importInputRef.current?.click()}
+                />
 
                 <div className="min-w-0">
-                    <div className="flex items-center justify-between border-b border-white/[0.05] bg-[#0D1725] px-3 py-2">
-                        <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                            <FileCode2 size={12} />
-                            {activeFile}
-                            <span>{lineCount} lignes</span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                            <button
-                                type="button"
-                                onClick={copyCode}
-                                className="rounded-lg p-2 text-slate-600 hover:bg-white/[0.05] hover:text-white"
-                                aria-label="Copier"
-                            >
-                                {copied ? <Check size={13} /> : <Clipboard size={13} />}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={deleteFile}
-                                className="rounded-lg p-2 text-slate-600 hover:bg-red-500/10 hover:text-red-400"
-                                aria-label="Supprimer le fichier"
-                            >
-                                <Trash2 size={13} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex h-[390px] bg-[#06101A]">
-                        <div className="w-11 shrink-0 overflow-hidden border-r border-white/[0.04] bg-[#08111C] py-3 text-right font-mono text-[10px] leading-6 text-slate-700">
-                            {Array.from({ length: lineCount }, (_, index) => (
-                                <div key={index} className="pr-2">
-                                    {index + 1}
-                                </div>
-                            ))}
-                        </div>
-
-                        <textarea
-                            value={currentFile?.content ?? ""}
-                            onChange={(event) =>
-                                updateCurrentFile(event.target.value)
-                            }
-                            spellCheck={false}
-                            className="min-w-0 flex-1 resize-none border-0 bg-[#06101A] p-4 font-mono text-[12px] leading-6 text-slate-300 outline-none focus:ring-0"
-                            aria-label={"Éditeur " + activeFile}
-                        />
-                    </div>
+                    <CodeEditor
+                        activeFile={activeFile}
+                        currentFile={currentFile}
+                        lineCount={lineCount}
+                        copied={copied}
+                        onChange={updateCurrentFile}
+                        onCopy={copyCode}
+                        onDelete={deleteFile}
+                    />
 
                     <div className="flex items-center justify-between border-t border-white/[0.05] bg-[#08111C] px-3 py-2">
                         <div className="flex gap-1">
@@ -1018,89 +904,20 @@ export default function CodeWorkspace({ workspace, stepId }) {
                     </div>
 
                     {panel === "terminal" ? (
-                        <div className="flex min-h-[250px] flex-col bg-[#050B12]">
-                            <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-6 text-slate-400">
-                                {terminal.map((line, index) => (
-                                    <pre
-                                        key={index}
-                                        className="whitespace-pre-wrap break-words"
-                                    >
-                                        {line}
-                                    </pre>
-                                ))}
-                                <div ref={terminalEndRef} />
-                            </div>
-
-                            <form
-                                onSubmit={submitCommand}
-                                className="border-t border-white/[0.05] bg-[#07101A] p-3"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono text-xs text-[#FF8A3D]">
-                                        $
-                                    </span>
-                                    <input
-                                        value={command}
-                                        onChange={(event) =>
-                                            setCommand(event.target.value)
-                                        }
-                                        placeholder="help"
-                                        className="min-w-0 flex-1 border-0 bg-transparent px-0 py-2 font-mono text-xs text-white outline-none placeholder:text-slate-700 focus:ring-0"
-                                        aria-label="Commande du terminal"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="rounded-lg p-2 text-slate-600 hover:bg-white/[0.05] hover:text-white"
-                                        aria-label="Exécuter"
-                                    >
-                                        <ChevronDown
-                                            size={15}
-                                            className="rotate-[-90deg]"
-                                        />
-                                    </button>
-                                </div>
-                            </form>
-
-                            <div className="flex items-center justify-between border-t border-white/[0.05] px-4 py-2 text-[10px] text-slate-700">
-                                <span>Shell pédagogique</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setTerminal([])}
-                                    className="inline-flex items-center gap-1 hover:text-slate-400"
-                                >
-                                    <Trash2 size={11} />
-                                    Effacer
-                                </button>
-                            </div>
-                        </div>
+                        <TerminalPanel
+                            terminal={terminal}
+                            command={command}
+                            onCommandChange={setCommand}
+                            onSubmit={submitCommand}
+                            onClear={() => setTerminal([])}
+                            terminalEndRef={terminalEndRef}
+                        />
                     ) : (
-                        <div className="bg-[#050B12] p-2">
-                            <div className="mb-2 flex items-center justify-between px-2">
-                                <div className="flex items-center gap-2">
-                                    <Eye size={13} className="text-[#FF8A3D]" />
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                                        Aperçu
-                                    </span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={runPreview}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-2.5 py-2 text-[10px] font-bold text-[#08111F]"
-                                >
-                                    <Play size={11} fill="currentColor" />
-                                    Actualiser
-                                </button>
-                            </div>
-
-                            <iframe
-                                key={previewVersion}
-                                title="Prévisualisation DevRoad"
-                                sandbox="allow-scripts"
-                                srcDoc={buildPreviewDocument()}
-                                className="h-[420px] w-full rounded-2xl border border-white/[0.06] bg-white"
-                            />
-                        </div>
+                        <PreviewPane
+                            previewVersion={previewVersion}
+                            srcDoc={buildPreviewDocument()}
+                            onRefresh={runPreview}
+                        />
                     )}
                 </div>
             </div>
@@ -1201,7 +1018,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                     </div>
                 </div>
             )}
-
         </section>
     );
+
 }
