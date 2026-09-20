@@ -54,7 +54,29 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
    <button onClick={()=>setCreate(true)} className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 text-xs font-bold text-[#08111F]"><Plus size={15}/> Nouveau</button>
   </header>
   {error&&<div className="absolute left-1/2 top-16 z-[70] -translate-x-1/2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-xs text-red-300">{error}<button onClick={()=>setError("")} className="ml-3"><X size={13}/></button></div>}
-  {project?<DevLabWorkspace project={project} onSave={saveFile} onNewFile={newFile} onDelete={deleteFile} onImportFiles={async (files) => {\n   for (const file of files) {\n    const existing = project.files?.find((item) => item.path === file.path);\n    if (existing) await saveFile(existing, { path: existing.path, content: file.content });\n    else { const response = await request(API + "/" + project.id + "/files", { method: "POST", body: JSON.stringify(file) }); setProject((current) => ({ ...current, files: [...current.files, response.file].sort((a,b) => a.path.localeCompare(b.path)) })); }\n   }\n }} />:<ProjectHome projects={projects} loading={loading} onOpen={open} onCreate={()=>setCreate(true)}/>}
+  {project?<DevLabWorkspace
+    project={project}
+    onSave={saveFile}
+    onNewFile={newFile}
+    onDelete={deleteFile}
+    onImportFiles={async (files) => {
+      for (const file of files) {
+        const existing = project.files?.find((item) => item.path === file.path);
+        if (existing) {
+          await saveFile(existing, { path: existing.path, content: file.content });
+        } else {
+          const response = await request(API + "/" + project.id + "/files", {
+            method: "POST",
+            body: JSON.stringify(file),
+          });
+          setProject((current) => ({
+            ...current,
+            files: [...current.files, response.file].sort((a, b) => a.path.localeCompare(b.path)),
+          }));
+        }
+      }
+    }}
+  />:<ProjectHome projects={projects} loading={loading} onOpen={open} onCreate={()=>setCreate(true)}/>}
   {drawer&&<Drawer projects={projects} onClose={()=>setDrawer(false)} onOpen={open} onCreate={()=>{setDrawer(false);setCreate(true)}}/>}
   {create&&<CreateModal loading={loading} onClose={()=>setCreate(false)} onCreate={createProject}/>}
  </div>;
