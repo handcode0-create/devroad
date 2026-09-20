@@ -83,6 +83,71 @@ class DevLabProjectTest extends TestCase
         $this->assertDatabaseCount('devlab_projects', 0);
     }
 
+    public function test_une_etape_peut_ouvrir_un_projet_devlab_lie(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create([
+            'title' => 'Laravel',
+            'technology' => 'laravel',
+            'status' => 'active',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'Installer Laravel',
+            'position' => 1,
+            'status' => 'in_progress',
+            'code_example' => "<?php\\n\\necho 'DevRoad';",
+            'workspace_language' => 'php',
+            'workspace_file' => 'main.php',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->postJson(route('devlab.projects.for-step', $step));
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('created', true)
+            ->assertJsonPath('project.roadmap_step_id', $step->id)
+            ->assertJsonPath('project.template', 'php');
+
+        $projectId = $response->json('project.id');
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.for-step', $step))
+            ->assertOk()
+            ->assertJsonPath('created', false)
+            ->assertJsonPath('project.id', $projectId);
+
+        $this->assertDatabaseCount('devlab_projects', 1);
+        $this->assertDatabaseHas('devlab_files', [
+            'devlab_project_id' => $projectId,
+            'path' => 'main.php',
+            'content' => "<?php\\n\\necho 'DevRoad';",
+        ]);
+    }
+
+    public function test_un_utilisateur_ne_peut_pas_lier_un_projet_a_une_etape_dun_autre(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+
+        $roadmap = $owner->roadmaps()->create([
+            'title' => 'PHP',
+            'technology' => 'php',
+            'status' => 'active',
+        ]);
+        $step = $roadmap->steps()->create([
+            'title' => 'PHP',
+            'position' => 1,
+            'status' => 'in_progress',
+        ]);
+
+        $this->actingAs($intruder)
+            ->postJson(route('devlab.projects.for-step', $step))
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('devlab_projects', 0);
+    }
+
     public function test_un_projet_peut_etre_renomme_et_duplique(): void
     {
         $user = User::factory()->create();

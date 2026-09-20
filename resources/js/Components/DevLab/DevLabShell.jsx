@@ -7,10 +7,11 @@ import PreviewPane from "@/Components/DevLab/PreviewPane";
 
 const API="/devlab/projects";
 
-export default function DevLabShell({ initialProjects=[] }) {
+export default function DevLabShell({ initialProjects=[], initialProjectId=null }) {
  const [projects,setProjects]=useState(initialProjects),[project,setProject]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState(""),[create,setCreate]=useState(false),[drawer,setDrawer]=useState(false);
  async function request(url,options={}){const r=await fetch(url,{...options,headers:{Accept:"application/json","X-Requested-With":"XMLHttpRequest","X-CSRF-TOKEN":document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")??"",...(options.body?{"Content-Type":"application/json"}:{}),...(options.headers??{})}});const d=r.status===204?{}:await r.json();if(!r.ok)throw Error(d.message||"Une erreur est survenue.");return d}
  useEffect(()=>{void migrateLegacyWorkspaces()},[]);
+ useEffect(()=>{if(initialProjectId){void open(initialProjectId)}},[initialProjectId]);
 
  async function migrateLegacyWorkspaces(){
   if(typeof window==="undefined")return;

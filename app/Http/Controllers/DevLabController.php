@@ -72,6 +72,7 @@ class DevLabController extends Controller
 
         return Inertia::render('DevLab/Index', [
             'projects' => $projects,
+            'open_project_id' => $request->integer('project') ?: null,
 
             'roadmaps' => $roadmaps,
             'active_roadmap' => $selectedRoadmap

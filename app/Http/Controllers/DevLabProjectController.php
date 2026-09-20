@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DevLabFile;
 use App\Models\DevLabProject;
+use App\Models\RoadmapStep;
 use App\Services\DevLabProjectTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -69,6 +70,91 @@ class DevLabProjectController extends Controller
         $this->authorize('delete', $project);
         $project->delete();
         return response()->json([], 204);
+    }
+
+    public function openForStep(
+        Request $request,
+        RoadmapStep $step,
+        DevLabProjectTemplateService $templates
+    ): JsonResponse {
+        $this->authorize('view', $step);
+
+        $project = $request->user()
+            ->devLabProjects()
+            ->where('roadmap_step_id', $step->id)
+            ->with('files')
+            ->first();
+
+        if ($project) {
+            $project->updateQuietly(['last_opened_at' => now()]);
+
+            return response()->json([
+                'project' => $project->fresh()->load('files'),
+                'created' => false,
+            ]);
+        }
+
+        $template = match ($step->workspace_language ?? $step->roadmap->technology) {
+            'laravel' => 'laravel',
+            'php' => 'php',
+            'node' => 'node',
+            default => 'html',
+        };
+
+        $files = $templates->filesFor($template);
+        $workspacePath = $step->workspace_file ?: match ($template) {
+            'laravel' => 'routes/web.php',
+            'php' => 'main.php',
+            'node' => 'main.js',
+            default => 'index.html',
+        };
+
+        if ($step->code_example) {
+            $replaced = false;
+
+            foreach ($files as &$file) {
+                if ($file['path'] === $workspacePath) {
+                    $file['content'] = $step->code_example;
+                    $replaced = true;
+                    break;
+                }
+            }
+            unset($file);
+
+            if (! $replaced) {
+                $files[] = [
+                    'path' => $workspacePath,
+                    'content' => $step->code_example,
+                ];
+            }
+        }
+
+        $project = DB::transaction(function () use ($request, $step, $template, $templates, $files) {
+            $project = $request->user()->devLabProjects()->create([
+                'name' => 'Étape ' . $step->position . ' — ' . $step->title,
+                'template' => $template,
+                'runtime' => $templates->runtimeFor($template),
+                'description' => 'Workspace DevLab lié à l’étape « ' . $step->title . ' ».',
+                'roadmap_step_id' => $step->id,
+                'last_opened_at' => now(),
+            ]);
+
+            $project->files()->createMany(array_map(
+                fn (array $file) => [
+                    'path' => $file['path'],
+                    'content' => $file['content'],
+                    'size' => strlen($file['content']),
+                ],
+                $files
+            ));
+
+            return $project;
+        });
+
+        return response()->json([
+            'project' => $project->load('files'),
+            'created' => true,
+        ], 201);
     }
 
     public function importLegacy(Request $request): JsonResponse

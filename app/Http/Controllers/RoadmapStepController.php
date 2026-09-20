@@ -27,6 +27,7 @@ class RoadmapStepController extends Controller
 
         $step->load([
             'roadmap',
+            'devLabProject',
         ]);
 
         $roadmap = $step->roadmap;
@@ -89,6 +90,12 @@ class RoadmapStepController extends Controller
                 'content' => $step->content,
                 'code_example' => $step->code_example,
                 'estimated_minutes' => $step->estimated_minutes,
+                'devlab_project' => $step->devLabProject
+                    ? [
+                        'id' => $step->devLabProject->id,
+                        'name' => $step->devLabProject->name,
+                    ]
+                    : null,
                 'workspace' => $this->workspaceFor(
                     $roadmap->technology,
                     $step->code_example,

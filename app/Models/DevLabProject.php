@@ -14,13 +14,18 @@ class DevLabProject extends Model
     public const TEMPLATES = ['html', 'node', 'php', 'laravel'];
     public const RUNTIMES = ['browser', 'server'];
 
-    protected $fillable = ['name', 'template', 'runtime', 'description', 'last_opened_at'];
+    protected $fillable = ['name', 'template', 'runtime', 'description', 'last_opened_at', 'roadmap_step_id'];
 
     protected $casts = ['last_opened_at' => 'datetime'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function roadmapStep(): BelongsTo
+    {
+        return $this->belongsTo(RoadmapStep::class);
     }
 
     public function files(): HasMany

@@ -31,6 +31,7 @@ export default function Show({
     );
     const [showMemoForm, setShowMemoForm] = useState(false);
     const [readingProgress, setReadingProgress] = useState(0);
+    const [devlabOpening, setDevlabOpening] = useState(false);
     const [roadmapCompletedSteps, setRoadmapCompletedSteps] = useState(
         Number(roadmap.completed_steps_count ?? 0),
     );
@@ -70,6 +71,45 @@ export default function Show({
             window.removeEventListener("resize", updateReadingProgress);
         };
     }, []);
+
+    async function openInDevLab() {
+        if (devlabOpening) {
+            return;
+        }
+
+        setDevlabOpening(true);
+
+        try {
+            const response = await fetch(
+                `/devlab/projects/for-step/${step.id}`,
+                {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN":
+                            document
+                                .querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute("content") ?? "",
+                    },
+                },
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.project?.id) {
+                throw new Error(
+                    result.message ?? "Impossible d'ouvrir DevLab.",
+                );
+            }
+
+            window.location.assign(
+                `/devlab?project=${result.project.id}`,
+            );
+        } catch (error) {
+            setDevlabOpening(false);
+        }
+    }
 
     function changeStatus(status) {
         if (statusLoading || status === displayStatus) {
@@ -278,6 +318,40 @@ export default function Show({
                                 <pre className="overflow-x-auto p-5 text-xs leading-6 text-slate-300">
                                     <code>{step.code_example}</code>
                                 </pre>
+                            </section>
+                        )}
+
+                        {step.workspace?.enabled && (
+                            <section className="min-w-0 overflow-hidden rounded-3xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.035] p-5 sm:p-6">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF8A3D]">
+                                            DevLab
+                                        </p>
+                                        <h2 className="mt-1 text-base font-bold text-white">
+                                            Pratique directement dans ton workspace
+                                        </h2>
+                                        <p className="mt-1 text-xs leading-6 text-slate-500">
+                                            {step.devlab_project
+                                                ? `Projet lié : ${step.devlab_project.name}`
+                                                : "Crée automatiquement un projet DevLab lié à cette étape."}
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={openInDevLab}
+                                        disabled={devlabOpening}
+                                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] shadow-[0_8px_22px_rgba(255,106,0,0.18)] transition hover:bg-[#ff781a] disabled:cursor-wait disabled:opacity-60"
+                                    >
+                                        <Code2 size={16} />
+                                        {devlabOpening
+                                            ? "Ouverture..."
+                                            : step.devlab_project
+                                              ? "Continuer dans DevLab"
+                                              : "Ouvrir dans DevLab"}
+                                    </button>
+                                </div>
                             </section>
                         )}
 
