@@ -10,6 +10,8 @@ class DevLabFile extends Model
 {
     use HasFactory;
 
+    protected $table = 'devlab_files';
+
     protected $fillable = ['path', 'content', 'size'];
 
     protected $casts = ['size' => 'integer'];

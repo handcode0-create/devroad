@@ -14,6 +14,8 @@ class DevLabProject extends Model
     public const TEMPLATES = ['html', 'node', 'php', 'laravel'];
     public const RUNTIMES = ['browser', 'server'];
 
+    protected $table = 'devlab_projects';
+
     protected $fillable = ['name', 'template', 'runtime', 'description', 'last_opened_at', 'roadmap_step_id'];
 
     protected $casts = ['last_opened_at' => 'datetime'];
