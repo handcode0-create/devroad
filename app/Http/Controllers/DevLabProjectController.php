@@ -166,7 +166,7 @@ class DevLabProjectController extends Controller
             'template' => ['required', 'string', 'in:' . implode(',', DevLabProject::TEMPLATES)],
             'files' => ['required', 'array', 'min:1', 'max:100'],
             'files.*.path' => ['required', 'string', 'max:180'],
-            'files.*.content' => ['required', 'string', 'max:' . (512 * 1024)],
+            'files.*.content' => ['present', 'string', 'max:' . (512 * 1024)],
         ]);
 
         $paths = [];
@@ -175,14 +175,26 @@ class DevLabProjectController extends Controller
         foreach ($validated['files'] as &$file) {
             $path = str_replace('\\', '/', trim($file['path']));
 
-            if (
-                $path === '' ||
-                str_starts_with($path, '/') ||
-                preg_match('/^[A-Za-z]:\\//', $path) ||
-                str_contains($path, '..') ||
-                preg_match('/(^|\\/)\\.env(?:\\.|$)/i', $path) ||
-                preg_match('/(^|\\/)(?:\\.git|node_modules|vendor|storage)(?:\\/|$)/i', $path)
-            ) {
+            $segments = array_values(array_filter(explode('/', $path), static fn (string $segment): bool => $segment !== ''));
+            $lowerSegments = array_map('strtolower', $segments);
+            $isWindowsAbsolute = strlen($path) >= 3
+                && $path[1] === ':'
+                && $path[2] === '/'
+                && ctype_alpha($path[0]);
+
+            $blocked = array_reduce(
+                $lowerSegments,
+                static fn (bool $carry, string $segment): bool =>
+                    $carry
+                    || $segment === '.git'
+                    || $segment === 'node_modules'
+                    || $segment === 'vendor'
+                    || $segment === 'storage'
+                    || str_starts_with($segment, '.env'),
+                false
+            );
+
+            if ($path === '' || str_starts_with($path, '/') || $isWindowsAbsolute || str_contains($path, '..') || $blocked) {
                 return response()->json(['message' => 'Chemin de fichier invalide.'], 422);
             }
 
