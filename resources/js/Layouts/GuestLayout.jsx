@@ -1,6 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import OnboardingSwipe from '@/Components/OnboardingSwipe';
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 
 function OnboardingProgress() {
     const { url } = usePage();
@@ -13,7 +14,9 @@ function OnboardingProgress() {
                     key={item}
                     className={[
                         'h-2 rounded-full transition-all duration-300',
-                        item === step ? 'w-8 bg-[#FF6A00] shadow-[0_0_14px_rgba(255,106,0,.45)]' : 'w-2 bg-white/20',
+                        item === step
+                            ? 'w-8 bg-[#FF6A00] shadow-[0_0_14px_rgba(255,106,0,.45)]'
+                            : 'w-2 bg-white/20',
                     ].join(' ')}
                 />
             ))}
@@ -24,93 +27,103 @@ function OnboardingProgress() {
 export default function GuestLayout({ children, title, description }) {
     const { url } = usePage();
     const isRegister = url.startsWith('/register');
-    const step = isRegister ? 3 : 2;
+    const step = isRegister ? 2 : 1;
+
+    const previous = isRegister ? route('login') : '/';
+    const next = isRegister ? null : route('register');
 
     return (
-        <div className="relative min-h-[100dvh] overflow-hidden bg-[#07090D] text-white">
-            <img
-                src="https://i.ibb.co/nN1K8BBp/64-FDEBF3-54-EF-4-C0-C-AE1-D-2-F66195-B8375.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover object-center"
-            />
+        <OnboardingSwipe step={step} className="min-h-[100dvh]">
+            <div className="relative min-h-[100dvh] overflow-hidden bg-[#07090D] text-white">
+                <img
+                    src="https://i.ibb.co/nN1K8BBp/64-FDEBF3-54-EF-4-C0-C-AE1-D-2-F66195-B8375.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                />
 
-            <div className="absolute inset-0 bg-[#05070A]/70" aria-hidden="true" />
-            <div
-                className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,106,0,.18),transparent_32%),linear-gradient(to_bottom,rgba(5,7,10,.25),rgba(5,7,10,.96)_88%)]"
-                aria-hidden="true"
-            />
+                <div className="absolute inset-0 bg-[#05070A]/60" aria-hidden="true" />
+                <div
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,106,0,.18),transparent_34%),linear-gradient(to_bottom,rgba(5,7,10,.15),rgba(5,7,10,.97)_90%)]"
+                    aria-hidden="true"
+                />
 
-            <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1180px] flex-col px-5 py-6 sm:px-8 lg:px-10">
-                <header className="flex items-center">
-                    <Link href="/" className="group inline-flex items-center gap-2.5">
-                        <ApplicationLogo className="h-9 w-9 object-contain drop-shadow-[0_0_18px_rgba(255,106,0,.25)]" />
-                        <span className="text-xl font-extrabold tracking-[-0.04em]">
-                            Dev<span className="text-[#FF6A00]">Road</span>
-                        </span>
-                    </Link>
-                </header>
-
-                <main className="flex flex-1 items-center justify-center py-8 sm:py-12">
-                    <div className="w-full max-w-[470px]">
-                        <div className="mb-5 flex items-center justify-between px-1">
-                            <Link
-                                href="/"
-                                className="inline-flex items-center gap-2 text-xs font-medium text-white/50 transition hover:text-white"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Retour
-                            </Link>
-
-                            <span className="text-xs font-semibold text-white/45">
-                                Étape {step} sur 3
+                <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col px-5 py-6">
+                    <header className="flex items-center justify-center">
+                        <Link href="/" className="inline-flex flex-col items-center gap-1.5">
+                            <ApplicationLogo className="h-10 w-10 object-contain drop-shadow-[0_0_18px_rgba(255,106,0,.25)]" />
+                            <span className="text-xl font-extrabold tracking-[-0.04em]">
+                                Dev<span className="text-[#FF6A00]">Road</span>
                             </span>
-                        </div>
+                        </Link>
+                    </header>
 
-                        <div className="overflow-hidden rounded-[30px] border border-white/[0.11] bg-[#0A0D12]/80 shadow-[0_30px_100px_rgba(0,0,0,.55)] backdrop-blur-2xl">
-                            <div className="h-1 w-full bg-white/[0.04]">
-                                <div
-                                    className={`h-full bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,.65)] transition-all duration-500 ${isRegister ? 'w-full' : 'w-2/3'}`}
-                                />
+                    <main className="flex flex-1 items-end justify-center pb-5 pt-8">
+                        <div className="w-full">
+                            <div className="mb-4 flex items-center justify-between px-1">
+                                <Link
+                                    href={previous}
+                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-white/45 transition hover:text-white"
+                                >
+                                    <ArrowLeft className="h-3.5 w-3.5" />
+                                    Retour
+                                </Link>
+
+                                {next ? (
+                                    <Link
+                                        href={next}
+                                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FF8A3D] transition hover:text-[#FF6A00]"
+                                    >
+                                        Suivant
+                                        <ArrowRight className="h-3.5 w-3.5" />
+                                    </Link>
+                                ) : (
+                                    <span className="text-xs font-semibold text-white/35">Dernière étape</span>
+                                )}
                             </div>
 
-                            <div className="p-6 sm:p-8">
-                                <div className="mb-7">
-                                    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 text-[#FF8A3D] shadow-[0_0_25px_rgba(255,106,0,.08)]">
-                                        <ShieldCheck className="h-5 w-5" />
-                                    </div>
-
-                                    <h1 className="text-[28px] font-black tracking-[-0.045em] text-white sm:text-[32px]">
-                                        {title}
-                                    </h1>
-                                    <p className="mt-2.5 max-w-[390px] text-sm leading-6 text-white/50">
-                                        {description}
-                                    </p>
+                            <div className="overflow-hidden rounded-[30px] border border-white/[0.16] bg-[#0A0D12]/72 shadow-[0_30px_100px_rgba(0,0,0,.6)] backdrop-blur-2xl">
+                                <div className="h-1 w-full bg-white/[0.05]">
+                                    <div
+                                        className={`h-full bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,.65)] transition-all duration-500 ${isRegister ? 'w-full' : 'w-2/3'}`}
+                                    />
                                 </div>
 
-                                {children}
+                                <div className="p-5 sm:p-7">
+                                    <div className="mb-6">
+                                        <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FF8A3D]">
+                                            <ShieldCheck className="h-4 w-4" />
+                                            {isRegister ? 'Créer un compte' : 'Bienvenue 👋'}
+                                        </div>
+
+                                        <h1 className="text-[29px] font-black tracking-[-0.05em] text-white sm:text-[32px]">
+                                            {title}
+                                        </h1>
+                                        <p className="mt-2 text-sm leading-6 text-white/50">
+                                            {description}
+                                        </p>
+                                    </div>
+
+                                    {children}
+                                </div>
+
+                                <div className="border-t border-white/[0.08] px-5 py-4 sm:px-7">
+                                    <OnboardingProgress />
+                                </div>
                             </div>
 
-                            <div className="border-t border-white/[0.07] px-6 py-5 sm:px-8">
-                                <OnboardingProgress />
-                            </div>
+                            <a
+                                href="https://handcode.site"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-4 flex items-center justify-center text-[11px] font-medium tracking-wide text-white/30 transition hover:text-white/65"
+                            >
+                                Propulsed by <span className="ml-1 text-white/50">handCode</span>
+                            </a>
                         </div>
-
-                        <p className="mt-5 text-center text-[11px] leading-5 text-white/30">
-                            Tes données sont protégées et utilisées uniquement pour ton expérience DevRoad.
-                        </p>
-
-                        <a
-                            href="https://handcode.site"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex w-full items-center justify-center text-[11px] font-medium tracking-wide text-white/30 transition hover:text-white/65"
-                        >
-                            Propulsed by <span className="ml-1 text-white/50">handCode</span>
-                        </a>
-                    </div>
-                </main>
+                    </main>
+                </div>
             </div>
-        </div>
+        </OnboardingSwipe>
     );
 }
