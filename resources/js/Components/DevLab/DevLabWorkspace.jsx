@@ -118,7 +118,8 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                 const path = rawPath.replace(/\\/g, "/").replace(/^\.\//, "");
 
                 if (!path || path.includes("..") || path.startsWith("/") || /^[A-Za-z]:\//.test(path)) continue;
-                if (/(^|\\/)(?:\.env|\.git|node_modules|vendor|storage)(?:\\/|$)/i.test(path)) continue;
+                const blockedSegments = path.split("/").map((segment) => segment.toLowerCase());
+                if (blockedSegments.some((segment) => [".env", ".git", "node_modules", "vendor", "storage"].includes(segment))) continue;
 
                 imported.push({
                     path,
