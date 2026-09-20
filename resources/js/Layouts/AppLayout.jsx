@@ -108,7 +108,7 @@ function UserAvatar({ user }) {
     const initials = name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
 
     return (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-gradient-to-br from-[#FF8A3D] to-[#FF6A00] text-xs font-bold text-white shadow-[0_4px_16px_rgba(255,106,0,0.25)]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-gradient-to-br from-[#FF8A3D] to-[#FF6A00] text-xs font-bold text-white theme-avatar shadow-[0_4px_16px_rgba(255,106,0,0.25)]">
             {user?.avatar ? <img src={user.avatar} alt={name} className="h-full w-full object-cover" /> : initials || 'U'}
         </div>
     );
