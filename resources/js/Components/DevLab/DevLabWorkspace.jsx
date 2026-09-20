@@ -64,6 +64,11 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
         setPanel("preview");
     }
 
+    function closePreview() {
+        setPanel("editor");
+        requestAnimationFrame(() => editorRef.current?.focus());
+    }
+
     async function save() {
         if (!current || saved) return;
         try {
@@ -186,7 +191,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
     );
 
     const previewView = runtime === "browser" ? (
-        <PreviewPane previewVersion={previewVersion} srcDoc={srcDoc} onRefresh={refreshPreview} />
+        <PreviewPane previewVersion={previewVersion} srcDoc={srcDoc} onRefresh={refreshPreview} onClose={closePreview} />
     ) : (
         <div className="m-3 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 text-center">
             <Monitor className="mx-auto text-slate-600" size={22} />
@@ -222,11 +227,11 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                     <RuntimeSelector runtime={runtime} template={project.template} />
                     <button
                         type="button"
-                        onClick={refreshPreview}
+                        onClick={() => panel === "preview" ? closePreview() : refreshPreview()}
                         className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 text-[10px] font-bold text-[#08111F]"
                     >
                         <Play size={13} fill="currentColor" />
-                        Aperçu
+                        {panel === "preview" ? "Fermer" : "Aperçu"}
                     </button>
                 </div>
 
