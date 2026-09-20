@@ -152,8 +152,8 @@ export default function Show({
                 />
             </div>
 
-            <div className="mx-auto max-w-5xl space-y-6">
-                <div className="flex items-center justify-between gap-4">
+            <div className="mx-auto w-full min-w-0 max-w-5xl space-y-6">
+                <div className="flex min-w-0 items-center justify-between gap-4">
                     <Link
                         href={`/roadmaps/${roadmap.id}`}
                         className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
@@ -171,7 +171,7 @@ export default function Show({
                     )}
                 </div>
 
-                <section className="rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725] p-6 sm:p-8">
+                <section className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725] p-5 sm:p-8">
                     <div className="flex flex-wrap items-center gap-3">
                         <span className="rounded-full bg-[#FF6A00]/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
                             Étape {step.position}
@@ -185,12 +185,12 @@ export default function Show({
                         )}
                     </div>
 
-                    <h1 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-4xl">
+                    <h1 className="mt-5 break-words text-2xl font-bold tracking-tight text-white sm:text-4xl">
                         {step.title}
                     </h1>
 
                     {step.description && (
-                        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
+                        <p className="mt-3 max-w-3xl break-words text-sm leading-7 text-slate-500 [overflow-wrap:anywhere]">
                             {step.description}
                         </p>
                     )}
@@ -221,20 +221,20 @@ export default function Show({
                     )}
                 </section>
 
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-                    <main className="space-y-6">
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+                    <main className="min-w-0 space-y-6">
                         {step.objective && (
-                            <section className="rounded-3xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.04] p-5 sm:p-7">
+                            <section className="min-w-0 overflow-hidden rounded-3xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.04] p-5 sm:p-7">
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF8A3D]">
                                     Objectif
                                 </p>
-                                <p className="mt-3 text-sm leading-7 text-slate-300">
+                                <p className="mt-3 break-words text-sm leading-7 text-slate-300 [overflow-wrap:anywhere]">
                                     {step.objective}
                                 </p>
                             </section>
                         )}
 
-                        <article className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-8">
+                        <article className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-8">
                             <div className="mb-6 flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-[#FF8A3D]">
                                     <Code2 size={18} />
@@ -267,7 +267,7 @@ export default function Show({
                         </article>
 
                         {step.code_example && (
-                            <section className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#08111F]">
+                            <section className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-[#08111F]">
                                 <div className="flex items-center gap-2 border-b border-white/[0.06] px-5 py-4">
                                     <Code2 size={16} className="text-[#FF8A3D]" />
                                     <span className="text-xs font-semibold text-white">
@@ -289,7 +289,7 @@ export default function Show({
                         )}
 
                         {hasExercise && (
-                            <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
+                            <section className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
                                 <div className="flex items-start gap-3">
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
                                         <CheckCircle2 size={18} />
@@ -578,7 +578,7 @@ function CourseContent({ content }) {
     const blocks = content.split(/\n\s*\n/);
 
     return (
-        <div className="space-y-5 text-sm leading-7 text-slate-400">
+        <div className="min-w-0 space-y-5 break-words text-sm leading-7 text-slate-400 [overflow-wrap:anywhere]">
             {blocks.map((block, index) => {
                 const text = block.trim();
 

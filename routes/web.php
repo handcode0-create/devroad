@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('devlab/projects')->name('devlab.projects.')->group(function () {
         Route::get('/', [DevLabProjectController::class, 'index'])->name('index');
         Route::post('/', [DevLabProjectController::class, 'store'])->name('store');
+        Route::post('/import-legacy', [DevLabProjectController::class, 'importLegacy'])->name('import-legacy');
         Route::get('/{project}', [DevLabProjectController::class, 'show'])->name('show');
         Route::patch('/{project}', [DevLabProjectController::class, 'update'])->name('update');
         Route::delete('/{project}', [DevLabProjectController::class, 'destroy'])->name('destroy');

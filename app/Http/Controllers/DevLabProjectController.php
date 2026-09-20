@@ -71,6 +71,67 @@ class DevLabProjectController extends Controller
         return response()->json([], 204);
     }
 
+    public function importLegacy(Request $request): JsonResponse
+    {
+        $this->authorize('create', DevLabProject::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:1', 'max:120'],
+            'template' => ['required', 'string', 'in:' . implode(',', DevLabProject::TEMPLATES)],
+            'files' => ['required', 'array', 'min:1', 'max:100'],
+            'files.*.path' => ['required', 'string', 'max:180'],
+            'files.*.content' => ['required', 'string', 'max:' . (512 * 1024)],
+        ]);
+
+        $paths = [];
+        $totalSize = 0;
+
+        foreach ($validated['files'] as &$file) {
+            $path = str_replace('\\', '/', trim($file['path']));
+
+            if (
+                $path === '' ||
+                str_starts_with($path, '/') ||
+                preg_match('/^[A-Za-z]:\\//', $path) ||
+                str_contains($path, '..') ||
+                preg_match('/(^|\\/)\\.env(?:\\.|$)/i', $path) ||
+                preg_match('/(^|\\/)(?:\\.git|node_modules|vendor|storage)(?:\\/|$)/i', $path)
+            ) {
+                return response()->json(['message' => 'Chemin de fichier invalide.'], 422);
+            }
+
+            if (in_array($path, $paths, true)) {
+                return response()->json(['message' => 'Deux fichiers portent le même chemin.'], 422);
+            }
+
+            $file['path'] = $path;
+            $file['size'] = strlen($file['content']);
+            $totalSize += $file['size'];
+            $paths[] = $path;
+        }
+        unset($file);
+
+        if ($totalSize > 5 * 1024 * 1024) {
+            return response()->json(['message' => 'Taille totale de l’import trop élevée.'], 422);
+        }
+
+        $template = $validated['template'];
+        $project = DB::transaction(function () use ($request, $validated, $template) {
+            $project = $request->user()->devLabProjects()->create([
+                'name' => trim($validated['name']),
+                'template' => $template,
+                'runtime' => in_array($template, ['node', 'php', 'laravel'], true) ? 'server' : 'browser',
+                'last_opened_at' => now(),
+            ]);
+
+            $project->files()->createMany($validated['files']);
+
+            return $project;
+        });
+
+        return response()->json(['project' => $project->load('files')], 201);
+    }
+
     public function duplicate(Request $request, DevLabProject $project): JsonResponse
     {
         $this->authorize('view', $project);
