@@ -1,50 +1,42 @@
-import PrimaryButton from '@/Components/PrimaryButton';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import AuthLayout from '@/Components/Auth/AuthLayout';
+import AuthButton from '@/Components/Auth/AuthButton';
+import AuthNotice from '@/Components/Auth/AuthNotice';
 
 export default function VerifyEmail({ status }) {
     const { post, processing } = useForm({});
 
-    const submit = (e) => {
-        e.preventDefault();
+    const submit = (event) => {
+        event.preventDefault();
 
         post(route('verification.send'));
     };
 
     return (
-        <GuestLayout>
-            <Head title="Email Verification" />
-
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
-            </div>
+        <AuthLayout
+            title="Vérifie ton adresse e-mail"
+            subtitle="On vient de t'envoyer un lien de confirmation. Clique dessus pour commencer. Rien reçu ? On peut te le renvoyer."
+        >
+            <Head title="Vérifier l'adresse e-mail" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
+                <AuthNotice>Un nouveau lien vient d'être envoyé à l'adresse indiquée à l'inscription.</AuthNotice>
             )}
 
             <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
-
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Log Out
-                    </Link>
-                </div>
+                <AuthButton processing={processing} busyLabel="Envoi...">
+                    Renvoyer l'e-mail
+                </AuthButton>
             </form>
-        </GuestLayout>
+
+            <Link
+                href={route('logout')}
+                method="post"
+                as="button"
+                className="mt-5 min-h-[44px] rounded-lg text-sm font-semibold text-[#FF6A00] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6A00]/60"
+            >
+                Se déconnecter
+            </Link>
+        </AuthLayout>
     );
 }

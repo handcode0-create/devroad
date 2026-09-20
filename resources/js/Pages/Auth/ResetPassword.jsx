@@ -1,9 +1,9 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
+import AuthLayout from '@/Components/Auth/AuthLayout';
+import AuthField from '@/Components/Auth/AuthField';
+import AuthButton from '@/Components/Auth/AuthButton';
+import { RouteArrival, RouteStop, RouteTrack } from '@/Components/Auth/RouteTrack';
+import { isEmail, isPassword, isSame, routeProgress } from '@/Components/Auth/progress';
 
 export default function ResetPassword({ token, email }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -13,8 +13,16 @@ export default function ResetPassword({ token, email }) {
         password_confirmation: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
+    const done = {
+        email: isEmail(data.email),
+        password: isPassword(data.password),
+        password_confirmation: isSame(data.password, data.password_confirmation),
+    };
+    const progress = routeProgress(Object.values(done));
+    const stateOf = (field) => (errors[field] ? 'error' : done[field] ? 'done' : 'idle');
+
+    const submit = (event) => {
+        event.preventDefault();
 
         post(route('password.store'), {
             onFinish: () => reset('password', 'password_confirmation'),
@@ -22,73 +30,57 @@ export default function ResetPassword({ token, email }) {
     };
 
     return (
-        <GuestLayout>
-            <Head title="Reset Password" />
+        <AuthLayout title="Choisis un nouveau mot de passe" subtitle="Tu pourras te reconnecter juste après.">
+            <Head title="Nouveau mot de passe" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
+            <form onSubmit={submit} noValidate>
+                <RouteTrack progress={progress}>
+                    <RouteStop state={stateOf('email')}>
+                        <AuthField
+                            id="email"
+                            label="Adresse e-mail"
+                            type="email"
+                            value={data.email}
+                            onChange={(value) => setData('email', value)}
+                            error={errors.email}
+                            autoComplete="username"
+                            inputMode="email"
+                        />
+                    </RouteStop>
 
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
+                    <RouteStop state={stateOf('password')}>
+                        <AuthField
+                            id="password"
+                            label="Nouveau mot de passe"
+                            type="password"
+                            value={data.password}
+                            onChange={(value) => setData('password', value)}
+                            error={errors.password}
+                            hint="8 caractères minimum."
+                            autoComplete="new-password"
+                            autoFocus
+                        />
+                    </RouteStop>
 
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
+                    <RouteStop state={stateOf('password_confirmation')}>
+                        <AuthField
+                            id="password_confirmation"
+                            label="Confirmer le mot de passe"
+                            type="password"
+                            value={data.password_confirmation}
+                            onChange={(value) => setData('password_confirmation', value)}
+                            error={errors.password_confirmation}
+                            autoComplete="new-password"
+                        />
+                    </RouteStop>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        type="password"
-                        id="password_confirmation"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Reset Password
-                    </PrimaryButton>
-                </div>
+                    <RouteArrival reached={progress === 1}>
+                        <AuthButton processing={processing} busyLabel="Enregistrement...">
+                            Enregistrer le mot de passe
+                        </AuthButton>
+                    </RouteArrival>
+                </RouteTrack>
             </form>
-        </GuestLayout>
+        </AuthLayout>
     );
 }

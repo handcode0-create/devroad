@@ -75,3 +75,43 @@
         padding-right: max(1rem, env(safe-area-inset-right));
     }
 }
+
+/*
+ * La « ligne blanche » de la route : les tirets centraux du logo DevRoad.
+ * Utilisée par les écrans d'authentification (voir Components/Auth/RouteTrack.jsx).
+ */
+@layer components {
+    .road-line {
+        width: 2px;
+        background-image: repeating-linear-gradient(
+            to bottom,
+            currentColor 0 7px,
+            transparent 7px 14px
+        );
+    }
+
+    /* Partie « parcourue » : on ne montre que la fraction --p (0 à 1) depuis le haut. */
+    .road-fill {
+        clip-path: inset(0 0 calc((1 - var(--p, 0)) * 100%) 0);
+        transition: clip-path 500ms ease;
+    }
+}
+
+/* Un seul moment orchestré : la route de l'exemple se dessine au chargement. */
+@keyframes road-draw {
+    from {
+        clip-path: inset(0 0 100% 0);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .road-draw {
+        animation: road-draw 1400ms cubic-bezier(0.22, 0.7, 0.2, 1) 250ms both;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .road-fill {
+        transition: none;
+    }
+}

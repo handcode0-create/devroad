@@ -1,14 +1,11 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import AuthLayout, { AuthLink } from '@/Components/Auth/AuthLayout';
+import AuthField from '@/Components/Auth/AuthField';
+import AuthButton from '@/Components/Auth/AuthButton';
+import { RouteArrival, RouteStop, RouteTrack } from '@/Components/Auth/RouteTrack';
+import { isEmail, isName, isPassword, isSame, routeProgress } from '@/Components/Auth/progress';
 
 export default function Register() {
-    const [showPassword, setShowPassword] = useState(false);
-    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -16,8 +13,17 @@ export default function Register() {
         password_confirmation: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
+    const done = {
+        name: isName(data.name),
+        email: isEmail(data.email),
+        password: isPassword(data.password),
+        password_confirmation: isSame(data.password, data.password_confirmation),
+    };
+    const progress = routeProgress(Object.values(done));
+    const stateOf = (field) => (errors[field] ? 'error' : done[field] ? 'done' : 'idle');
+
+    const submit = (event) => {
+        event.preventDefault();
 
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
@@ -25,130 +31,78 @@ export default function Register() {
     };
 
     return (
-        <GuestLayout
-            title="Rejoignez DevRoad"
-            description="Commencez dès maintenant. Créez votre espace et construisez votre progression."
+        <AuthLayout
+            swipeStep={2}
+            title="Commence ton parcours"
+            subtitle="Crée ton compte pour planifier ce que tu veux apprendre."
+            footer={
+                <>
+                    Déjà un compte ? <AuthLink href={route('login')}>Se connecter</AuthLink>
+                </>
+            }
         >
             <Head title="Créer un compte" />
 
-            <form onSubmit={submit} className="space-y-3.5">
-                <div>
-                    <InputLabel htmlFor="name" value="Nom" className="sr-only" />
-                    <div className="relative">
-                        <UserRound className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-white/35" />
-                        <TextInput
+            <form onSubmit={submit} noValidate>
+                <RouteTrack progress={progress}>
+                    <RouteStop state={stateOf('name')}>
+                        <AuthField
                             id="name"
-                            name="name"
+                            label="Nom complet"
                             value={data.name}
-                            className="block w-full rounded-2xl border border-white/[0.15] bg-white/[0.035] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-white/35 focus:border-[#FF6A00] focus:ring-[#FF6A00]/20"
+                            onChange={(value) => setData('name', value)}
+                            error={errors.name}
                             autoComplete="name"
-                            isFocused={true}
-                            placeholder="Nom complet"
-                            onChange={(e) => setData('name', e.target.value)}
-                            required
+                            autoFocus
                         />
-                    </div>
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
+                    </RouteStop>
 
-                <div>
-                    <InputLabel htmlFor="email" value="Adresse e-mail" className="sr-only" />
-                    <div className="relative">
-                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-white/35" />
-                        <TextInput
+                    <RouteStop state={stateOf('email')}>
+                        <AuthField
                             id="email"
+                            label="Adresse e-mail"
                             type="email"
-                            name="email"
                             value={data.email}
-                            className="block w-full rounded-2xl border border-white/[0.15] bg-white/[0.035] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-white/35 focus:border-[#FF6A00] focus:ring-[#FF6A00]/20"
-                            autoComplete="username"
-                            placeholder="Adresse e-mail"
-                            onChange={(e) => setData('email', e.target.value)}
-                            required
+                            onChange={(value) => setData('email', value)}
+                            error={errors.email}
+                            autoComplete="email"
+                            inputMode="email"
+                            placeholder="toi@exemple.com"
                         />
-                    </div>
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
+                    </RouteStop>
 
-                <div>
-                    <InputLabel htmlFor="password" value="Mot de passe" className="sr-only" />
-                    <div className="relative">
-                        <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-white/35" />
-                        <TextInput
+                    <RouteStop state={stateOf('password')}>
+                        <AuthField
                             id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
+                            label="Mot de passe"
+                            type="password"
                             value={data.password}
-                            className="block w-full rounded-2xl border border-white/[0.15] bg-white/[0.035] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-white/35 focus:border-[#FF6A00] focus:ring-[#FF6A00]/20"
+                            onChange={(value) => setData('password', value)}
+                            error={errors.password}
+                            hint="8 caractères minimum."
                             autoComplete="new-password"
-                            placeholder="Mot de passe"
-                            onChange={(e) => setData('password', e.target.value)}
-                            required
                         />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword((value) => !value)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1 text-white/35 transition hover:text-white"
-                            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                        >
-                            {showPassword ? <EyeOff className="h-[17px] w-[17px]" /> : <Eye className="h-[17px] w-[17px]" />}
-                        </button>
-                    </div>
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
+                    </RouteStop>
 
-                <div>
-                    <InputLabel htmlFor="password_confirmation" value="Confirmer le mot de passe" className="sr-only" />
-                    <div className="relative">
-                        <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-white/35" />
-                        <TextInput
+                    <RouteStop state={stateOf('password_confirmation')}>
+                        <AuthField
                             id="password_confirmation"
-                            type={showPasswordConfirmation ? 'text' : 'password'}
-                            name="password_confirmation"
+                            label="Confirmer le mot de passe"
+                            type="password"
                             value={data.password_confirmation}
-                            className="block w-full rounded-2xl border border-white/[0.15] bg-white/[0.035] py-3.5 pl-11 pr-12 text-sm text-white placeholder:text-white/35 focus:border-[#FF6A00] focus:ring-[#FF6A00]/20"
+                            onChange={(value) => setData('password_confirmation', value)}
+                            error={errors.password_confirmation}
                             autoComplete="new-password"
-                            placeholder="Confirmer le mot de passe"
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                            required
                         />
-                        <button
-                            type="button"
-                            onClick={() => setShowPasswordConfirmation((value) => !value)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1 text-white/35 transition hover:text-white"
-                            aria-label={showPasswordConfirmation ? 'Masquer la confirmation' : 'Afficher la confirmation'}
-                        >
-                            {showPasswordConfirmation ? <EyeOff className="h-[17px] w-[17px]" /> : <Eye className="h-[17px] w-[17px]" />}
-                        </button>
-                    </div>
-                    <InputError message={errors.password_confirmation} className="mt-2" />
-                </div>
+                    </RouteStop>
 
-                <button
-                    type="submit"
-                    disabled={processing}
-                    className="group mt-1 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#FF6A00] px-4 py-3.5 text-sm font-bold text-white shadow-[0_10px_35px_rgba(255,106,0,.22)] transition hover:bg-[#ff7a1a] focus:outline-none focus:ring-2 focus:ring-[#FF6A00]/40 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {processing ? 'Création...' : 'Créer un compte'}
-                    {!processing && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
-                </button>
+                    <RouteArrival reached={progress === 1}>
+                        <AuthButton processing={processing} busyLabel="Création du compte...">
+                            Créer mon compte
+                        </AuthButton>
+                    </RouteArrival>
+                </RouteTrack>
             </form>
-
-            <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/[0.09]" />
-                <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/30">Ou</span>
-                <div className="h-px flex-1 bg-white/[0.09]" />
-            </div>
-
-            <p className="text-center text-sm text-white/45">
-                Vous avez déjà un compte ?{' '}
-                <Link
-                    href={route('login')}
-                    className="font-semibold text-[#FF8A3D] transition hover:text-[#FF6A00]"
-                >
-                    Se connecter
-                </Link>
-            </p>
-        </GuestLayout>
+        </AuthLayout>
     );
 }

@@ -14,6 +14,8 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                // Police de marque pour les grands titres (écrans d'authentification)
+                display: ['Manrope', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
         },
     },
