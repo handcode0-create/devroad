@@ -59,6 +59,28 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         return $this->syncInstance($project, $sandbox, false);
     }
 
+    public function executeCommand(SandboxProject $project, string $command, int $timeout = 120): array
+    {
+        $this->assertConfigured();
+        $providerId = $this->providerId($project);
+        $metadata = $project->metadata ?? [];
+        $toolboxUrl = $metadata['daytona_toolbox_url']
+            ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId);
+
+        $result = $this->execute($toolboxUrl, '/process/execute', [
+            'command' => $command,
+            'cwd' => 'workspace',
+            'timeout' => max(1, min($timeout, 300)),
+        ]);
+
+        $project->updateQuietly(['last_started_at' => $project->last_started_at ?: now()]);
+
+        return [
+            'output' => $result['result'] ?? $result['output'] ?? '',
+            'exit_code' => $result['exitCode'] ?? null,
+        ];
+    }
+
     public function destroy(SandboxProject $project): void
     {
         $this->assertConfigured();
