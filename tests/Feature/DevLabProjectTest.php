@@ -35,6 +35,54 @@ class DevLabProjectTest extends TestCase
         $this->assertDatabaseHas('devlab_projects', ['id' => $project->id, 'name' => 'Privé']);
     }
 
+    public function test_un_workspace_legacy_peut_etre_importe(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.import-legacy'), [
+                'name' => 'Workspace importé',
+                'template' => 'html',
+                'files' => [
+                    ['path' => 'index.html', 'content' => '<h1>DevRoad</h1>'],
+                    ['path' => 'main.js', 'content' => 'console.log("ok");'],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('project.name', 'Workspace importé')
+            ->assertJsonPath('project.runtime', 'browser');
+
+        $this->assertDatabaseHas('devlab_projects', [
+            'user_id' => $user->id,
+            'name' => 'Workspace importé',
+        ]);
+        $this->assertDatabaseHas('devlab_files', [
+            'path' => 'index.html',
+            'content' => '<h1>DevRoad</h1>',
+        ]);
+        $this->assertDatabaseHas('devlab_files', [
+            'path' => 'main.js',
+            'content' => 'console.log("ok");',
+        ]);
+    }
+
+    public function test_un_import_legacy_refuse_un_chemin_dangereux(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.import-legacy'), [
+                'name' => 'Import invalide',
+                'template' => 'html',
+                'files' => [
+                    ['path' => '../secret.php', 'content' => 'secret'],
+                ],
+            ])
+            ->assertStatus(422);
+
+        $this->assertDatabaseCount('devlab_projects', 0);
+    }
+
     public function test_un_projet_peut_etre_renomme_et_duplique(): void
     {
         $user = User::factory()->create();
