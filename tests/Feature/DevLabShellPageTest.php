@@ -22,6 +22,7 @@ class DevLabShellPageTest extends TestCase
         $response = $this->actingAs($user)->get('/devlab');
 
         $response->assertOk();
+        $response->assertSee('meta name="csrf-token"', false);
         $response->assertInertia(fn ($page) => $page
             ->component('DevLab/Index')
             ->has('projects', 1)
