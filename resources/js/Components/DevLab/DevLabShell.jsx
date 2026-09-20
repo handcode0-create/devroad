@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
 
 const API="/devlab/projects";
@@ -47,6 +47,9 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
  async function deleteFile(file){if(project.files.length<=1)return;try{await request(API+"/"+project.id+"/files/"+file.id,{method:"DELETE"});setProject(p=>({...p,files:p.files.filter(f=>f.id!==file.id)}))}catch(e){setError(e.message)}}
  return <div className="fixed inset-0 z-[60] flex flex-col bg-[#08111F] text-white">
   <header className="flex h-14 shrink-0 items-center gap-2 border-b border-white/[.07] bg-[#0D1725] px-3">
+   <button type="button" onClick={()=>{if(window.history.length>1){window.history.back()}else{window.location.href="/dashboard"}}} className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl px-2 text-slate-400 hover:bg-white/[.05] hover:text-white" aria-label="Retour à la page précédente" title="Retour">
+    <ArrowLeft size={18}/><span className="hidden text-xs font-semibold sm:inline">Retour</span>
+   </button>
    <button onClick={()=>setDrawer(true)} className="flex min-h-10 items-center gap-2 rounded-xl px-2 hover:bg-white/[.05]" aria-label="Projets"><Code2 size={19} className="text-[#FF6A00]"/><b className="hidden sm:block">Dev<span className="text-[#FF6A00]">Lab</span></b></button>
    {project?<><button onClick={()=>setDrawer(true)} className="max-w-[45vw] truncate rounded-lg px-2 text-sm font-semibold">{project.name}</button><ProjectMenu onRename={rename} onDuplicate={duplicate} onDelete={remove}/></>:<span className="text-xs text-slate-600">{projects.length} projet{projects.length>1?"s":""}</span>}
    <button onClick={()=>setCreate(true)} className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 text-xs font-bold text-[#08111F]"><Plus size={15}/> Nouveau</button>
