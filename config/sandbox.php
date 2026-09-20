@@ -21,7 +21,7 @@ return [
             'version' => '22',
             'image' => 'node:22-bookworm',
             'port' => 5173,
-            'bootstrap' => 'cd workspace && npm create vite@latest . -- --template react && npm install',
+            'bootstrap' => 'npm create vite@latest . -- --template react && npm install',
             'serve' => 'npm run dev -- --host 0.0.0.0',
         ],
         'nextjs' => [
@@ -30,7 +30,7 @@ return [
             'version' => '22',
             'image' => 'node:22-bookworm',
             'port' => 3000,
-            'bootstrap' => 'cd workspace && npx create-next-app@latest . --js --tailwind --eslint --app --src-dir --use-npm --import-alias "@/*" --no-git',
+            'bootstrap' => 'npx create-next-app@latest . --js --tailwind --eslint --app --src-dir --use-npm --import-alias "@/*" --no-git',
             'serve' => 'npm run dev -- --hostname 0.0.0.0',
         ],
         'node' => [
@@ -57,7 +57,7 @@ return [
             'version' => '8.3',
             'image' => 'composer:2',
             'port' => 8000,
-            'bootstrap' => 'cd workspace && composer create-project laravel/laravel .',
+            'bootstrap' => 'composer create-project laravel/laravel .',
             'serve' => 'php artisan serve --host=0.0.0.0 --port=8000',
         ],
     ],
