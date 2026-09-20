@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
+use App\Jobs\StartSandboxJob;
 use Tests\TestCase;
 
 class SandboxProjectTest extends TestCase
@@ -142,24 +144,20 @@ class SandboxProjectTest extends TestCase
             'status' => 'stopped',
         ]);
 
+        Queue::fake();
+
         $this->actingAs($user)
             ->postJson('/sandbox/projects/' . $project->id . '/start')
-            ->assertOk()
-            ->assertJsonPath('project.status', 'running')
-            ->assertJsonPath('project.preview_url', 'https://5173-sbx_test_123.proxy.daytona.work')
-            ->assertJsonPath('instance.driver', 'daytona');
+            ->assertStatus(202)
+            ->assertJsonPath('project.status', 'starting')
+            ->assertJsonPath('queued', true);
+
+        Queue::assertPushed(StartSandboxJob::class, fn ($job) => $job->projectId === $project->id);
 
         $this->assertDatabaseHas('sandbox_projects', [
             'id' => $project->id,
-            'status' => 'running',
-            'preview_url' => 'https://5173-sbx_test_123.proxy.daytona.work',
+            'status' => 'starting',
         ]);
-
-        Http::assertSent(fn ($request) =>
-            $request->url() === 'https://app.daytona.io/api/sandbox'
-            && $request->hasHeader('Authorization', 'Bearer test-key')
-            && $request->data()['image'] === 'node:22-bookworm'
-        );
     }
 
     public function test_une_commande_est_executee_uniquement_dans_le_sandbox_daytona(): void
