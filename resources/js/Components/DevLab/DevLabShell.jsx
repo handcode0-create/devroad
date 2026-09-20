@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import { Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
@@ -6,7 +7,7 @@ const API="/devlab/projects";
 
 export default function DevLabShell({ initialProjects=[], initialProjectId=null }) {
  const [projects,setProjects]=useState(initialProjects),[project,setProject]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState(""),[create,setCreate]=useState(false),[drawer,setDrawer]=useState(false);
- async function request(url,options={}){const r=await fetch(url,{...options,headers:{Accept:"application/json","X-Requested-With":"XMLHttpRequest","X-CSRF-TOKEN":document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")??"",...(options.body?{"Content-Type":"application/json"}:{}),...(options.headers??{})}});const d=r.status===204?{}:await r.json();if(!r.ok)throw Error(d.message||"Une erreur est survenue.");return d}
+ async function request(url,options={}){const method=(options.method||"GET").toLowerCase();const response=await axios.request({url,method,data:options.body?JSON.parse(options.body):undefined,headers:{Accept:"application/json","X-Requested-With":"XMLHttpRequest",...(options.headers??{})},withCredentials:true,withXSRFToken:true});return response.data}
  useEffect(()=>{void migrateLegacyWorkspaces()},[]);
  useEffect(()=>{if(initialProjectId){void open(initialProjectId)}},[initialProjectId]);
 
