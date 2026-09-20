@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        {{-- DevLab fetch requests read the token from this meta tag. --}}
+        {{-- Current Laravel CSRF token for AJAX clients. --}}
         <meta name="theme-color" content="#08111F">
         <meta name="application-name" content="{{ config('app.name', 'DevRoad') }}">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'DevRoad') }}">
