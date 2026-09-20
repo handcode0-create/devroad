@@ -702,3 +702,68 @@
         background-color: rgba(255, 255, 255, 0.06) !important;
     }
 }
+
+
+/* Theme hardening — portal-safe components and intentional brand contrast. */
+@layer components {
+    html[data-theme='light'] .theme-brand-contrast {
+        color: #FFFFFF !important;
+    }
+
+    html[data-theme='light'] .theme-avatar {
+        color: #FFFFFF !important;
+    }
+
+    html[data-theme='light'] .theme-modal {
+        background-color: #FFFFFF !important;
+        border-color: #E2E8F0 !important;
+        color: #0F172A !important;
+    }
+
+    html[data-theme='light'] .theme-modal-header,
+    html[data-theme='light'] .theme-modal-section {
+        border-color: #E2E8F0 !important;
+    }
+
+    html[data-theme='light'] .theme-modal-title {
+        color: #0F172A !important;
+    }
+
+    html[data-theme='light'] .theme-modal-muted {
+        color: #64748B !important;
+    }
+
+    html[data-theme='light'] .theme-modal-action {
+        background-color: #F8FAFC !important;
+        border-color: #CBD5E1 !important;
+        color: #334155 !important;
+    }
+
+    html[data-theme='light'] .theme-modal-action:hover {
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
+    }
+
+    html[data-theme='light'] .theme-modal-close:hover {
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
+    }
+
+    html[data-theme='light'] .theme-toast-success {
+        border-color: rgba(5, 150, 105, 0.20) !important;
+        background-color: rgba(16, 185, 129, 0.10) !important;
+        color: #047857 !important;
+    }
+
+    html[data-theme='light'] .theme-toast-error {
+        border-color: rgba(220, 38, 38, 0.20) !important;
+        background-color: rgba(239, 68, 68, 0.10) !important;
+        color: #B91C1C !important;
+    }
+
+    html[data-theme='light'] .theme-toast-info {
+        border-color: rgba(2, 132, 199, 0.20) !important;
+        background-color: rgba(14, 165, 233, 0.10) !important;
+        color: #0369A1 !important;
+    }
+}
