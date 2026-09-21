@@ -86,8 +86,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         $this->assertConfigured();
         $providerId = $this->providerId($project);
         $metadata = $project->metadata ?? [];
-        $toolboxUrl = $metadata['daytona_toolbox_url']
-            ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId);
+        $toolboxUrl = $this->toolboxUrlFor($providerId, $metadata['daytona_toolbox_url'] ?? null);
 
         $result = $this->execute($toolboxUrl, '/process/execute', [
             'command' => $command,
@@ -170,8 +169,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             throw new RuntimeException('Daytona n’a pas retourné l’identifiant du Sandbox.');
         }
 
-        $toolboxUrl = $sandbox['toolboxProxyUrl']
-            ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId);
+        $toolboxUrl = $this->toolboxUrlFor($providerId, $sandbox['toolboxProxyUrl'] ?? null);
 
         $metadata = $project->fresh()->metadata ?? [];
         $metadata['startup_phase'] = 'provisioning';
@@ -262,9 +260,10 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         }
 
         $providerId = $sandbox['id'] ?? $this->providerId($project);
-        $toolboxUrl = $sandbox['toolboxProxyUrl']
-            ?? ($project->metadata['daytona_toolbox_url']
-                ?? config('sandbox.toolbox_url') . '/' . rawurlencode($providerId));
+        $toolboxUrl = $this->toolboxUrlFor(
+            $providerId,
+            $sandbox['toolboxProxyUrl'] ?? ($project->metadata['daytona_toolbox_url'] ?? null)
+        );
 
         $sessionId = 'devroad-server';
         $this->execute(
@@ -387,7 +386,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
                 'metadata' => [
                     'daytona_sandbox_id' => $providerId,
                     'sandbox_state' => $state,
-                    'toolbox_url' => $sandbox['toolboxProxyUrl'] ?? null,
+                    'toolbox_url' => $this->toolboxUrlFor($providerId, $sandbox['toolboxProxyUrl'] ?? null),
                 ],
             ]
         );
@@ -403,6 +402,23 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         $response->throw();
 
         return $response->json() ?? [];
+    }
+
+    /**
+     * URL de base du Toolbox d'UN sandbox : {proxy}/toolbox/{sandboxId}.
+     *
+     * Daytona renvoie toolboxProxyUrl SANS l'identifiant du sandbox (par exemple
+     * « https://proxy.app.daytona.io/toolbox »). Les appels doivent viser
+     * « .../toolbox/{sandboxId}/process/... » ; sans l'identifiant, le proxy lit
+     * « process » comme identifiant de sandbox et répond 401 « Bearer token is
+     * invalid ». On ajoute donc l'identifiant, sauf s'il est déjà présent.
+     */
+    private function toolboxUrlFor(string $providerId, ?string $base = null): string
+    {
+        $base = rtrim($base ?: (string) config('sandbox.toolbox_url'), '/');
+        $suffix = '/' . rawurlencode($providerId);
+
+        return str_ends_with($base, $suffix) ? $base : $base . $suffix;
     }
 
     private function api(): PendingRequest

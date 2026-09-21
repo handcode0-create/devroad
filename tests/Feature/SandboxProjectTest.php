@@ -373,4 +373,134 @@ class SandboxProjectTest extends TestCase
                 ->where('runtime_enabled', false)
             );
     }
+
+    private function activerDaytona(): void
+    {
+        config()->set('sandbox.enabled', true);
+        config()->set('sandbox.driver', 'daytona');
+        config()->set('sandbox.api_key', 'test-key');
+        config()->set('sandbox.default_region', 'us');
+        config()->set('sandbox.toolbox_url', 'https://proxy.app.daytona.io/toolbox');
+    }
+
+    /**
+     * Simule le VRAI comportement de Daytona : toolboxProxyUrl est renvoyée sans
+     * l'identifiant du sandbox, et le proxy répond 401 à tout appel « /toolbox/process/... ».
+     */
+    private function fauxDaytona(string $sandboxId, string $toolboxProxyUrl): void
+    {
+        $sandbox = [
+            'id' => $sandboxId,
+            'state' => 'started',
+            'target' => 'us',
+            'cpu' => 1,
+            'memory' => 2,
+            'disk' => 5,
+            'toolboxProxyUrl' => $toolboxProxyUrl,
+        ];
+
+        Http::fake(function ($request) use ($sandboxId, $sandbox) {
+            $url = $request->url();
+            $base = 'https://proxy.app.daytona.io/toolbox/' . $sandboxId;
+
+            if ($request->method() === 'POST' && $url === 'https://app.daytona.io/api/sandbox') {
+                return Http::response($sandbox, 200);
+            }
+
+            if ($request->method() === 'GET' && $url === 'https://app.daytona.io/api/sandbox/' . $sandboxId) {
+                return Http::response($sandbox, 200);
+            }
+
+            if (str_contains($url, '/signed-preview-url')) {
+                return Http::response(['url' => 'https://preview.test/' . $sandboxId, 'token' => 'preview-token'], 200);
+            }
+
+            if (str_starts_with($url, $base . '/process/')) {
+                return str_ends_with($url, '/exec')
+                    ? Http::response(['cmdId' => 'cmd_1'], 200)
+                    : Http::response(['result' => '', 'exitCode' => 0], 200);
+            }
+
+            if (str_starts_with($url, 'https://proxy.app.daytona.io/toolbox/')) {
+                return Http::response([
+                    'statusCode' => 401,
+                    'message' => 'unauthorized: authentication failed: Bearer token is invalid',
+                    'code' => 'UNAUTHORIZED',
+                ], 401);
+            }
+
+            return Http::response([], 404);
+        });
+    }
+
+    public function test_l_identifiant_du_sandbox_est_ajoute_a_l_url_du_toolbox_renvoyee_par_daytona(): void
+    {
+        $this->activerDaytona();
+        $this->fauxDaytona('sbx_real', 'https://proxy.app.daytona.io/toolbox');
+
+        $user = User::factory()->create();
+        $project = $user->sandboxProjects()->create([
+            'name' => 'Toolbox sans identifiant',
+            'template' => 'react',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'starting',
+        ]);
+
+        $instance = app(\App\Services\Sandbox\DaytonaSandboxExecutor::class)->start($project);
+
+        $this->assertSame('running', $instance->status);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://proxy.app.daytona.io/toolbox/sbx_real/process/session');
+        Http::assertNotSent(fn ($request) => str_starts_with($request->url(), 'https://proxy.app.daytona.io/toolbox/process/'));
+        $this->assertSame(
+            'https://proxy.app.daytona.io/toolbox/sbx_real',
+            $project->fresh()->metadata['daytona_toolbox_url']
+        );
+    }
+
+    public function test_l_identifiant_n_est_pas_duplique_quand_l_url_le_contient_deja(): void
+    {
+        $this->activerDaytona();
+        $this->fauxDaytona('sbx_dup', 'https://proxy.app.daytona.io/toolbox/sbx_dup');
+
+        $user = User::factory()->create();
+        $project = $user->sandboxProjects()->create([
+            'name' => 'Toolbox avec identifiant',
+            'template' => 'react',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'starting',
+        ]);
+
+        app(\App\Services\Sandbox\DaytonaSandboxExecutor::class)->start($project);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://proxy.app.daytona.io/toolbox/sbx_dup/process/session');
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/sbx_dup/sbx_dup'));
+    }
+
+    public function test_une_url_toolbox_deja_enregistree_sans_identifiant_est_corrigee_a_l_execution(): void
+    {
+        $this->activerDaytona();
+        $this->fauxDaytona('sbx_old', 'https://proxy.app.daytona.io/toolbox');
+
+        $user = User::factory()->create();
+        // État réel des projets créés avant le correctif : l'URL enregistrée n'a pas l'identifiant.
+        $project = $user->sandboxProjects()->create([
+            'name' => 'Projet existant',
+            'template' => 'node',
+            'runtime' => 'node',
+            'runtime_version' => '22',
+            'status' => 'running',
+            'metadata' => [
+                'daytona_sandbox_id' => 'sbx_old',
+                'daytona_toolbox_url' => 'https://proxy.app.daytona.io/toolbox',
+            ],
+        ]);
+
+        $result = app(\App\Services\Sandbox\DaytonaSandboxExecutor::class)->executeCommand($project, 'pwd');
+
+        $this->assertIsArray($result);
+        Http::assertSent(fn ($request) => $request->url() === 'https://proxy.app.daytona.io/toolbox/sbx_old/process/execute');
+    }
 }
