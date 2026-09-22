@@ -241,11 +241,11 @@ class MemoController extends Controller
         $data = $request->validate([
             'ids' => ['required', 'array', 'min:1', 'max:100'],
             'ids.*' => ['integer'],
-            'action' => ['required', 'in:move,favorite,unfavorite,delete,restore'],
+            'action' => ['required', 'in:move,favorite,unfavorite,delete,restore,force_delete'],
             'folder_id' => ['nullable', 'integer'],
         ]);
 
-        $query = $data['action'] === 'restore'
+        $query = in_array($data['action'], ['restore', 'force_delete'], true)
             ? $request->user()->memos()->withTrashed()->onlyTrashed()
             : $request->user()->memos();
         $memos = $query->whereIn('id', $data['ids'])->get();
@@ -264,6 +264,7 @@ class MemoController extends Controller
                     'unfavorite' => $memo->update(['is_favorite' => false]),
                     'delete' => $memo->delete(),
                     'restore' => $memo->restore(),
+                    'force_delete' => $memo->forceDelete(),
                     default => null,
                 };
             }
