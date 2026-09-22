@@ -8,13 +8,14 @@ import FavoriteButton from '@/Components/Memos/FavoriteButton';
 import TagBadge from '@/Components/Memos/TagBadge';
 import { buttonClass } from '@/Components/Ui/buttons';
 
-function listUrl({ tag, favorites, recent, q, folder }) {
+function listUrl({ tag, favorites, recent, q, folder, trash }) {
     const params = new URLSearchParams();
     if (tag) params.set('tag', tag);
     if (favorites) params.set('favorites', '1');
     if (recent) params.set('recent', '1');
     if (q) params.set('q', q);
     if (folder) params.set('folder', folder);
+    if (trash) params.set('trash', '1');
     const query = params.toString();
     return query ? '/memos?' + query : '/memos';
 }
@@ -117,6 +118,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
             tag: filters.tag || undefined,
             favorites: filters.favorites ? 1 : undefined,
             recent: filters.recent ? 1 : undefined,
+            trash: filters.trash ? 1 : undefined,
         }, { preserveState: true, replace: true });
     }
 
@@ -127,7 +129,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
         return 'Toutes les fiches';
     }, [filters, tags]);
 
-    const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q || filters.folder);
+    const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q || filters.folder || filters.trash);
 
     return (
         <AppLayout>
@@ -159,6 +161,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             <div className="space-y-1">
                                 <NavItem href="/memos" active={!hasFilter} icon={FileText} label="Toutes les fiches" count={counts.total} />
                                 <NavItem href={listUrl({ favorites: true })} active={Boolean(filters.favorites)} icon={Bookmark} label="Favoris" count={counts.favorites} />
+                                <NavItem href={listUrl({ trash: true })} active={Boolean(filters.trash)} icon={Trash2} label="Corbeille" count={counts.trash} />
                                 <NavItem href={listUrl({ recent: true })} active={Boolean(filters.recent)} icon={Sparkles} label="Récents" count={counts.recent} />
                             </div>
                             <div className="mt-5 border-t border-white/[0.06] pt-4">
@@ -203,7 +206,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-white">{activeFolder}</h2><p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p></div>
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} onDragStart={() => startDragMemo(memo)} onDragEnd={endDrag} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
+                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} onDragStart={() => startDragMemo(memo)} onDragEnd={endDrag} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
                     </section>
                 </div>
             </div>
@@ -277,14 +280,14 @@ function ViewButton({ active, onClick, icon: Icon, label }) {
     return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
 }
 
-function MemoCard({ memo, grid, onDragStart, onDragEnd }) {
+function MemoCard({ memo, grid, trash = false, onDragStart, onDragEnd }) {
     return <article
         draggable
         onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
         onDragEnd={onDragEnd}
         className={'group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:border-[#FF6A00]/20 hover:bg-[#101B2C] cursor-grab active:cursor-grabbing ' + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}
     >
-        <Link href={'/memos/' + memo.id} className={'min-w-0 flex-1 ' + (grid ? 'flex flex-col' : 'flex items-center gap-4')}>
+        <div className={'min-w-0 flex-1 ' + (grid ? 'flex flex-col' : 'flex items-center gap-4')}>
             <div className={grid ? 'mb-3 flex items-center justify-between gap-2' : 'flex w-[150px] shrink-0 items-center gap-2'}>
                 <span className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-600"><span className="h-1.5 w-1.5 rounded-full bg-[#FF6A00]" />{memo.is_favorite ? 'Favori' : 'Fiche'}</span>
                 {grid && <span className="text-[10px] text-slate-600">{memo.updated_at ? new Date(memo.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : ''}</span>}
@@ -294,8 +297,8 @@ function MemoCard({ memo, grid, onDragStart, onDragEnd }) {
                 <p className={'mt-1 text-xs leading-5 text-slate-500 ' + (grid ? 'line-clamp-4' : 'line-clamp-1')}>{memo.excerpt}</p>
                 {memo.tags?.length > 0 && <div className={'flex flex-wrap gap-1.5 ' + (grid ? 'mt-auto pt-4' : 'mt-2')}>{memo.tags.map((tag) => <TagBadge key={tag.id} name={tag.name} />)}</div>}
             </div>
-        </Link>
-        <div className={grid ? 'mt-3 flex items-center justify-end border-t border-white/[0.06] pt-3' : 'shrink-0'}><FavoriteButton memo={memo} /></div>
+        </div>
+        <div className={grid ? 'mt-3 flex items-center justify-end gap-2 border-t border-white/[0.06] pt-3' : 'shrink-0'}>{trash ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button> : <FavoriteButton memo={memo} />}</div>
     </article>;
 }
 
