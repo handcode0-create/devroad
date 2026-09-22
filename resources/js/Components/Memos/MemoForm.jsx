@@ -2,14 +2,16 @@ import { Link } from '@inertiajs/react';
 import { Field, inputClass } from '@/Components/Ui/Field';
 import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
-import MemoEditor, { autoMemoTitle } from '@/Components/Memos/MemoEditor';
+import MemoEditor, { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function MemoForm({ form, onSubmit, submitLabel, cancelHref }) {
     const { data, setData, errors, processing } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     function applyAutoTitle(title) { if (title) setData('title', title); }
     function handleSubmit(event) {
-        if (!data.title.trim()) { const title = autoMemoTitle(data.content); if (title) setData('title', title); }
+        const normalizedContent = normalizeMemoContent(data.content);
+        if (normalizedContent !== data.content) setData('content', normalizedContent);
+        if (!data.title.trim()) { const title = autoMemoTitle(normalizedContent); if (title) setData('title', title); }
         onSubmit(event);
     }
     return (
