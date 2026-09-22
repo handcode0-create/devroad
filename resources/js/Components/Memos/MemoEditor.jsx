@@ -77,20 +77,51 @@ export function memoValueToHtml(value) {
 export function sanitizeMemoHtml(value) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(String(value ?? ''), 'text/html');
-    const allowed = new Set(['P','DIV','BR','H2','H3','H4','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','PRE','CODE','HR','SPAN','FONT']);
+    const allowed = new Set(['P','DIV','BR','H2','H3','H4','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','PRE','CODE','HR','SPAN','FONT','A','IMG','FIGURE']);
+    const localAttachmentUrl = (url, allowDownload = true) => {
+        const value = String(url ?? '');
+        return allowDownload
+            ? /^\/memos\/attachments\/[0-9]+(?:\/download)?$/.test(value)
+            : /^\/memos\/attachments\/[0-9]+$/.test(value);
+    };
+
     doc.body.querySelectorAll('*').forEach((node) => {
         if (!allowed.has(node.tagName)) {
             node.replaceWith(...Array.from(node.childNodes));
             return;
         }
-        Array.from(node.attributes).forEach((attribute) => {
-            if (!['style','face','size'].includes(attribute.name.toLowerCase())) node.removeAttribute(attribute.name);
-        });
-        if (node.tagName === 'FONT' && node.getAttribute('face')) {
-            node.style.fontFamily = node.getAttribute('face');
-            node.removeAttribute('face');
+
+        const attributes = Array.from(node.attributes);
+        while (node.attributes.length > 0) {
+            node.removeAttribute(node.attributes[0].name);
         }
+
+        attributes.forEach((attribute) => {
+            const name = attribute.name.toLowerCase();
+            const value = attribute.value;
+
+            if (node.tagName === 'IMG' && ['src', 'alt'].includes(name)) {
+                if (name === 'src' && localAttachmentUrl(value, false)) node.setAttribute(name, value);
+                if (name === 'alt') node.setAttribute(name, value);
+                return;
+            }
+
+            if (node.tagName === 'A' && name === 'href' && localAttachmentUrl(value)) {
+                node.setAttribute('href', value);
+                return;
+            }
+
+            if (node.tagName === 'FIGURE' && name === 'data-attachment-id' && /^\d+$/.test(value)) {
+                node.setAttribute(name, value);
+                return;
+            }
+
+            if (node.tagName === 'FONT' && ['face', 'size'].includes(name)) {
+                node.setAttribute(name, value);
+            }
+        });
     });
+
     return doc.body.innerHTML;
 }
 
