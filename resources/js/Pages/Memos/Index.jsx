@@ -43,6 +43,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
     const [deleteMemoTarget, setDeleteMemoTarget] = useState(null);
+    const [forceDeleteMemoTarget, setForceDeleteMemoTarget] = useState(null);
     const [searchInput, setSearchInput] = useState(null);
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
@@ -124,6 +125,13 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     function deleteMemo(memo) {
         setActiveMenu(null);
         setDeleteMemoTarget(memo);
+    }
+
+    function forceDeleteMemo(memo) { setActiveMenu(null); setForceDeleteMemoTarget(memo); }
+
+    function confirmForceDeleteMemo() {
+        if (!forceDeleteMemoTarget) return;
+        router.delete('/memos/' + forceDeleteMemoTarget.id + '/force-delete', { preserveScroll: true, onFinish: () => setForceDeleteMemoTarget(null) });
     }
 
     function confirmDeleteMemo() {
@@ -432,7 +440,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => setSelectedIds([])} className="rounded-lg p-1.5 text-slate-500 hover:text-white" aria-label="Annuler la sélection"><X size={14} /></button>
                                 </div>}
                             </div>
-                            <ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} menuOpen={activeMenu === memo.id} folderPath={getFolderPath(memo.folder_id)} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} onDuplicate={duplicateMemo} onDelete={deleteMemo} /></li>)}</ul><Pagination links={memos.links} />
+                            <ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} menuOpen={activeMenu === memo.id} folderPath={getFolderPath(memo.folder_id)} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} onDuplicate={duplicateMemo} onDelete={deleteMemo} onForceDelete={forceDeleteMemo} /></li>)}</ul><Pagination links={memos.links} />
                         </> : <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />}
                     </section>
                 </div>
@@ -442,8 +450,10 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
             </Modal>
             <Modal show={bulkMoveOpen} onClose={() => !bulkProcessing && setBulkMoveOpen(false)} title="Déplacer les fiches sélectionnées" description={selectedIds.length + ' fiche(s) seront déplacée(s).'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setBulkMoveOpen(false)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitBulkMove} disabled={bulkProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F]">Déplacer</button></div>}><select value={bulkMoveFolderId} onChange={(event) => setBulkMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white"><option value="">Sans dossier — racine</option>{folderTree.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></Modal>
 
-            <ConfirmModal show={bulkDeleteOpen} title={filters.trash ? 'Supprimer définitivement les fiches ?' : 'Mettre les fiches à la corbeille ?'} description={filters.trash ? 'Cette action ne peut pas être annulée.' : 'Les fiches pourront être restaurées depuis la corbeille.'} confirmLabel={filters.trash ? 'Supprimer définitivement' : 'Mettre à la corbeille'} onClose={() => setBulkDeleteOpen(false)} onConfirm={() => { if (filters.trash) { selectedIds.forEach((id) => router.delete('/memos/' + id + '/force-delete', { preserveScroll: true })); setSelectedIds([]); } else { bulkAction('delete'); } setBulkDeleteOpen(false); }} />
+            <ConfirmModal show={bulkDeleteOpen} title={filters.trash ? 'Supprimer définitivement les fiches ?' : 'Mettre les fiches à la corbeille ?'} description={filters.trash ? 'Cette action ne peut pas être annulée.' : 'Les fiches pourront être restaurées depuis la corbeille.'} confirmLabel={filters.trash ? 'Supprimer définitivement' : 'Mettre à la corbeille'} onClose={() => setBulkDeleteOpen(false)} onConfirm={() => { if (filters.trash) { bulkAction('force_delete'); } else { bulkAction('delete'); } setBulkDeleteOpen(false); }} />
 
+            <ConfirmModal show={Boolean(deleteMemoTarget)} title={'Mettre « ' + (deleteMemoTarget?.title ?? '') + ' » à la corbeille ?'} description="La fiche pourra être restaurée depuis la corbeille." confirmLabel="Mettre à la corbeille" onClose={() => setDeleteMemoTarget(null)} onConfirm={confirmDeleteMemo} />
+            <ConfirmModal show={Boolean(forceDeleteMemoTarget)} title={'Supprimer définitivement « ' + (forceDeleteMemoTarget?.title ?? '') + ' » ?'} description="Cette action est irréversible. Le contenu et les pièces jointes seront définitivement supprimés." confirmLabel="Supprimer définitivement" onClose={() => setForceDeleteMemoTarget(null)} onConfirm={confirmForceDeleteMemo} />
             <ConfirmModal show={emptyTrashOpen} title="Vider la corbeille ?" description="Toutes les fiches supprimées seront définitivement effacées." confirmLabel="Vider la corbeille" onClose={() => setEmptyTrashOpen(false)} onConfirm={() => { router.post('/memos/empty-trash', {}, { preserveScroll: true }); setEmptyTrashOpen(false); }} />
 
             <ConfirmModal show={Boolean(deleteFolderTarget)} title={'Supprimer « ' + (deleteFolderTarget?.name ?? '') + ' » ?'} description="Les fiches seront conservées mais retirées de ce dossier. Les sous-dossiers remonteront d'un niveau." confirmLabel="Supprimer le dossier" onClose={() => setDeleteFolderTarget(null)} onConfirm={confirmDeleteFolder} />
@@ -532,7 +542,7 @@ function ViewButton({ active, onClick, icon: Icon, label }) {
     return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
 }
 
-function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = false, folderPath = [], onSelect, onMenu, onDragStart, onDragEnd, onMove, onDuplicate, onDelete }) {
+function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = false, folderPath = [], onSelect, onMenu, onDragStart, onDragEnd, onMove, onDuplicate, onDelete, onForceDelete }) {
     return <article
         draggable
         onDragStart={(event) => onDragStart(event)}
@@ -563,7 +573,7 @@ function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = fals
             {menuOpen && <div className="absolute right-0 top-9 w-48 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.45)]">
                 <Link href={'/memos/' + memo.id} className="block rounded-lg px-3 py-2 text-xs text-slate-300 hover:bg-white/[0.05]">Ouvrir</Link>
                 {!trash && <><Link href={'/memos/' + memo.id + '/edit'} className="block rounded-lg px-3 py-2 text-xs text-slate-300 hover:bg-white/[0.05]">Modifier</Link><button type="button" onClick={() => onMove(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Déplacer</button><button type="button" onClick={() => onDuplicate(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Dupliquer</button><button type="button" onClick={() => onDelete(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Mettre à la corbeille</button></>}
-                {trash && <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button>}
+                {trash && <><button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button><button type="button" onClick={() => onForceDelete(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer définitivement</button></>}
             </div>}
         </div>
     </article>;
