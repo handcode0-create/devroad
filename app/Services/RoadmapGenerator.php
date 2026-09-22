@@ -142,6 +142,75 @@ class RoadmapGenerator
         });
     }
 
+    private function buildStepPayload(
+        string $technology,
+        array $lesson,
+        int $index,
+        int $stepCount,
+        array $codeExamples,
+        array $enrichment,
+        ?string $sourceFooter,
+    ): array {
+        $isStructured = array_key_exists('title', $lesson);
+
+        $title = $isStructured ? ($lesson['title'] ?? 'Cours') : ($lesson[0] ?? 'Cours');
+        $lessonOverride = $enrichment['lessons'][$title] ?? [];
+
+        $description = $lessonOverride['description']
+            ?? ($isStructured ? ($lesson['description'] ?? null) : ($lesson[1] ?? null));
+        $objective = $lessonOverride['objective']
+            ?? ($isStructured ? ($lesson['objective'] ?? null) : ($lesson[2] ?? null));
+        $content = $lessonOverride['content']
+            ?? ($isStructured
+                ? ($lesson['content'] ?? null)
+                : $this->buildContent($title, $lesson[3] ?? null));
+
+        if ($sourceFooter && $content) {
+            $content = rtrim($content) . "\n\n" . $sourceFooter;
+        }
+
+        $codeExample = $lessonOverride['code_example']
+            ?? ($isStructured ? ($lesson['code_example'] ?? null) : ($codeExamples[$index] ?? null));
+        $estimatedMinutes = $lessonOverride['estimated_minutes']
+            ?? ($isStructured ? ($lesson['estimated_minutes'] ?? 30) : ($index === $stepCount - 1 ? 60 : 30));
+
+        $workspace = $this->buildWorkspaceMetadata(
+            $technology,
+            $title,
+            $codeExample,
+            $lessonOverride['workspace_file']
+                ?? ($isStructured ? ($lesson['workspace_file'] ?? null) : null),
+            $lessonOverride['workspace_language']
+                ?? ($isStructured ? ($lesson['workspace_language'] ?? null) : null),
+            $lessonOverride['workspace_files']
+                ?? ($isStructured ? ($lesson['workspace_files'] ?? null) : null),
+        );
+
+        $exercise = $this->buildExercise(
+            $title,
+            $description,
+            $objective,
+            $codeExample,
+            array_merge($isStructured ? $lesson : [], $lessonOverride)
+        );
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'objective' => $objective,
+            'content' => $content,
+            'code_example' => $codeExample,
+            'workspace_file' => $workspace['file'],
+            'workspace_language' => $workspace['language'],
+            'workspace_files' => $workspace['files'],
+            'exercise_title' => $exercise['title'],
+            'exercise_description' => $exercise['description'],
+            'exercise_hint' => $exercise['hint'],
+            'exercise_solution' => $exercise['solution'],
+            'estimated_minutes' => $estimatedMinutes,
+        ];
+    }
+
     private function buildWorkspaceMetadata(
         string $technology,
         string $title,
