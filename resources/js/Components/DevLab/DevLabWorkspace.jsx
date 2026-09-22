@@ -341,6 +341,9 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                         onSelect={setActive}
                         onCreate={onNewFile}
                         onImport={() => importRef.current?.click()}
+                        onRename={renameFile}
+                        onDuplicate={duplicateFile}
+                        onDelete={removeFile}
                     />
 
                     <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#06101A]">
