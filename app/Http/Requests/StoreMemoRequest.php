@@ -50,7 +50,20 @@ class StoreMemoRequest extends FormRequest
                 $node->parentNode?->replaceChild($fragment, $node);
                 continue;
             }
+            $attributes = [];
+            foreach ($node->attributes as $attribute) $attributes[] = [$attribute->name, $attribute->value];
             while ($node->attributes->length > 0) $node->removeAttributeNode($node->attributes->item(0));
+            foreach ($attributes as [$name, $value]) {
+                $name = strtolower($name);
+                if ($node->tagName === 'img' && in_array($name, ['src', 'alt'], true)) {
+                    if ($name === 'src' && ! preg_match('#^/memos/attachments/[0-9]+$#', $value)) continue;
+                    $node->setAttribute($name, $value);
+                } elseif ($node->tagName === 'a' && $name === 'href' && preg_match('#^/memos/attachments/[0-9]+(?:/download)?$#', $value)) {
+                    $node->setAttribute('href', $value);
+                } elseif ($node->tagName === 'figure' && $name === 'data-attachment-id' && ctype_digit($value)) {
+                    $node->setAttribute($name, $value);
+                }
+            }
         }
 
         $html = '';
@@ -71,6 +84,9 @@ class StoreMemoRequest extends FormRequest
             'formatting.fontWeight' => ['sometimes', 'in:400,500,600,700'],
             'is_favorite' => ['sometimes', 'boolean'],
             'folder_id' => ['sometimes', 'nullable', 'integer'],
+            'icon' => ['sometimes', 'nullable', 'string', 'max:8'],
+            'cover_attachment_id' => ['sometimes', 'nullable', 'integer'],
+            'is_full_width' => ['sometimes', 'boolean'],
             'attachments' => ['sometimes', 'nullable', 'array', 'max:8'],
             'attachments.*' => ['file', 'max:5120', 'mimes:jpg,jpeg,png,gif,webp,pdf,txt,md,json,csv,zip'],
             'tags' => ['sometimes', 'nullable', 'array', 'max:10'],
