@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, CaseLower, CaseUpper, CheckSquare, Code2, FileText, Heading1, Heading2, Heading3, List, ListOrdered, Minus, Move, Plus, Quote, Sparkles, Type } from 'lucide-react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, CaseLower, CaseUpper, CheckSquare, Code2, FileText, Heading1, Heading2, Heading3, Image as ImageIcon, List, ListOrdered, Minus, Paperclip, Plus, Quote, Sparkles, Type } from 'lucide-react';
 
 const FONTS = [
     { value: 'Inter', label: 'Inter' },
@@ -94,7 +94,7 @@ export function sanitizeMemoHtml(value) {
     return doc.body.innerHTML;
 }
 
-export default function MemoEditor({ content, onContentChange, formatting, onFormattingChange, onAutoTitle }) {
+export default function MemoEditor({ content, onContentChange, formatting, onFormattingChange, onAutoTitle, attachments = [] }) {
     const style = useMemo(() => defaultMemoFormatting(formatting), [formatting]);
     const editorRef = useRef(null);
     const [slashOpen, setSlashOpen] = useState(false);
@@ -195,13 +195,74 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
         emitContent();
     }
 
-    function handleInput() {
+    function currentSlashQuery() {
         const text = editorRef.current?.innerText ?? '';
-        setSlashOpen(text.trimStart().startsWith('/') && text.trim().length > 1);
+        const line = text.split(/\n/).pop()?.trim() ?? '';
+        const match = line.match(/^\/([a-z0-9-]*)$/i);
+        return match ? match[1].toLowerCase() : null;
+    }
+
+    function insertInlineHtml(html) {
+        focusEditor();
+        document.execCommand('insertHTML', false, html);
+        emitContent();
+    }
+
+    function insertAttachmentInline(attachment) {
+        if (!attachment) return;
+        if (attachment.is_image) {
+            insertInlineHtml('<figure data-attachment-id="' + attachment.id + '"><img src="' + attachment.url + '" alt="' + escapeHtml(attachment.name) + '"></figure>');
+        } else {
+            insertInlineHtml('<p><a href="' + attachment.url + '">📎 ' + escapeHtml(attachment.name) + '</a></p>');
+        }
+        setSlashOpen(false);
+    }
+
+    function applySlashCommand(command) {
+        const selection = window.getSelection();
+        const node = selection?.anchorNode;
+        const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+        const host = element?.closest?.('p,div,h2,h3,h4,blockquote,pre,li');
+        if (host && /^\/[a-z0-9-]*$/i.test(host.innerText.trim())) {
+            host.innerHTML = '';
+            const range = document.createRange();
+            range.selectNodeContents(host);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        const actions = {
+            h1: () => applyBlock('h1'),
+            h2: () => applyBlock('h2'),
+            h3: () => applyBlock('h3'),
+            todo: () => applyBlock('check'),
+            bullet: () => applyBlock('bullet'),
+            number: () => applyBlock('number'),
+            quote: () => applyBlock('quote'),
+            code: insertCode,
+            divider: insertSeparator,
+            image: () => insertAttachmentInline(attachments.find((item) => item.is_image)),
+            file: () => insertAttachmentInline(attachments.find((item) => !item.is_image)),
+        };
+        actions[command]?.();
+        setSlashOpen(false);
+    }
+
+    function handleInput() {
+        setSlashOpen(currentSlashQuery() !== null);
         emitContent();
     }
 
     function handleKeyDown(event) {
+        if (slashOpen && event.key === 'Enter') {
+            const query = currentSlashQuery();
+            if (query) {
+                event.preventDefault();
+                applySlashCommand(query);
+                return;
+            }
+        }
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
             event.preventDefault();
             runCommand('bold');
@@ -251,11 +312,13 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
                 <option value="bullet">Liste</option><option value="number">Liste numérotée</option><option value="check">Checklist</option><option value="quote">Citation</option>
             </select>
             <FormatButton onClick={insertCode} label="Bloc de code"><Code2 size={14} /></FormatButton>
+            <FormatButton onClick={() => insertAttachmentInline(attachments.find((item) => item.is_image))} label="Image inline"><ImageIcon size={14} /></FormatButton>
+            <FormatButton onClick={() => insertAttachmentInline(attachments.find((item) => !item.is_image))} label="Fichier inline"><Paperclip size={14} /></FormatButton>
             <FormatButton onClick={insertSeparator} label="Séparateur"><Minus size={14} /></FormatButton>
             <button type="button" onClick={() => insertText('')} className="hidden" aria-hidden="true" />
             <button type="button" onClick={() => onAutoTitle?.(autoMemoTitle(editorRef.current?.innerText ?? ''))} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-2.5 text-xs font-semibold text-[#FF8A3D]"><Sparkles size={13} />Titre automatique</button>
         </div>
-        {slashOpen && <div className="border-b border-white/[0.05] bg-[#0D1725] px-3 py-2 text-[11px] text-slate-500">Écris directement dans l'éditeur puis utilise les boutons pour formater le texte.</div>}
+        {slashOpen && <SlashMenu query={currentSlashQuery() ?? ''} attachments={attachments} onSelect={applySlashCommand} onInsertAttachment={insertAttachmentInline} />}
         <div className="flex items-center gap-2 border-b border-white/[0.05] px-3 py-2 text-[10px] text-slate-600"><FileText size={12} /><span>Éditeur riche · les titres, listes et styles sont appliqués directement, sans dièses ni marqueurs.</span></div>
         <div
             ref={(element) => { editorRef.current = element; initializeEditor(element); }}
@@ -271,6 +334,25 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
             className="min-h-[400px] w-full resize-y overflow-y-auto bg-[#08111F] p-4 leading-7 text-slate-200 outline-none empty:before:text-slate-600 empty:before:content-[attr(data-placeholder)]"
             data-placeholder="Écris une note puis applique les formats directement, comme dans Notion."
         />
+    </div>;
+}
+function SlashMenu({ query, attachments, onSelect, onInsertAttachment }) {
+    const commands = [
+        ['h1', 'Titre 1', 'Grand titre'], ['h2', 'Titre 2', 'Titre secondaire'], ['h3', 'Titre 3', 'Petit titre'],
+        ['todo', 'Checklist', 'Tâche à cocher'], ['bullet', 'Liste', 'Liste à puces'], ['number', 'Liste numérotée', 'Liste ordonnée'],
+        ['quote', 'Citation', 'Bloc de citation'], ['code', 'Code', 'Bloc monospace'], ['divider', 'Séparateur', 'Ligne horizontale'],
+        ['image', 'Image', 'Insérer une image'], ['file', 'Fichier', 'Insérer un fichier'],
+    ];
+    const filtered = commands.filter(([key, label]) => !query || key.includes(query) || label.toLowerCase().includes(query));
+    return <div className="border-b border-white/[0.05] bg-[#0D1725] p-2">
+        <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Commandes rapides</div>
+        <div className="grid gap-1 sm:grid-cols-2">
+            {filtered.map(([key, label, description]) => <button key={key} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => onSelect(key)} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-white/[0.05]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.04] text-xs font-semibold text-[#FF8A3D]">/</span>
+                <span className="min-w-0"><span className="block text-xs font-semibold text-slate-200">{label}</span><span className="block truncate text-[10px] text-slate-600">{description}</span></span>
+            </button>)}
+        </div>
+        {query === 'image' && attachments.filter((item) => item.is_image).length > 0 && <div className="mt-2 flex gap-2 overflow-x-auto border-t border-white/[0.05] pt-2">{attachments.filter((item) => item.is_image).slice(0, 6).map((item) => <button key={item.id} type="button" onClick={() => onInsertAttachment(item)} className="shrink-0 overflow-hidden rounded-lg border border-white/[0.06]"><img src={item.url} alt={item.name} className="h-14 w-14 object-cover" /></button>)}</div>}
     </div>;
 }
 function FormatButton({ active, onClick, label, children }) { return <button type="button" onClick={onClick} aria-label={label} title={label} className={'flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-[#08111F] transition ' + (active ? 'text-white' : 'text-slate-500 hover:text-white')}>{children}</button>; }
