@@ -553,9 +553,9 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, acti
             </Link>
             <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); }} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white group-hover:flex" title="Actions du dossier"><MoreHorizontal size={14} /></button>
             {activeMenu === folder.id && <div className="absolute right-1 top-9 z-30 w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.45)]">
-                <button type="button" onClick={() => { onCreateChild(folder.id); onMenu(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Nouveau sous-dossier</button>
-                <button type="button" onClick={() => { onRename(folder); onMenu(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Renommer</button>
-                <button type="button" onClick={() => { onDelete(folder); onMenu(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer</button>
+                <button type="button" onClick={() => { onCreateChild(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Nouveau sous-dossier</button>
+                <button type="button" onClick={() => { onRename(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Renommer</button>
+                <button type="button" onClick={() => { onDelete(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer</button>
             </div>}
         </div>
     </div>;
