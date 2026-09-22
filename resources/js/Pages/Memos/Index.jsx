@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { Bookmark, ChevronDown, FileText, Folder, LayoutGrid, List, Plus, Search, Sparkles, X } from 'lucide-react';
+import { Bookmark, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import Pagination from '@/Components/Ui/Pagination';
@@ -8,17 +8,18 @@ import FavoriteButton from '@/Components/Memos/FavoriteButton';
 import TagBadge from '@/Components/Memos/TagBadge';
 import { buttonClass } from '@/Components/Ui/buttons';
 
-function listUrl({ tag, favorites, recent, q }) {
+function listUrl({ tag, favorites, recent, q, folder }) {
     const params = new URLSearchParams();
     if (tag) params.set('tag', tag);
     if (favorites) params.set('favorites', '1');
     if (recent) params.set('recent', '1');
     if (q) params.set('q', q);
+    if (folder) params.set('folder', folder);
     const query = params.toString();
     return query ? '/memos?' + query : '/memos';
 }
 
-export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
+export default function Index({ memos, tags = [], folders = [], filters = {}, counts = {} }) {
     const items = memos?.data ?? [];
     const [query, setQuery] = useState(filters.q ?? '');
     const [mobileLibraryOpen, setMobileLibraryOpen] = useState(false);
@@ -37,6 +38,17 @@ export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
         }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
+    function createFolder(parentId = null) {
+        const name = window.prompt(parentId ? 'Nom du sous-dossier' : 'Nom du dossier');
+        if (!name?.trim()) return;
+        router.post('/memo-folders', { name: name.trim(), parent_id: parentId }, { preserveScroll: true });
+    }
+
+    function deleteFolder(folder) {
+        if (!window.confirm('Supprimer le dossier « ' + folder.name + ' » ? Les fiches resteront conservées.')) return;
+        router.delete('/memo-folders/' + folder.id, { preserveScroll: true });
+    }
+
     function clearSearch() {
         setQuery('');
         router.get('/memos', {
@@ -53,14 +65,14 @@ export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
         return 'Toutes les fiches';
     }, [filters, tags]);
 
-    const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q);
+    const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q || filters.folder);
 
     return (
         <AppLayout>
             <Head title="Fiches mémo" />
             <div className="space-y-5">
                 <PageHeader title="Fiches mémo" subtitle="Un espace de rangement façon Notion pour organiser tes connaissances, commandes et astuces." actions={
-                    <Link href="/memos/create" className={buttonClass('primary')}>
+                    <Link href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className={buttonClass('primary')}>
                         <Plus size={16} aria-hidden="true" />
                         <span className="hidden sm:inline">Nouvelle fiche</span>
                         <span className="sm:hidden">Nouvelle</span>
@@ -86,6 +98,16 @@ export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
                                 <NavItem href="/memos" active={!hasFilter} icon={FileText} label="Toutes les fiches" count={counts.total} />
                                 <NavItem href={listUrl({ favorites: true })} active={Boolean(filters.favorites)} icon={Bookmark} label="Favoris" count={counts.favorites} />
                                 <NavItem href={listUrl({ recent: true })} active={Boolean(filters.recent)} icon={Sparkles} label="Récents" count={counts.recent} />
+                            </div>
+                            <div className="mt-5 border-t border-white/[0.06] pt-4">
+                                <div className="mb-2 flex items-center justify-between px-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Dossiers</span>
+                                    <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
+                                </div>
+                                <div className="space-y-1">
+                                    {folders.map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onDelete={deleteFolder} />)}
+                                    {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
+                                </div>
                             </div>
                             {tags.length > 0 && <div className="mt-5 border-t border-white/[0.06] pt-4">
                                 <div className="mb-2 flex items-center justify-between px-2"><span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Collections</span><span className="text-[10px] text-slate-600">{tags.length}</span></div>
@@ -126,6 +148,20 @@ function NavItem({ href, active, icon: Icon, label, count }) {
     return <Link href={href} preserveScroll className={'group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium transition ' + (active ? 'bg-[#FF6A00]/10 text-[#FF8A3D]' : 'text-slate-500 hover:bg-white/[0.035] hover:text-slate-200')}>
         <Icon size={15} className={active ? 'text-[#FF8A3D]' : 'text-slate-600 group-hover:text-slate-400'} /><span className="min-w-0 flex-1 truncate">{label}</span>{typeof count === 'number' && <span className={active ? 'text-[10px] text-[#FF8A3D]' : 'text-[10px] text-slate-700'}>{count}</span>}
     </Link>;
+}
+
+function FolderNavItem({ folder, active, onCreateChild, onDelete, depth = 0 }) {
+    return <div>
+        <div className={'group flex items-center gap-1 rounded-xl pr-1 transition ' + (active ? 'bg-[#FF6A00]/10' : 'hover:bg-white/[0.035]')}>
+            <Link href={listUrl({ folder: active ? null : folder.id })} className={'flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium ' + (active ? 'text-[#FF8A3D]' : 'text-slate-500 hover:text-slate-200')} style={{ paddingLeft: 10 + depth * 14 }}>
+                <Folder size={14} className={active ? 'text-[#FF8A3D]' : 'text-slate-600'} />
+                <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                {typeof folder.memos_count === 'number' && <span className="text-[10px] text-slate-700">{folder.memos_count}</span>}
+            </Link>
+            <button type="button" onClick={() => onCreateChild(folder.id)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-[#FF8A3D] group-hover:flex" title="Créer un sous-dossier"><Plus size={12} /></button>
+            <button type="button" onClick={() => onDelete(folder)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-red-300 group-hover:flex" title="Supprimer le dossier"><Trash2 size={12} /></button>
+        </div>
+    </div>;
 }
 
 function ViewButton({ active, onClick, icon: Icon, label }) {
