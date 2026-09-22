@@ -241,4 +241,107 @@ class DevLabProjectTest extends TestCase
 
         $this->assertDatabaseHas('devlab_files', ['path' => 'style.css', 'content' => '', 'size' => 0]);
     }
+    public function test_un_fichier_peut_etre_renomme_duplique_et_supprime(): void
+    {
+        $user = User::factory()->create();
+        $project = $user->devLabProjects()->create([
+            'name' => 'Fichiers',
+            'template' => 'html',
+            'runtime' => 'browser',
+        ]);
+        $file = $project->files()->create([
+            'path' => 'index.html',
+            'content' => '<h1>DevRoad</h1>',
+            'size' => 17,
+        ]);
+
+        $this->actingAs($user)
+            ->patchJson(route('devlab.projects.files.update', [$project, $file]), [
+                'path' => 'pages/home.html',
+                'content' => '<h1>Accueil</h1>',
+            ])
+            ->assertOk()
+            ->assertJsonPath('file.path', 'pages/home.html')
+            ->assertJsonPath('file.content', '<h1>Accueil</h1>');
+
+        $this->assertDatabaseHas('devlab_files', [
+            'id' => $file->id,
+            'path' => 'pages/home.html',
+            'content' => '<h1>Accueil</h1>',
+            'size' => 16,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.files.store', $project), [
+                'path' => 'pages/home-copy.html',
+                'content' => '<h1>Accueil</h1>',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('file.path', 'pages/home-copy.html');
+
+        $this->assertDatabaseCount('devlab_files', 2);
+
+        $this->actingAs($user)
+            ->deleteJson(route('devlab.projects.files.destroy', [$project, $file]))
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('devlab_files', ['id' => $file->id]);
+        $this->assertDatabaseHas('devlab_files', ['path' => 'pages/home-copy.html']);
+    }
+
+    public function test_un_intrus_ne_peut_pas_renommer_ou_supprimer_un_fichier(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+        $project = $owner->devLabProjects()->create([
+            'name' => 'Privé',
+            'template' => 'html',
+            'runtime' => 'browser',
+        ]);
+        $file = $project->files()->create([
+            'path' => 'index.html',
+            'content' => 'secret',
+            'size' => 6,
+        ]);
+
+        $this->actingAs($intruder)
+            ->patchJson(route('devlab.projects.files.update', [$project, $file]), [
+                'path' => 'hacked.html',
+                'content' => 'hacked',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($intruder)
+            ->deleteJson(route('devlab.projects.files.destroy', [$project, $file]))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('devlab_files', [
+            'id' => $file->id,
+            'path' => 'index.html',
+            'content' => 'secret',
+        ]);
+    }
+
+    public function test_le_dernier_fichier_ne_peut_pas_etre_supprime(): void
+    {
+        $user = User::factory()->create();
+        $project = $user->devLabProjects()->create([
+            'name' => 'Dernier fichier',
+            'template' => 'html',
+            'runtime' => 'browser',
+        ]);
+        $file = $project->files()->create([
+            'path' => 'index.html',
+            'content' => '',
+            'size' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->deleteJson(route('devlab.projects.files.destroy', [$project, $file]))
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Un projet doit conserver au moins un fichier.');
+
+        $this->assertDatabaseHas('devlab_files', ['id' => $file->id]);
+    }
+
 }
