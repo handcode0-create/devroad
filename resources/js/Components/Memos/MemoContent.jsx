@@ -2,7 +2,16 @@ import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 
 const DEFAULT_FORMATTING = { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 };
-const ALLOWED_FONTS = new Set(['Inter', 'Poppins', 'Space Grotesk', 'JetBrains Mono', 'Georgia', 'Arial']);
+const ALLOWED_FONTS = new Set(['Inter', 'Poppins', 'Space Grotesk', 'JetBrains Mono', 'Manrope', 'Lora']);
+
+const FONT_STACKS = {
+    Inter: "'Inter', system-ui, sans-serif",
+    Poppins: "'Poppins', system-ui, sans-serif",
+    'Space Grotesk': "'Space Grotesk', system-ui, sans-serif",
+    'JetBrains Mono': "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
+    Manrope: "'Manrope', system-ui, sans-serif",
+    Lora: "'Lora', Georgia, serif",
+};
 const ALLOWED_TRANSFORMS = new Set(['none', 'uppercase', 'lowercase', 'capitalize']);
 const ALLOWED_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
 const ALLOWED_WEIGHTS = new Set([400, 500, 600, 700]);
@@ -13,11 +22,13 @@ function safeFormatting(value) {
 }
 
 function inline(text) {
+    // Backward compatibility for memos created by the previous marker-based
+    // implementation. New edits no longer write these markers.
     const pattern = /(\[\[upper\]\][\s\S]*?\[\[\/upper\]\]|\[\[lower\]\][\s\S]*?\[\[\/lower\]\]|\[\[capitalize\]\][\s\S]*?\[\[\/capitalize\]\]|\*\*[^*]+\*\*|`[^`]+`)/g;
     return text.split(pattern).map((part, index) => {
-        if (part.startsWith('[[upper]]')) return <span key={index}>{part.slice(9, -10).toUpperCase()}</span>;
-        if (part.startsWith('[[lower]]')) return <span key={index}>{part.slice(9, -10).toLowerCase()}</span>;
-        if (part.startsWith('[[capitalize]]')) return <span key={index}>{part.slice(14, -15).replace(/(^|\s)\S/g, (char) => char.toUpperCase())}</span>;
+        if (part.startsWith('[[upper]]')) return <span key={index} style={{ textTransform: 'none' }}>{part.slice(9, -10).toUpperCase()}</span>;
+        if (part.startsWith('[[lower]]')) return <span key={index} style={{ textTransform: 'none' }}>{part.slice(9, -10).toLowerCase()}</span>;
+        if (part.startsWith('[[capitalize]]')) return <span key={index} style={{ textTransform: 'none' }}>{part.slice(14, -15).replace(/(^|\s)\S/g, (char) => char.toUpperCase())}</span>;
         if (part.startsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
         if (part.startsWith('`')) return <code key={index} className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] text-[#FF8A3D]">{part.slice(1, -1)}</code>;
         return part;
@@ -58,5 +69,5 @@ export default function MemoContent({ content, formatting }) {
     while ((match = fence.exec(content ?? '')) !== null) { if (match.index > last) parts.push({ type: 'text', value: content.slice(last, match.index) }); parts.push({ type: 'code', lang: match[1], value: match[2].replace(/\n$/, '') }); last = match.index + match[0].length; }
     if (last < (content ?? '').length) parts.push({ type: 'text', value: content.slice(last) });
     const style = safeFormatting(formatting);
-    return <div className="space-y-4" style={{ fontFamily: style.fontFamily, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}>{parts.map((part, index) => part.type === 'code' ? <CodeBlock key={index} lang={part.lang} value={part.value} /> : renderTextBlock(part.value, style, index))}</div>;
+    return <div className="space-y-4" style={{ fontFamily: FONT_STACKS[style.fontFamily] ?? FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}>{parts.map((part, index) => part.type === 'code' ? <CodeBlock key={index} lang={part.lang} value={part.value} /> : renderTextBlock(part.value, style, index))}</div>;
 }
