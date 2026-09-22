@@ -46,6 +46,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [deleteMemoTarget, setDeleteMemoTarget] = useState(null);
     const [forceDeleteMemoTarget, setForceDeleteMemoTarget] = useState(null);
     const [searchInput, setSearchInput] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
     useEffect(() => { try { localStorage.setItem('devroad:memos:view', view); } catch {} }, [view]);
@@ -54,6 +55,12 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
         setSelectedIds([]);
         setActiveMenu(null);
     }, [filters.folder, filters.q, filters.tag, filters.favorites, filters.recent, filters.trash, filters.sort]);
+
+    useEffect(() => {
+        const removeStart = router.on('start', () => setLoading(true));
+        const removeFinish = router.on('finish', () => setLoading(false));
+        return () => { removeStart(); removeFinish(); };
+    }, []);
 
     useEffect(() => {
         const handler = (event) => {
@@ -70,12 +77,24 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                 window.location.href = filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create';
             } else if (event.key === 'Escape') {
                 setActiveMenu(null);
+                setActiveFolderMenu(null);
                 setSelectedIds([]);
             }
         };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
     }, [filters.folder]);
+
+    useEffect(() => {
+        setSelectedIds([]);
+    }, [memos?.current_page]);
+
+    useEffect(() => {
+        if (!activeMenu && !activeFolderMenu) return undefined;
+        const close = () => { setActiveMenu(null); setActiveFolderMenu(null); };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, [activeMenu, activeFolderMenu]);
 
     function submitSearch(event) {
         event.preventDefault();
@@ -432,7 +451,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             {filters.trash && counts.trash > 0 && <button type="button" onClick={() => setEmptyTrashOpen(true)} className="rounded-xl border border-red-400/15 bg-red-400/[0.05] px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/10">Vider la corbeille</button>}
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <>
+                        {loading ? <MemoSkeletons grid={view === 'grid'} /> : items.length > 0 ? <>
                             <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-white/[0.05] bg-[#0D1725]/70 px-3 py-2">
                                 <label className="flex items-center gap-2 text-xs font-semibold text-slate-400"><input type="checkbox" checked={items.length > 0 && selectedIds.length === items.length} onChange={toggleSelectAll} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" /><span>{selectedIds.length ? selectedIds.length + ' sélectionnée(s)' : 'Sélectionner'}</span></label>
                                 {selectedIds.length > 0 && <div className="flex flex-wrap items-center gap-1.5">
@@ -554,7 +573,7 @@ function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = fals
         onContextMenu={(event) => { event.preventDefault(); onMenu(); }}
         className={'group relative overflow-visible rounded-2xl border bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:bg-[#101B2C] cursor-grab active:cursor-grabbing ' + (selected ? 'border-[#FF6A00]/50 ring-1 ring-[#FF6A00]/20' : 'border-white/[0.06] hover:border-[#FF6A00]/20 ') + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}
     >
-        <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-[#08111F]/80 text-slate-600 opacity-0 backdrop-blur transition group-hover:opacity-100 hover:text-white" aria-label={selected ? 'Désélectionner' : 'Sélectionner'}>
+        <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-[#08111F]/80 text-slate-600 opacity-100 backdrop-blur transition sm:opacity-0 sm:group-hover:opacity-100 hover:text-white" aria-label={selected ? 'Désélectionner' : 'Sélectionner'}>
             {selected ? <span className="flex h-4 w-4 items-center justify-center rounded bg-[#FF6A00] text-[#08111F]"><Check size={11} strokeWidth={3} /></span> : <span className="h-4 w-4 rounded border border-white/20" />}
         </button>
         <Link href={'/memos/' + memo.id} className={'min-w-0 flex-1 ' + (grid ? 'flex flex-col' : 'flex items-center gap-4')} draggable={false}>
@@ -581,6 +600,16 @@ function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = fals
             </div>}
         </div>
     </article>;
+}
+
+function MemoSkeletons({ grid }) {
+    return <div className={grid ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'} aria-label="Chargement">
+        {Array.from({ length: grid ? 6 : 5 }).map((_, index) => <div key={index} className={'animate-pulse rounded-2xl border border-white/[0.05] bg-[#0D1725] ' + (grid ? 'h-52 p-4' : 'h-20 p-4')}>
+            <div className="h-3 w-24 rounded bg-white/[0.06]" />
+            <div className="mt-4 h-4 w-2/3 rounded bg-white/[0.06]" />
+            <div className="mt-3 h-3 w-full rounded bg-white/[0.04]" />
+        </div>)}
+    </div>;
 }
 
 function EmptyState({ filtered, trash = false, folder = false }) {
