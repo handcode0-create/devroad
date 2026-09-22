@@ -148,7 +148,6 @@ class MemoController extends Controller
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
                 'attachments' => $this->formatAttachments($memo),
-                'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
             ],
             'folders' => $memo->user->memoFolders()->orderBy('position')->orderBy('name')->get(['id', 'parent_id', 'name', 'icon', 'position']),
         ]);
