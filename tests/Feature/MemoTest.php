@@ -190,6 +190,43 @@ class MemoTest extends TestCase
         $this->assertNull($memo->fresh()->deleted_at);
     }
 
+    public function test_les_actions_groupees_et_la_corbeille_definitive_sont_isolees_par_utilisateur(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $first = $user->memos()->create(['title' => 'B', 'content' => 'b']);
+        $second = $user->memos()->create(['title' => 'A', 'content' => 'a']);
+        $foreign = $other->memos()->create(['title' => 'Secret', 'content' => 'x']);
+
+        $this->actingAs($user)->post(route('memos.bulk'), ['ids' => [$first->id, $second->id], 'action' => 'favorite'])->assertRedirect();
+        $this->assertTrue($first->fresh()->is_favorite);
+        $this->assertTrue($second->fresh()->is_favorite);
+        $this->assertFalse($foreign->fresh()->is_favorite);
+
+        $this->actingAs($user)->post(route('memos.bulk'), ['ids' => [$first->id], 'action' => 'delete'])->assertRedirect();
+        $this->assertNotNull($first->fresh()->deleted_at);
+        $this->actingAs($user)->post(route('memos.bulk'), ['ids' => [$first->id], 'action' => 'restore'])->assertRedirect();
+        $this->assertNull($first->fresh()->deleted_at);
+
+        $this->actingAs($user)->post(route('memos.bulk'), ['ids' => [$first->id], 'action' => 'delete'])->assertRedirect();
+        $this->actingAs($user)->post(route('memos.bulk'), ['ids' => [$first->id], 'action' => 'force_delete'])->assertRedirect();
+        $this->assertDatabaseMissing('memos', ['id' => $first->id]);
+        $this->assertDatabaseHas('memos', ['id' => $foreign->id]);
+    }
+
+    public function test_le_tri_des_memos_est_accepte(): void
+    {
+        $this->withoutVite();
+        $user = User::factory()->create();
+        $user->memos()->create(['title' => 'Zeta', 'content' => 'z']);
+        $user->memos()->create(['title' => 'Alpha', 'content' => 'a']);
+
+        $this->actingAs($user)->get(route('memos.index', ['sort' => 'title_asc']))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.sort', 'title_asc')
+                ->where('memos.data.0.title', 'Alpha'));
+    }
+
     public function test_la_liste_ne_contient_que_les_memos_de_lutilisateur_et_filtre_les_favoris(): void
     {
         $this->withoutVite();
