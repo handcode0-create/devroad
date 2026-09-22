@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMemoRequest;
 use App\Http\Requests\UpdateMemoRequest;
 use App\Models\Memo;
+use App\Models\MemoFolder;
 use App\Models\RoadmapStep;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,12 +26,15 @@ class MemoController extends Controller
         $q = $request->query('q');
         $q = is_string($q) ? trim($q) : '';
         $recent = $request->boolean('recent');
+        $folderId = $request->query('folder');
+        $folderId = is_numeric($folderId) ? (int) $folderId : null;
 
         $memos = $user->memos()
             ->with('tags:id,name,slug')
             ->when($request->boolean('favorites'), fn ($query) => $query->where('is_favorite', true))
             ->when($recent, fn ($query) => $query->where('updated_at', '>=', Carbon::now()->subDays(7)))
             ->when($tag, fn ($query) => $query->whereHas('tags', fn ($t) => $t->where('slug', $tag)))
+            ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($search) use ($q) {
                     $search->where('title', 'ilike', '%' . $q . '%')
@@ -48,9 +52,13 @@ class MemoController extends Controller
                 'is_favorite' => $memo->is_favorite,
                 'updated_at' => $memo->updated_at,
                 'tags' => $this->formatTags($memo),
+                'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
+                'attachments' => $this->formatAttachments($memo),
+                'folder_id' => $memo->folder_id,
             ]);
 
         $tags = $user->tags()->has('memos')->withCount('memos')->orderBy('name')->get(['id', 'name', 'slug']);
+        $folders = $user->memoFolders()->withCount('memos')->orderBy('position')->orderBy('name')->get(['id', 'parent_id', 'name', 'icon', 'position', 'memos_count']);
 
         $counts = [
             'total' => $user->memos()->count(),
@@ -61,12 +69,14 @@ class MemoController extends Controller
         return Inertia::render('Memos/Index', [
             'memos' => $memos,
             'tags' => $tags,
+            'folders' => $folders,
             'counts' => $counts,
             'filters' => [
                 'favorites' => $request->boolean('favorites'),
                 'recent' => $recent,
                 'tag' => $tag,
                 'q' => $q,
+                'folder' => $folderId,
             ],
         ]);
     }
@@ -83,8 +93,9 @@ class MemoController extends Controller
         Gate::authorize('create', Memo::class);
 
         $memo = DB::transaction(function () use ($request) {
-            $memo = $request->user()->memos()->create($request->safe()->except('tags'));
+            $memo = $request->user()->memos()->create($request->safe()->except(['tags', 'attachments']));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
+            $this->storeAttachments($request, $memo);
 
             return $memo;
         });
@@ -109,12 +120,14 @@ class MemoController extends Controller
     public function show(Memo $memo): Response
     {
         Gate::authorize('view', $memo);
-        $memo->load('tags:id,name,slug');
+        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'attachments:id,memo_id,name,mime_type,size,created_at']);
 
         return Inertia::render('Memos/Show', [
             'memo' => [
                 ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite', 'created_at', 'updated_at'),
                 'tags' => $this->formatTags($memo),
+                'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
+                'attachments' => $this->formatAttachments($memo),
             ],
         ]);
     }
@@ -122,7 +135,7 @@ class MemoController extends Controller
     public function edit(Memo $memo): Response
     {
         Gate::authorize('update', $memo);
-        $memo->load('tags:id,name,slug');
+        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'attachments:id,memo_id,name,mime_type,size,created_at']);
 
         return Inertia::render('Memos/Edit', [
             'memo' => [
@@ -137,10 +150,11 @@ class MemoController extends Controller
         Gate::authorize('update', $memo);
 
         DB::transaction(function () use ($request, $memo) {
-            $memo->update($request->safe()->except('tags'));
+            $memo->update($request->safe()->except(['tags', 'attachments']));
 
             if ($request->has('tags')) {
                 $memo->syncTagNames($request->validated('tags', []) ?? []);
+                $this->storeAttachments($request, $memo);
             }
         });
 
@@ -161,6 +175,33 @@ class MemoController extends Controller
         $memo->delete();
 
         return redirect()->route('memos.index');
+    }
+
+    private function storeAttachments(Request $request, Memo $memo): void
+    {
+        foreach ($request->file('attachments', []) as $file) {
+            $memo->attachments()->create([
+                'user_id' => $request->user()->id,
+                'name' => mb_substr($file->getClientOriginalName(), 0, 255),
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+                'size' => $file->getSize(),
+                'data' => $file->getContent(),
+            ]);
+        }
+    }
+
+    private function formatAttachments(Memo $memo): array
+    {
+        return $memo->attachments->map(fn ($file) => [
+            'id' => $file->id,
+            'name' => $file->name,
+            'mime_type' => $file->mime_type,
+            'size' => $file->size,
+            'is_image' => $file->isImage(),
+            'url' => '/memos/attachments/' . $file->id,
+            'download_url' => '/memos/attachments/' . $file->id . '/download',
+            'created_at' => $file->created_at,
+        ])->values()->all();
     }
 
     private function formatTags(Memo $memo): array
