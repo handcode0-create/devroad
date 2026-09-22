@@ -143,7 +143,7 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
         nodes.forEach((node) => {
             if (mode === 'uppercase') node.nodeValue = node.nodeValue.toUpperCase();
             if (mode === 'lowercase') node.nodeValue = node.nodeValue.toLowerCase();
-            if (mode === 'capitalize') node.nodeValue = node.nodeValue.replace(/(^|[\\s-])\\p{L}/gu, (match) => match.toUpperCase());
+            if (mode === 'capitalize') node.nodeValue = node.nodeValue.replace(/(^|[\s-])\p{L}/gu, (match) => match.toUpperCase());
         });
 
         range.deleteContents();
