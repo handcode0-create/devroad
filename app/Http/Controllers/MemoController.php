@@ -53,7 +53,6 @@ class MemoController extends Controller
                 'updated_at' => $memo->updated_at,
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
-                'attachments' => $this->formatAttachments($memo),
                 'folder_id' => $memo->folder_id,
             ]);
 
