@@ -5,8 +5,8 @@ import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
 import MemoEditor, { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
-export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, folders = [], attachments = [] }) {
-    const { data, setData, errors, processing, recentlySuccessful } = form;
+export default function MemoForm({ form, onSubmit, saved = false, submitLabel, cancelHref, folders = [], attachments = [] }) {
+    const { data, setData, errors, processing, isDirty } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
 
@@ -114,7 +114,7 @@ export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, fold
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
                 <button type="submit" disabled={processing} className={buttonClass('primary')}>
-                    {processing ? 'Enregistrement...' : recentlySuccessful ? 'Enregistré ✓' : submitLabel}
+                    {processing ? 'Enregistrement...' : saved && !isDirty ? 'Enregistré ✓' : submitLabel}
                 </button>
                 <Link href={cancelHref} className={buttonClass('secondary')}>Annuler</Link>
             </div>
