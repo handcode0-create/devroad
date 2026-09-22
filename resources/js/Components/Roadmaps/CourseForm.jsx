@@ -8,6 +8,15 @@ const LANGUAGES = [
     ['javascript', 'JavaScript'],
     ['html', 'HTML'],
     ['css', 'CSS'],
+    ['typescript', 'TypeScript'],
+    ['react', 'React'],
+    ['nextjs', 'Next.js'],
+    ['tailwind', 'Tailwind CSS'],
+    ['git', 'Git'],
+    ['github', 'GitHub Actions'],
+    ['docker', 'Docker'],
+    ['mysql', 'MySQL'],
+    ['postgresql', 'PostgreSQL'],
 ];
 
 export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enregistrer', cancelHref, mode = 'create' }) {
