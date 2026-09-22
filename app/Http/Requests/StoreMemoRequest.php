@@ -35,6 +35,9 @@ class StoreMemoRequest extends FormRequest
             'formatting.textAlign' => ['sometimes', 'in:left,center,right,justify'],
             'formatting.fontWeight' => ['sometimes', 'in:400,500,600,700'],
             'is_favorite' => ['sometimes', 'boolean'],
+            'folder_id' => ['sometimes', 'nullable', 'integer'],
+            'attachments' => ['sometimes', 'nullable', 'array', 'max:8'],
+            'attachments.*' => ['file', 'max:5120', 'mimes:jpg,jpeg,png,gif,webp,pdf,txt,md,json,csv,zip'],
             'tags' => ['sometimes', 'nullable', 'array', 'max:10'],
             'tags.*' => ['nullable', 'string', 'max:50'],
         ];
