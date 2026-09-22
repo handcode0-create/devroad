@@ -24,7 +24,8 @@ export default function Show({ memo }) {
                 {memo.tags?.length > 0 && <ul className="-mt-2 mb-5 flex flex-wrap gap-2" aria-label="Tags">{memo.tags.map((tag) => <li key={tag.id}><Link href={'/memos?tag=' + tag.slug}><TagBadge name={tag.name} /></Link></li>)}</ul>}
                 {memo.breadcrumbs?.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-1 text-xs text-slate-500"><Folder size={14} className="mr-1 text-[#FF8A3D]" />{memo.breadcrumbs.map((item, index) => <span key={item.id}>{index > 0 && <span className="mx-1 text-slate-700">/</span>}{item.name}</span>)}</div>}
                 <article className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-6">
-                    {memo.cover && <div className="-mx-5 -mt-5 mb-6 overflow-hidden sm:-mx-6 sm:-mt-6"><img src={memo.cover.url} alt={memo.title} className="max-h-80 w-full object-cover" /></div>}\n                    <MemoContent content={memo.content} formatting={memo.formatting} />
+                    {memo.cover && <div className="-mx-5 -mt-5 mb-6 overflow-hidden sm:-mx-6 sm:-mt-6"><img src={memo.cover.url} alt={memo.title} className="max-h-80 w-full object-cover" /></div>}
+                    <MemoContent content={memo.content} formatting={memo.formatting} />
                     {memo.attachments?.length > 0 && <section className="mt-8 border-t border-white/[0.06] pt-5">
                         <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Fichiers et médias</h2>
                         <div className="grid gap-3 sm:grid-cols-2">

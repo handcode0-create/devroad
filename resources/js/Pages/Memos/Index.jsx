@@ -36,6 +36,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
             tag: filters.tag || undefined,
             favorites: filters.favorites ? 1 : undefined,
             recent: filters.recent ? 1 : undefined,
+            trash: filters.trash ? 1 : undefined,
         }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
