@@ -18,7 +18,7 @@ const BLOCKS = [
 ];
 
 export function defaultMemoFormatting(value = {}) { return { ...DEFAULT_FORMATTING, ...value }; }
-export function autoMemoTitle(content) { const firstLine = String(content ?? '').split('\n').map((line) => line.replace(/^\s*#+\s*/, '').trim()).find(Boolean); return firstLine ? firstLine.replace(/[`*_>#]/g, '').trim().slice(0, 255) : ''; }
+export function autoMemoTitle(content) { const firstLine = String(content ?? '').split('\n').map((line) => line.replace(/^\s*#+\s*/, '').replace(/\[\[(?:upper|lower|capitalize)\]\]|\[\[\/(?:upper|lower|capitalize)\]\]/g, '').trim()).find(Boolean); return firstLine ? firstLine.replace(/[`*_>#]/g, '').trim().slice(0, 255) : ''; }
 
 export default function MemoEditor({ content, onContentChange, formatting, onFormattingChange, onAutoTitle }) {
     const style = useMemo(() => defaultMemoFormatting(formatting), [formatting]);
