@@ -72,13 +72,13 @@ export default function FileExplorer({
                             popover="auto"
                             className="absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl"
                         >
-                            <button type="button" onClick={() => onRename(file)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
+                            <button type="button" onClick={() => { setOpenMenu(null); onRename(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
                                 <Pencil size={13} /> Renommer
                             </button>
-                            <button type="button" onClick={() => onDuplicate(file)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
+                            <button type="button" onClick={() => { setOpenMenu(null); onDuplicate(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
                                 <Copy size={13} /> Dupliquer
                             </button>
-                            <button type="button" onClick={() => onDelete(file)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">
+                            <button type="button" onClick={() => { setOpenMenu(null); onDelete(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">
                                 <Trash2 size={13} /> Supprimer
                             </button>
                         </div>
