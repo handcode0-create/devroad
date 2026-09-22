@@ -70,6 +70,16 @@ class User extends Authenticatable
         return $this->hasMany(Memo::class);
     }
 
+    public function memoFolders(): HasMany
+    {
+        return $this->hasMany(MemoFolder::class);
+    }
+
+    public function memoAttachments(): HasMany
+    {
+        return $this->hasMany(MemoAttachment::class);
+    }
+
     public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);
