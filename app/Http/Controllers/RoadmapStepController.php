@@ -19,6 +19,58 @@ use Inertia\Response;
 class RoadmapStepController extends Controller
 {
     /**
+     * Formulaire de création d'un cours.
+     */
+    public function create(Roadmap $roadmap): Response
+    {
+        $this->authorize('update', $roadmap);
+
+        return Inertia::render('Steps/Create', [
+            'roadmap' => [
+                'id' => $roadmap->id,
+                'title' => $roadmap->title,
+                'technology' => $roadmap->technology,
+            ],
+            'next_position' => ($roadmap->steps()->max('position') ?? 0) + 1,
+        ]);
+    }
+
+    /**
+     * Formulaire de modification d'un cours.
+     */
+    public function edit(RoadmapStep $step): Response
+    {
+        $this->authorize('update', $step);
+        $step->load('roadmap');
+
+        return Inertia::render('Steps/Edit', [
+            'roadmap' => [
+                'id' => $step->roadmap->id,
+                'title' => $step->roadmap->title,
+                'technology' => $step->roadmap->technology,
+            ],
+            'step' => [
+                'id' => $step->id,
+                'title' => $step->title,
+                'description' => $step->description,
+                'objective' => $step->objective,
+                'content' => $step->content,
+                'code_example' => $step->code_example,
+                'workspace_file' => $step->workspace_file,
+                'workspace_language' => $step->workspace_language,
+                'workspace_files' => $step->workspace_files ?? [],
+                'exercise_title' => $step->exercise_title,
+                'exercise_description' => $step->exercise_description,
+                'exercise_hint' => $step->exercise_hint,
+                'exercise_solution' => $step->exercise_solution,
+                'estimated_minutes' => $step->estimated_minutes,
+                'position' => $step->position,
+                'status' => $step->status,
+            ],
+        ]);
+    }
+
+    /**
      * Afficher le cours d'une étape.
      */
     public function show(RoadmapStep $step): Response|RedirectResponse
@@ -101,6 +153,7 @@ class RoadmapStepController extends Controller
                     $step->code_example,
                     $step->workspace_file,
                     $step->workspace_language,
+                    $step->workspace_files,
                 ),
                 'exercise' => $step->exercise_title ? [
                     'title' => $step->exercise_title,
@@ -221,7 +274,8 @@ class RoadmapStepController extends Controller
         ?string $technology,
         ?string $codeExample,
         ?string $workspaceFile = null,
-        ?string $workspaceLanguage = null
+        ?string $workspaceLanguage = null,
+        ?array $workspaceFiles = null,
     ): array {
         $profile = match ($workspaceLanguage ?? $technology) {
             'laravel' => [
@@ -289,21 +343,32 @@ class RoadmapStepController extends Controller
             ];
         }
 
+        $files = collect($workspaceFiles ?: [])
+            ->filter(fn ($file) => is_array($file) && ! empty($file['path']))
+            ->map(fn ($file) => [
+                'path' => $file['path'],
+                'content' => (string) ($file['content'] ?? ''),
+            ])
+            ->values()
+            ->all();
+
+        if ($files === []) {
+            $files = [[
+                'path' => $profile['filename'],
+                'content' => $codeExample ?: $profile['starter'],
+            ]];
+        }
+
         return [
             'enabled' => true,
             'runtime' => $this->workspaceRuntime($technology, $workspaceLanguage),
             'preview_enabled' => $profile['preview'],
             'language' => $profile['language'],
             'label' => $profile['label'],
-            'filename' => $profile['filename'],
+            'filename' => $files[0]['path'] ?? $profile['filename'],
             'run_command' => $profile['run_command'],
-            'initial_code' => $codeExample ?: $profile['starter'],
-            'files' => [
-                [
-                    'path' => $profile['filename'],
-                    'content' => $codeExample ?: $profile['starter'],
-                ],
-            ],
+            'initial_code' => $files[0]['content'] ?? ($codeExample ?: $profile['starter']),
+            'files' => $files,
         ];
     }
 
