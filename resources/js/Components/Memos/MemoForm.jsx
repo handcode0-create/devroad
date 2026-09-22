@@ -1,12 +1,14 @@
 import { Link } from '@inertiajs/react';
+import { File, Folder, ImagePlus, X } from 'lucide-react';
 import { Field, inputClass } from '@/Components/Ui/Field';
 import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
 import MemoEditor, { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
-export default function MemoForm({ form, onSubmit, submitLabel, cancelHref }) {
+export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, folders = [] }) {
     const { data, setData, errors, processing } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
+    const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
     function applyAutoTitle(title) { if (title) setData('title', title); }
     function handleSubmit(event) {
         const normalizedContent = normalizeMemoContent(data.content);
@@ -21,6 +23,25 @@ export default function MemoForm({ form, onSubmit, submitLabel, cancelHref }) {
             </Field>
             <Field label="Contenu" htmlFor="content" error={errors.content} hint="Les blocs de code entre triples accents restent affichés en monospace.">
                 <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} onAutoTitle={applyAutoTitle} />
+            </Field>
+            <Field label="Dossier" htmlFor="folder_id" hint="Organise tes fiches dans une arborescence.">
+                <div className="flex items-center gap-2">
+                    <Folder size={15} className="shrink-0 text-[#FF8A3D]" />
+                    <select id="folder_id" value={data.folder_id ?? ''} onChange={(e) => setData('folder_id', e.target.value || null)} className={inputClass}>
+                        <option value="">Sans dossier</option>
+                        {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.parent_id ? '↳ ' : ''}{folder.name}</option>)}
+                    </select>
+                </div>
+            </Field>
+            <Field label="Fichiers et images" htmlFor="attachments" hint="Images, PDF, Markdown, JSON, CSV ou ZIP · 5 Mo maximum par fichier."> 
+                <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3">
+                    <label htmlFor="attachments" className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/[0.08] px-4 py-4 text-xs font-semibold text-slate-400 transition hover:border-[#FF6A00]/30 hover:text-white">
+                        <ImagePlus size={16} className="text-[#FF8A3D]" />
+                        Ajouter des fichiers ou images
+                    </label>
+                    <input id="attachments" type="file" multiple accept="image/*,.pdf,.md,.txt,.json,.csv,.zip" onChange={addFiles} className="sr-only" />
+                    {selectedFiles.length > 0 && <ul className="mt-3 space-y-2">{selectedFiles.map((file, index) => <li key={file.name + file.size + index} className="flex items-center gap-2 rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-300"><File size={14} className="shrink-0 text-slate-500" /><span className="min-w-0 flex-1 truncate">{file.name}</span><span className="text-[10px] text-slate-600">{Math.max(1, Math.round(file.size / 1024))} Ko</span><button type="button" onClick={() => removeFile(index)} className="text-slate-600 hover:text-white" aria-label={"Retirer " + file.name}><X size={13} /></button></li>)}</ul>}
+                </div>
             </Field>
             <Field label="Tags" htmlFor="tags" error={tagsError}><TagInput id="tags" value={data.tags} onChange={(tags) => setData('tags', tags)} /></Field>
             <label className="flex items-center gap-2.5 text-sm text-slate-300"><input type="checkbox" checked={data.is_favorite} onChange={(e) => setData('is_favorite', e.target.checked)} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" />Ajouter aux favoris</label>
