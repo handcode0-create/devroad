@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
     Route::post('steps/{step}/run', [RoadmapStepController::class, 'runCode'])->name('steps.run');
     Route::post('steps/{step}/memo', [MemoController::class, 'storeFromStep'])->name('steps.memo');
     Route::post('memo-folders', [MemoFolderController::class, 'store'])->name('memo-folders.store');
+    Route::patch('memo-folders/reorder', [MemoFolderController::class, 'reorder'])->name('memo-folders.reorder');
     Route::patch('memo-folders/{folder}', [MemoFolderController::class, 'update'])->name('memo-folders.update');
     Route::delete('memo-folders/{folder}', [MemoFolderController::class, 'destroy'])->name('memo-folders.destroy');
     Route::get('memos/attachments/{attachment}', [MemoAttachmentController::class, 'show'])->name('memos.attachments.show');
@@ -113,6 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::post('memos/{memo}/attachments', [MemoAttachmentController::class, 'store'])->name('memos.attachments.store');
     Route::resource('memos', MemoController::class);
     Route::patch('memos/{memo}/favorite', [MemoController::class, 'toggleFavorite'])->name('memos.favorite');
+    Route::patch('memos/{memo}/move', [MemoController::class, 'move'])->name('memos.move');
     Route::get('search', SearchController::class)->name('search');
 });
 

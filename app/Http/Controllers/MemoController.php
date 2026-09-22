@@ -185,6 +185,30 @@ class MemoController extends Controller
         return redirect()->route('memos.index');
     }
 
+    /**
+     * Glisser-déposer d'une fiche sur un dossier : ne change QUE le rangement,
+     * sans repasser par la validation du titre/contenu.
+     */
+    public function move(Request $request, Memo $memo): RedirectResponse
+    {
+        Gate::authorize('update', $memo);
+
+        $data = $request->validate([
+            'folder_id' => ['nullable', 'integer'],
+        ]);
+
+        if ($data['folder_id'] !== null) {
+            abort_unless(
+                $request->user()->memoFolders()->whereKey($data['folder_id'])->exists(),
+                404
+            );
+        }
+
+        $memo->update(['folder_id' => $data['folder_id']]);
+
+        return back()->with('success', 'Fiche déplacée.');
+    }
+
     private function assertFolderBelongsToUser(Request $request): void
     {
         $folderId = $request->input('folder_id');
