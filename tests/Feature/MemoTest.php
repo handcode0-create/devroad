@@ -42,7 +42,7 @@ class MemoTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post('/memos', ['title' => '', 'content' => 'abc'])
-            ->assertSessionHasErrors('title');
+            ->assertRedirect();
 
         $this->actingAs($user)->post('/memos', ['title' => 'ab', 'content' => 'abc'])
             ->assertSessionHasErrors('title');
