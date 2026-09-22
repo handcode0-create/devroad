@@ -186,6 +186,9 @@ class MemoAttachmentTest extends TestCase
 
         $this->actingAs($user)->delete('/memos/' . $memo->id)->assertRedirect();
 
-        $this->assertDatabaseCount('memo_attachments', 0);
+        $this->assertDatabaseHas('memo_attachments', ['memo_id' => $memo->id]);
+
+        $this->actingAs($user)->delete('/memos/' . $memo->id . '/force-delete')->assertRedirect();
+        $this->assertDatabaseMissing('memo_attachments', ['memo_id' => $memo->id]);
     }
 }
