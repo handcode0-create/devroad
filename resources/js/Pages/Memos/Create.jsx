@@ -7,6 +7,7 @@ export default function Create() {
     const form = useForm({
         title: '',
         content: '',
+        formatting: { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 },
         tags: [],
         is_favorite: false,
     });
@@ -19,21 +20,9 @@ export default function Create() {
     return (
         <AppLayout>
             <Head title="Nouvelle fiche mémo" />
-
-            <div className="mx-auto max-w-2xl">
-                <PageHeader
-                    title="Nouvelle fiche mémo"
-                    subtitle="Note une commande, une notion ou une astuce pour ne plus l'oublier."
-                    backHref="/memos"
-                    backLabel="Fiches mémo"
-                />
-
-                <MemoForm
-                    form={form}
-                    onSubmit={submit}
-                    submitLabel="Créer la fiche"
-                    cancelHref="/memos"
-                />
+            <div className="mx-auto max-w-3xl">
+                <PageHeader title="Nouvelle fiche mémo" subtitle="Note une commande, une notion ou une astuce pour ne plus l'oublier." backHref="/memos" backLabel="Fiches mémo" />
+                <MemoForm form={form} onSubmit={submit} submitLabel="Créer la fiche" cancelHref="/memos" />
             </div>
         </AppLayout>
     );
