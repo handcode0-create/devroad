@@ -245,8 +245,10 @@ class MemoController extends Controller
             'folder_id' => ['nullable', 'integer'],
         ]);
 
-        $query = $request->user()->memos()->whereIn('id', $data['ids']);
-        $memos = $query->get();
+        $query = $data['action'] === 'restore'
+            ? $request->user()->memos()->withTrashed()->onlyTrashed()
+            : $request->user()->memos();
+        $memos = $query->whereIn('id', $data['ids'])->get();
 
         if ($data['action'] === 'move' && ($data['folder_id'] ?? null) !== null) {
             abort_unless($request->user()->memoFolders()->whereKey($data['folder_id'])->exists(), 422);
@@ -261,6 +263,7 @@ class MemoController extends Controller
                     'favorite' => $memo->update(['is_favorite' => true]),
                     'unfavorite' => $memo->update(['is_favorite' => false]),
                     'delete' => $memo->delete(),
+                    'restore' => $memo->restore(),
                     default => null,
                 };
             }
