@@ -24,7 +24,7 @@ class StoreRoadmapStepRequest extends FormRequest
             'workspace_file' => ['nullable', 'string', 'max:180'],
             'workspace_language' => ['nullable', Rule::in(['laravel', 'php', 'node', 'javascript', 'typescript', 'react', 'nextjs', 'html', 'css', 'tailwind', 'git', 'github', 'docker', 'mysql', 'postgresql'])],
             'workspace_files' => ['nullable', 'array', 'max:20'],
-            'workspace_files.*.path' => ['required_with:workspace_files', 'string', 'max:180'],
+            'workspace_files.*.path' => ['required_with:workspace_files', 'string', 'max:180', 'not_regex:/^(?:[A-Za-z]:[\\\\\/]|[\\\\\/]|.*(?:^|[\\\\/])\.\.(?:[\\\\/]|$))/'],
             'workspace_files.*.content' => ['nullable', 'string', 'max:100000'],
             'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'position' => ['sometimes', 'integer', 'min:0'],
