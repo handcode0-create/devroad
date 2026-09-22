@@ -105,6 +105,9 @@ class RoadmapGenerator
                 'css' => 'css',
                 'javascript', 'react', 'nextjs' => 'javascript',
                 'node' => 'node',
+                'typescript' => 'typescript',
+                'tailwind' => 'tailwind',
+                'git', 'github', 'docker', 'mysql', 'postgresql' => $technology,
                 default => null,
             };
         }
@@ -120,8 +123,14 @@ class RoadmapGenerator
                 'laravel' => 'routes/web.php',
                 'php' => 'main.php',
                 'javascript' => 'main.js',
+                'typescript' => 'main.ts',
+                'node' => 'index.js',
                 'html' => 'index.html',
-                'css' => 'styles.css',
+                'css', 'tailwind' => 'styles.css',
+                'git' => 'README.md',
+                'github' => '.github/workflows/ci.yml',
+                'docker' => 'Dockerfile',
+                'mysql', 'postgresql' => 'schema.sql',
                 default => null,
             };
         }
