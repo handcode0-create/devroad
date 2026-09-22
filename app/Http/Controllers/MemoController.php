@@ -81,11 +81,14 @@ class MemoController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('create', Memo::class);
 
-        return Inertia::render('Memos/Create');
+        return Inertia::render('Memos/Create', [
+            'folders' => $request->user()->memoFolders()->orderBy('position')->orderBy('name')->get(['id', 'parent_id', 'name', 'icon', 'position']),
+            'defaultFolderId' => $request->query('folder') ? (int) $request->query('folder') : null,
+        ]);
     }
 
     public function store(StoreMemoRequest $request): RedirectResponse
@@ -145,7 +148,9 @@ class MemoController extends Controller
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
                 'attachments' => $this->formatAttachments($memo),
+                'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
             ],
+            'folders' => $memo->user->memoFolders()->orderBy('position')->orderBy('name')->get(['id', 'parent_id', 'name', 'icon', 'position']),
         ]);
     }
 
