@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Copy, FilePlus2, Folder, FolderOpen, MoreVertical, Pencil, Trash2, Upload } from "lucide-react";
 
 export default function FileExplorer({
@@ -59,7 +60,7 @@ export default function FileExplorer({
                         </button>
                         <button
                             type="button"
-                            onClick={(event) => event.stopPropagation()}
+                            onClick={(event) => { event.stopPropagation(); setOpenMenu((current) => current === file.id ? null : file.id); }}
                             className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 opacity-100 transition hover:bg-white/[0.06] hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
                             aria-label={"Actions de " + file.path}
                             title="Actions du fichier"
