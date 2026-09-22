@@ -142,6 +142,10 @@ class MemoTagTest extends TestCase
 
         $this->actingAs($user)->delete(route('memos.destroy', $memo))->assertRedirect();
 
+        $this->assertDatabaseHas('memo_tag', ['memo_id' => $memo->id]);
+        $this->assertDatabaseHas('tags', ['user_id' => $user->id, 'slug' => 'laravel']);
+
+        $this->actingAs($user)->delete(route('memos.force-delete', $memo->id))->assertRedirect();
         $this->assertDatabaseCount('memo_tag', 0);
         $this->assertDatabaseHas('tags', ['user_id' => $user->id, 'slug' => 'laravel']);
     }
