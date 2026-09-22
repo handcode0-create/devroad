@@ -1,4 +1,4 @@
-import { FilePlus2, Folder, FolderOpen, Upload } from "lucide-react";
+import { Copy, FilePlus2, Folder, FolderOpen, MoreVertical, Pencil, Trash2, Upload } from "lucide-react";
 
 export default function FileExplorer({
     files,
@@ -42,20 +42,47 @@ export default function FileExplorer({
 
             <div className="max-h-[540px] overflow-y-auto p-2">
                 {files.map((file) => (
-                    <button
+                    <div
                         key={file.path}
-                        type="button"
-                        onClick={() => onSelect(file.path)}
                         className={[
-                            "mb-1 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[11px]",
-                            activeFile === file.path
-                                ? "bg-[#FF6A00]/10 text-[#FF8A3D]"
-                                : "text-slate-500 hover:bg-white/[0.03] hover:text-white",
+                            "group relative mb-1 flex w-full items-center rounded-lg text-[11px]",
+                            activeFile === file.path ? "bg-[#FF6A00]/10 text-[#FF8A3D]" : "text-slate-500 hover:bg-white/[0.03] hover:text-white",
                         ].join(" ")}
                     >
-                        <Folder size={12} className="shrink-0" />
-                        <span className="truncate">{file.path}</span>
-                    </button>
+                        <button
+                            type="button"
+                            onClick={() => onSelect(file.path)}
+                            className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 text-left"
+                        >
+                            <Folder size={12} className="shrink-0" />
+                            <span className="truncate">{file.path}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={(event) => event.stopPropagation()}
+                            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 opacity-100 transition hover:bg-white/[0.06] hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+                            aria-label={"Actions de " + file.path}
+                            title="Actions du fichier"
+                            popoverTarget={"devlab-file-menu-" + file.id}
+                        >
+                            <MoreVertical size={14} />
+                        </button>
+                        <div
+                            id={"devlab-file-menu-" + file.id}
+                            popover="auto"
+                            className="absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl"
+                        >
+                            <button type="button" onClick={() => onRename(file)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
+                                <Pencil size={13} /> Renommer
+                            </button>
+                            <button type="button" onClick={() => onDuplicate(file)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
+                                <Copy size={13} /> Dupliquer
+                            </button>
+                            <button type="button" onClick={() => onDelete(file)} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">
+                                <Trash2 size={13} /> Supprimer
+                            </button>
+                        </div>
+                    </div>
                 ))}
             </div>
         </aside>
