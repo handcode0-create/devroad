@@ -29,6 +29,9 @@ class MemoController extends Controller
         $trash = $request->boolean('trash');
         $folderId = $request->query('folder');
         $folderId = is_numeric($folderId) ? (int) $folderId : null;
+        $sort = (string) $request->query('sort', 'updated_desc');
+        $sorts = ['updated_desc', 'updated_asc', 'title_asc', 'title_desc', 'favorite'];
+        abort_unless(in_array($sort, $sorts, true), 422);
 
         $memosQuery = $trash ? $user->memos()->onlyTrashed() : $user->memos();
         $memos = $memosQuery
@@ -44,7 +47,11 @@ class MemoController extends Controller
                         ->orWhereHas('tags', fn ($tags) => $tags->where('name', 'ilike', '%' . $q . '%'));
                 });
             })
-            ->latest('updated_at')
+            ->when($sort === 'updated_desc', fn ($query) => $query->orderByDesc('updated_at'))
+            ->when($sort === 'updated_asc', fn ($query) => $query->orderBy('updated_at'))
+            ->when($sort === 'title_asc', fn ($query) => $query->orderBy('title'))
+            ->when($sort === 'title_desc', fn ($query) => $query->orderByDesc('title'))
+            ->when($sort === 'favorite', fn ($query) => $query->orderByDesc('is_favorite')->orderByDesc('updated_at'))
             ->paginate(12)
             ->withQueryString()
             ->through(fn (Memo $memo) => [
@@ -83,6 +90,7 @@ class MemoController extends Controller
                 'q' => $q,
                 'folder' => $folderId,
                 'trash' => $trash,
+                'sort' => $sort,
             ],
         ]);
     }
@@ -226,6 +234,63 @@ class MemoController extends Controller
         });
 
         return redirect()->route('memos.edit', $copy)->with('success', 'Fiche dupliquée.');
+    }
+
+    public function bulk(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+            'action' => ['required', 'in:move,favorite,unfavorite,delete,restore'],
+            'folder_id' => ['nullable', 'integer'],
+        ]);
+
+        $query = $request->user()->memos()->whereIn('id', $data['ids']);
+        $memos = $query->get();
+
+        if ($data['action'] === 'move' && ($data['folder_id'] ?? null) !== null) {
+            abort_unless($request->user()->memoFolders()->whereKey($data['folder_id'])->exists(), 422);
+        }
+
+        DB::transaction(function () use ($memos, $data) {
+            foreach ($memos as $memo) {
+                Gate::authorize('update', $memo);
+
+                match ($data['action']) {
+                    'move' => $memo->update(['folder_id' => $data['folder_id'] ?? null]),
+                    'favorite' => $memo->update(['is_favorite' => true]),
+                    'unfavorite' => $memo->update(['is_favorite' => false]),
+                    'delete' => $memo->delete(),
+                    default => null,
+                };
+            }
+        });
+
+        return back()->with('success', count($memos) . ' fiche(s) mise(s) à jour.');
+    }
+
+    public function forceDestroy(Request $request, int $memo): RedirectResponse
+    {
+        $model = $request->user()->memos()->withTrashed()->findOrFail($memo);
+        Gate::authorize('delete', $model);
+        abort_unless($model->trashed(), 404);
+        $model->forceDelete();
+
+        return back()->with('success', 'Fiche supprimée définitivement.');
+    }
+
+    public function emptyTrash(Request $request): RedirectResponse
+    {
+        $models = $request->user()->memos()->onlyTrashed()->get();
+
+        DB::transaction(function () use ($models) {
+            foreach ($models as $memo) {
+                Gate::authorize('delete', $memo);
+                $memo->forceDelete();
+            }
+        });
+
+        return back()->with('success', 'Corbeille vidée.');
     }
 
     public function restore(Request $request, int $memo): RedirectResponse
