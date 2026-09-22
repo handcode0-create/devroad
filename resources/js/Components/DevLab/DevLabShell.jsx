@@ -43,8 +43,10 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
  async function duplicate(){try{const d=await request(API+"/"+project.id+"/duplicate",{method:"POST"});setProjects(x=>[d.project,...x]);setProject(d.project)}catch(e){setError(e.message)}}
  async function remove(){try{await request(API+"/"+project.id,{method:"DELETE"});setProjects(x=>x.filter(p=>p.id!==project.id));setProject(null)}catch(e){setError(e.message)}}
  async function saveFile(file,payload){try{const d=await request(API+"/"+project.id+"/files/"+file.id,{method:"PATCH",body:JSON.stringify(payload)});setProject(p=>({...p,files:p.files.map(f=>f.id===file.id?d.file:f)}))}catch(e){setError(e.message);throw e}}
- async function newFile(){const path=window.prompt("Chemin du fichier","src/app.js");if(!path)return;try{const d=await request(API+"/"+project.id+"/files",{method:"POST",body:JSON.stringify({path,content:""})});setProject(p=>({...p,files:[...p.files,d.file].sort((a,b)=>a.path.localeCompare(b.path))}))}catch(e){setError(e.message)}}
- async function deleteFile(file){if(project.files.length<=1)return;try{await request(API+"/"+project.id+"/files/"+file.id,{method:"DELETE"});setProject(p=>({...p,files:p.files.filter(f=>f.id!==file.id)}))}catch(e){setError(e.message)}}
+ async function newFile(){const path=window.prompt("Chemin du fichier","src/app.js");if(!path)return;try{const d=await request(API+"/"+project.id+"/files",{method:"POST",body:JSON.stringify({path,content:""})});setProject(p=>({...p,files:[...p.files,d.file].sort((a,b)=>a.path.localeCompare(b.path))}));return d.file}catch(e){setError(e.message);return null}}
+ async function renameFile(file){const path=window.prompt("Nouveau nom / chemin du fichier",file.path);if(!path||path.trim()===file.path)return null;try{const d=await request(API+"/"+project.id+"/files/"+file.id,{method:"PATCH",body:JSON.stringify({path:path.trim(),content:file.content??""})});setProject(p=>({...p,files:p.files.map(f=>f.id===file.id?d.file:f).sort((a,b)=>a.path.localeCompare(b.path))}));return d.file}catch(e){setError(e.message);return null}}
+ async function duplicateFile(file){const lastSlash=file.path.lastIndexOf("/");const dir=lastSlash>=0?file.path.slice(0,lastSlash+1):"";const name=lastSlash>=0?file.path.slice(lastSlash+1):file.path;const dot=name.lastIndexOf(".");const base=dot>0?name.slice(0,dot):name;const ext=dot>0?name.slice(dot):"";let path=dir+base+"-copy"+ext;let index=2;while(project.files.some(f=>f.path===path)){path=dir+base+"-copy-"+index+ext;index+=1}try{const d=await request(API+"/"+project.id+"/files",{method:"POST",body:JSON.stringify({path,content:file.content??""})});setProject(p=>({...p,files:[...p.files,d.file].sort((a,b)=>a.path.localeCompare(b.path))}));return d.file}catch(e){setError(e.message);return null}}
+ async function deleteFile(file){if(project.files.length<=1){setError("Un projet doit conserver au moins un fichier.");return false}try{await request(API+"/"+project.id+"/files/"+file.id,{method:"DELETE"});setProject(p=>({...p,files:p.files.filter(f=>f.id!==file.id)}));return true}catch(e){setError(e.message);return false}}
  return <div className="fixed inset-0 z-[60] flex flex-col bg-[#08111F] text-white">
   <header className="flex h-14 shrink-0 items-center gap-2 border-b border-white/[.07] bg-[#0D1725] px-3">
    <button type="button" onClick={()=>{if(window.history.length>1){window.history.back()}else{window.location.href="/dashboard"}}} className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl px-2 text-slate-400 hover:bg-white/[.05] hover:text-white" aria-label="Retour à la page précédente" title="Retour">
@@ -59,6 +61,8 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
     project={project}
     onSave={saveFile}
     onNewFile={newFile}
+    onRename={renameFile}
+    onDuplicate={duplicateFile}
     onDelete={deleteFile}
     onImportFiles={async (files) => {
       for (const file of files) {
