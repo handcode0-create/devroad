@@ -41,7 +41,7 @@ const BLOCKS = [
 ];
 
 export function defaultMemoFormatting(value = {}) { return { ...DEFAULT_FORMATTING, ...value }; }
-export function autoMemoTitle(content) { const firstLine = String(content ?? '').split('\n').map((line) => stripInlineCaseMarkers(line).replace(/^\s*#+\s*/, '').trim()).find(Boolean); return firstLine ? firstLine.replace(/[`*_>#]/g, '').trim().slice(0, 255) : ''; }
+export function autoMemoTitle(content) { const firstLine = String(content ?? '').split('\n').map((line) => stripInlineCaseMarkers(line).replace(/<[^>]*>/g, '').replace(/^\s*#+\s*/, '').trim()).find(Boolean); return firstLine ? firstLine.replace(/[`*_>#]/g, '').trim().slice(0, 255) : ''; }
 
 function escapeHtml(value) {
     return String(value ?? '')
