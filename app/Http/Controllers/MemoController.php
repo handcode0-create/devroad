@@ -30,7 +30,7 @@ class MemoController extends Controller
         $folderId = is_numeric($folderId) ? (int) $folderId : null;
 
         $memos = $user->memos()
-            ->with('tags:id,name,slug')
+            ->with(['tags:id,name,slug', 'folder:id,name,parent_id'])
             ->when($request->boolean('favorites'), fn ($query) => $query->where('is_favorite', true))
             ->when($recent, fn ($query) => $query->where('updated_at', '>=', Carbon::now()->subDays(7)))
             ->when($tag, fn ($query) => $query->whereHas('tags', fn ($t) => $t->where('slug', $tag)))
@@ -93,6 +93,7 @@ class MemoController extends Controller
         Gate::authorize('create', Memo::class);
 
         $memo = DB::transaction(function () use ($request) {
+            $this->assertFolderBelongsToUser($request);
             $memo = $request->user()->memos()->create($request->safe()->except(['tags', 'attachments']));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
             $this->storeAttachments($request, $memo);
@@ -108,7 +109,8 @@ class MemoController extends Controller
         Gate::authorize('view', $step);
 
         $memo = DB::transaction(function () use ($request) {
-            $memo = $request->user()->memos()->create($request->safe()->except('tags'));
+            $this->assertFolderBelongsToUser($request);
+            $memo = $request->user()->memos()->create($request->safe()->except(['tags', 'attachments']));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
 
             return $memo;
@@ -141,6 +143,8 @@ class MemoController extends Controller
             'memo' => [
                 ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite'),
                 'tags' => $this->formatTags($memo),
+                'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
+                'attachments' => $this->formatAttachments($memo),
             ],
         ]);
     }
@@ -150,12 +154,13 @@ class MemoController extends Controller
         Gate::authorize('update', $memo);
 
         DB::transaction(function () use ($request, $memo) {
+            $this->assertFolderBelongsToUser($request);
             $memo->update($request->safe()->except(['tags', 'attachments']));
 
             if ($request->has('tags')) {
                 $memo->syncTagNames($request->validated('tags', []) ?? []);
-                $this->storeAttachments($request, $memo);
             }
+            $this->storeAttachments($request, $memo);
         });
 
         return redirect()->route('memos.show', $memo);
@@ -175,6 +180,14 @@ class MemoController extends Controller
         $memo->delete();
 
         return redirect()->route('memos.index');
+    }
+
+    private function assertFolderBelongsToUser(Request $request): void
+    {
+        $folderId = $request->input('folder_id');
+        if ($folderId !== null && ! $request->user()->memoFolders()->whereKey($folderId)->exists()) {
+            abort(422, 'Le dossier sélectionné est invalide.');
+        }
     }
 
     private function storeAttachments(Request $request, Memo $memo): void
