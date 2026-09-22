@@ -2,10 +2,26 @@ import { useMemo, useRef, useState } from 'react';
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, CaseLower, CaseUpper, CheckSquare, Code2, FileText, Heading1, Heading2, Heading3, List, ListOrdered, Minus, Move, Plus, Quote, Sparkles, Type } from 'lucide-react';
 
 const FONTS = [
-    { value: 'Inter', label: 'Inter' }, { value: 'Poppins', label: 'Poppins' },
-    { value: 'Space Grotesk', label: 'Space Grotesk' }, { value: 'JetBrains Mono', label: 'JetBrains Mono' },
-    { value: 'Georgia', label: 'Georgia' }, { value: 'Arial', label: 'Arial' },
+    { value: 'Inter', label: 'Inter' },
+    { value: 'Poppins', label: 'Poppins' },
+    { value: 'Space Grotesk', label: 'Space Grotesk' },
+    { value: 'JetBrains Mono', label: 'JetBrains Mono' },
+    { value: 'Manrope', label: 'Manrope' },
+    { value: 'Lora', label: 'Lora' },
 ];
+
+export const MEMO_FONT_STACKS = {
+    Inter: "'Inter', system-ui, sans-serif",
+    Poppins: "'Poppins', system-ui, sans-serif",
+    'Space Grotesk': "'Space Grotesk', system-ui, sans-serif",
+    'JetBrains Mono': "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
+    Manrope: "'Manrope', system-ui, sans-serif",
+    Lora: "'Lora', Georgia, serif",
+};
+
+function stripInlineCaseMarkers(value) {
+    return String(value ?? '').replace(/\[\[upper\]\]|\[\[\/upper\]\]|\[\[lower\]\]|\[\[\/lower\]\]|\[\[capitalize\]\]|\[\[\/capitalize\]\]/g, '');
+}
 const DEFAULT_FORMATTING = { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 };
 const BLOCKS = [
     { key: 'h1', label: 'Titre 1', prefix: '# ', icon: Heading1 },
@@ -18,7 +34,7 @@ const BLOCKS = [
 ];
 
 export function defaultMemoFormatting(value = {}) { return { ...DEFAULT_FORMATTING, ...value }; }
-export function autoMemoTitle(content) { const firstLine = String(content ?? '').split('\n').map((line) => line.replace(/^\s*#+\s*/, '').replace(/\[\[(?:upper|lower|capitalize)\]\]|\[\[\/(?:upper|lower|capitalize)\]\]/g, '').trim()).find(Boolean); return firstLine ? firstLine.replace(/[`*_>#]/g, '').trim().slice(0, 255) : ''; }
+export function autoMemoTitle(content) { const firstLine = String(content ?? '').split('\n').map((line) => stripInlineCaseMarkers(line).replace(/^\s*#+\s*/, '').trim()).find(Boolean); return firstLine ? firstLine.replace(/[`*_>#]/g, '').trim().slice(0, 255) : ''; }
 
 export default function MemoEditor({ content, onContentChange, formatting, onFormattingChange, onAutoTitle }) {
     const style = useMemo(() => defaultMemoFormatting(formatting), [formatting]);
@@ -38,26 +54,20 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
             return;
         }
 
-        const selected = content.slice(start, end);
-        const markers = {
-            uppercase: ['[[upper]]', '[[/upper]]'],
-            lowercase: ['[[lower]]', '[[/lower]]'],
-            capitalize: ['[[capitalize]]', '[[/capitalize]]'],
-            none: ['', ''],
-        };
-        const [prefix, suffix] = markers[mode] ?? markers.none;
-
+        const selected = stripInlineCaseMarkers(content.slice(start, end));
         let value = selected;
-        if (mode === 'none') {
-            value = selected
-                .replace(/\[\[upper\]\]|\[\[\/upper\]\]|\[\[lower\]\]|\[\[\/lower\]\]|\[\[capitalize\]\]|\[\[\/capitalize\]\]/g, '');
-        } else {
-            value = prefix + selected
-                .replace(/\[\[upper\]\]|\[\[\/upper\]\]|\[\[lower\]\]|\[\[\/lower\]\]|\[\[capitalize\]\]|\[\[\/capitalize\]\]/g, '') + suffix;
-        }
+
+        if (mode === 'uppercase') value = selected.toUpperCase();
+        if (mode === 'lowercase') value = selected.toLowerCase();
+        if (mode === 'capitalize') value = selected.replace(/(^|[\s-])\p{L}/gu, (match) => match.toUpperCase());
+        if (mode === 'none') value = selected;
 
         const next = content.slice(0, start) + value + content.slice(end);
         onContentChange(next);
+
+        // A selection transform becomes part of the stored text. Disable the
+        // global CSS transform so it cannot override the selected characters.
+        onFormattingChange({ ...style, textTransform: 'none' });
 
         requestAnimationFrame(() => {
             el.focus();
@@ -129,7 +139,7 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
         </div>
         {slashOpen && <div className="border-b border-white/[0.05] bg-[#0D1725] px-3 py-2 text-[11px] text-slate-500">Commande rapide : <span className="text-slate-300">/titre</span>, <span className="text-slate-300">/liste</span>, <span className="text-slate-300">/check</span> ou <span className="text-slate-300">/code</span>.</div>}
         <div className="flex items-center gap-2 border-b border-white/[0.05] px-3 py-2 text-[10px] text-slate-600"><FileText size={12} /><span>Éditeur par blocs · sélectionne un texte puis applique un bloc, ou utilise les commandes rapides.</span></div>
-        <textarea ref={textareaRef} value={content} onChange={onChange} onKeyDown={handleKeyDown} rows={18} maxLength={50000} aria-label="Contenu de la fiche" style={{ fontFamily: style.fontFamily, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }} className="min-h-[400px] w-full resize-y border-0 bg-[#08111F] p-4 leading-7 text-slate-200 outline-none placeholder:text-slate-600" placeholder="Écris une note, puis utilise Bloc… pour structurer ta fiche comme dans Notion." />
+        <textarea ref={textareaRef} value={content} onChange={onChange} onKeyDown={handleKeyDown} rows={18} maxLength={50000} aria-label="Contenu de la fiche" style={{ fontFamily: MEMO_FONT_STACKS[style.fontFamily] ?? MEMO_FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }} className="min-h-[400px] w-full resize-y border-0 bg-[#08111F] p-4 leading-7 text-slate-200 outline-none placeholder:text-slate-600" placeholder="Écris une note, puis utilise Bloc… pour structurer ta fiche comme dans Notion." />
     </div>;
 }
 
