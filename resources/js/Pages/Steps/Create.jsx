@@ -11,7 +11,7 @@ export default function Create({ roadmap, next_position = 1 }) {
         content: '',
         code_example: '',
         workspace_file: '',
-        workspace_language: ['laravel', 'php', 'node', 'javascript', 'html', 'css'].includes(roadmap?.technology)
+        workspace_language: ['laravel', 'php', 'node', 'javascript', 'typescript', 'react', 'nextjs', 'html', 'css', 'tailwind', 'git', 'github', 'docker', 'mysql', 'postgresql'].includes(roadmap?.technology)
             ? roadmap.technology
             : '',
         workspace_files: [],
