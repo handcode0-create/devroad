@@ -156,7 +156,38 @@ class MemoTest extends TestCase
             ->delete(route('memos.destroy', $memo))
             ->assertRedirect(route('memos.index'));
 
-        $this->assertDatabaseCount('memos', 0);
+        $this->assertDatabaseHas('memos', ['id' => $memo->id]);
+        $this->assertNotNull($memo->fresh()->deleted_at);
+    }
+
+    public function test_un_memo_peut_etre_duplique_et_restaure_depuis_la_corbeille(): void
+    {
+        $user = User::factory()->create();
+        $memo = $user->memos()->create([
+            'title' => 'Original',
+            'content' => '<h2>Contenu</h2>',
+            'icon' => '🚀',
+            'is_full_width' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('memos.duplicate', $memo))
+            ->assertRedirect();
+
+        $copy = $user->memos()->where('title', 'Original — Copie')->first();
+        $this->assertNotNull($copy);
+        $this->assertSame($memo->content, $copy->content);
+        $this->assertSame('🚀', $copy->icon);
+        $this->assertTrue($copy->is_full_width);
+
+        $this->actingAs($user)->delete(route('memos.destroy', $memo))->assertRedirect();
+        $this->assertNotNull($memo->fresh()->deleted_at);
+
+        $this->actingAs($user)
+            ->post(route('memos.restore', $memo->id))
+            ->assertRedirect(route('memos.index'));
+
+        $this->assertNull($memo->fresh()->deleted_at);
     }
 
     public function test_la_liste_ne_contient_que_les_memos_de_lutilisateur_et_filtre_les_favoris(): void
