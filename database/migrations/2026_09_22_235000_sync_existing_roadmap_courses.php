@@ -1,7 +1,7 @@
 <?php
 
-use AppModelsRoadmap;
-use AppServicesRoadmapGenerator;
+use App\Models\Roadmap;
+use App\Services\RoadmapGenerator;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
