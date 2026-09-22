@@ -67,7 +67,7 @@ function renderTextBlock(text, style, key) {
 
 export default function MemoContent({ content, formatting }) {
     const rawContent = String(content ?? '');
-    const isRichHtml = /<(?:p|div|h[1-6]|strong|b|em|i|u|s|ul|ol|li|blockquote|pre|code|br|hr|figure|img|a)\\b/i.test(rawContent);
+    const isRichHtml = /<(?:p|div|h[1-6]|strong|b|em|i|u|s|ul|ol|li|blockquote|pre|code|br|hr|figure|img|a)\b/i.test(rawContent);
     const richHtml = isRichHtml ? sanitizeMemoHtml(rawContent) : null;
     const parts = []; const fence = new RegExp('```([\\w+-]*)\\n([\\s\\S]*?)```', 'g'); let last = 0; let match;
     while ((match = fence.exec(content ?? '')) !== null) { if (match.index > last) parts.push({ type: 'text', value: content.slice(last, match.index) }); parts.push({ type: 'code', lang: match[1], value: match[2].replace(/\n$/, '') }); last = match.index + match[0].length; }

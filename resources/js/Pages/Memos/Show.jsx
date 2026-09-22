@@ -42,7 +42,8 @@ export default function Show({ memo }) {
                     </section>}
                 </article>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                    <Link href={'/memos/' + memo.id + '/edit'} className={buttonClass('primary')}><Pencil size={16} />Modifier</Link>\n                    <button type="button" onClick={() => router.post('/memos/' + memo.id + '/duplicate')} className={buttonClass('secondary')}><Copy size={16} />Dupliquer</button>
+                    <Link href={'/memos/' + memo.id + '/edit'} className={buttonClass('primary')}><Pencil size={16} />Modifier</Link>
+                    <button type="button" onClick={() => router.post('/memos/' + memo.id + '/duplicate')} className={buttonClass('secondary')}><Copy size={16} />Dupliquer</button>
                     <button type="button" onClick={() => setConfirmDelete(true)} className={buttonClass('danger')}><Trash2 size={16} />Supprimer</button>
                 </div>
             </div>
