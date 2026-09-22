@@ -108,7 +108,7 @@ class MemoTest extends TestCase
 
         $this->actingAs($user)
             ->put(route('memos.update', $memo), ['title' => 'Git stash', 'content' => 'git stash pop'])
-            ->assertRedirect(route('memos.show', $memo));
+            ->assertRedirect(route('memos.edit', $memo));
 
         $this->assertDatabaseHas('memos', ['id' => $memo->id, 'title' => 'Git stash']);
     }
@@ -249,4 +249,29 @@ class MemoTest extends TestCase
                 ->has('memos.data', 1)
                 ->where('memos.data.0.title', 'Mon mémo'));
     }
+
+    public function test_une_couverture_doit_appartenir_au_memo_modifie(): void
+    {
+        $user = User::factory()->create();
+        $memo = $user->memos()->create(['title' => 'A', 'content' => 'contenu']);
+        $otherMemo = $user->memos()->create(['title' => 'B', 'content' => 'contenu']);
+        $attachment = $otherMemo->attachments()->create([
+            'user_id' => $user->id,
+            'name' => 'couverture.png',
+            'mime_type' => 'image/png',
+            'size' => 3,
+            'data' => 'abc',
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('memos.update', $memo), [
+                'title' => 'A modifié',
+                'content' => 'contenu',
+                'cover_attachment_id' => $attachment->id,
+            ])
+            ->assertStatus(422);
+
+        $this->assertNull($memo->fresh()->cover_attachment_id);
+    }
+
 }
