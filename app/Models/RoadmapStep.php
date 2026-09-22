@@ -30,6 +30,7 @@ class RoadmapStep extends Model
         'code_example',
         'workspace_file',
         'workspace_language',
+        'workspace_files',
         'exercise_title',
         'exercise_description',
         'exercise_hint',
@@ -45,6 +46,7 @@ class RoadmapStep extends Model
         'estimated_minutes' => 'integer',
         'exercise_completed_at' => 'datetime',
         'last_viewed_at' => 'datetime',
+        'workspace_files' => 'array',
     ];
 
     public function devLabProject(): HasOne
