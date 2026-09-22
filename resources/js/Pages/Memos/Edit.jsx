@@ -1,10 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import MemoForm from '@/Components/Memos/MemoForm';
 import { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function Edit({ memo, folders = [] }) {
+    const [saved, setSaved] = useState(false);
+
     const form = useForm({
         title: memo.title ?? '',
         content: normalizeMemoContent(memo.content ?? ''),
@@ -20,6 +23,7 @@ export default function Edit({ memo, folders = [] }) {
 
     function submit(event) {
         event.preventDefault();
+        setSaved(false);
 
         form.transform((data) => {
             const content = normalizeMemoContent(data.content);
@@ -33,6 +37,7 @@ export default function Edit({ memo, folders = [] }) {
             };
         }).post('/memos/' + memo.id, {
             forceFormData: true,
+            onSuccess: () => setSaved(true),
         });
     }
 
@@ -46,6 +51,7 @@ export default function Edit({ memo, folders = [] }) {
                     folders={folders}
                     attachments={memo.attachments ?? []}
                     onSubmit={submit}
+                    saved={saved}
                     submitLabel="Enregistrer"
                     cancelHref={'/memos/' + memo.id}
                 />
