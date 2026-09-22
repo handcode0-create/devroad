@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bookmark, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
@@ -55,29 +55,66 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     // dragged : { type: 'folder' | 'memo', id, parentId } — parentId sert à
     // ne réordonner qu'entre dossiers d'un même niveau (mêmes « frères »).
     const [dragged, setDragged] = useState(null);
+    const draggedRef = useRef(null);
     const [dropTarget, setDropTarget] = useState(null); // id de dossier survolé (ou 'root')
 
-    function startDragFolder(folder) {
-        setDragged({ type: 'folder', id: folder.id, parentId: folder.parent_id ?? null });
+    function setDraggedItem(item, event = null) {
+        draggedRef.current = item;
+        setDragged(item);
+        if (event?.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('application/x-devroad-memo-dnd', JSON.stringify(item));
+            event.dataTransfer.setData('text/plain', item.type + ':' + item.id);
+        }
     }
 
-    function startDragMemo(memo) {
-        setDragged({ type: 'memo', id: memo.id });
+    function readDragged(event = null) {
+        if (draggedRef.current) return draggedRef.current;
+        try {
+            const raw = event?.dataTransfer?.getData('application/x-devroad-memo-dnd');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    function startDragFolder(folder, event) {
+        setDraggedItem({ type: 'folder', id: folder.id, parentId: folder.parent_id ?? null }, event);
+    }
+
+    function startDragMemo(memo, event) {
+        setDraggedItem({ type: 'memo', id: memo.id }, event);
     }
 
     function endDrag() {
+        draggedRef.current = null;
         setDragged(null);
         setDropTarget(null);
     }
 
     // Dépose SUR un dossier : une fiche s'y range, un dossier s'y imbrique.
-    function dropOnFolder(folder) {
-        if (!dragged) return;
+    function dropOnFolder(folder, event = null) {
+        const item = readDragged(event);
+        if (!item) return;
 
-        if (dragged.type === 'memo') {
-            router.patch('/memos/' + dragged.id + '/move', { folder_id: folder.id }, { preserveScroll: true, preserveState: true });
-        } else if (dragged.type === 'folder' && dragged.id !== folder.id) {
-            router.patch('/memo-folders/' + dragged.id, { parent_id: folder.id }, { preserveScroll: true, preserveState: true });
+        if (item.type === 'memo') {
+            router.patch('/memos/' + item.id + '/move', { folder_id: folder.id }, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: endDrag,
+                onError: endDrag,
+            });
+            return;
+        }
+
+        if (item.type === 'folder' && item.id !== folder.id) {
+            router.patch('/memo-folders/' + item.id, { parent_id: folder.id }, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: endDrag,
+                onError: endDrag,
+            });
+            return;
         }
 
         endDrag();
@@ -85,32 +122,43 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
 
     // Dépose sur l'en-tête « Dossiers » : remonte un dossier à la racine,
     // ou retire une fiche de son dossier.
-    function dropOnRoot() {
-        if (!dragged) return;
+    function dropOnRoot(event = null) {
+        const item = readDragged(event);
+        if (!item) return;
 
-        if (dragged.type === 'memo') {
-            router.patch('/memos/' + dragged.id + '/move', { folder_id: null }, { preserveScroll: true, preserveState: true });
-        } else if (dragged.type === 'folder' && dragged.parentId !== null) {
-            router.patch('/memo-folders/' + dragged.id, { parent_id: null }, { preserveScroll: true, preserveState: true });
+        if (item.type === 'memo') {
+            router.patch('/memos/' + item.id + '/move', { folder_id: null }, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: endDrag,
+                onError: endDrag,
+            });
+        } else if (item.type === 'folder' && item.parentId !== null) {
+            router.patch('/memo-folders/' + item.id, { parent_id: null }, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: endDrag,
+                onError: endDrag,
+            });
+        } else {
+            endDrag();
         }
-
-        endDrag();
     }
 
     // Réordonne un dossier parmi ses frères (même parent), à la position de « target ».
-    function reorderFolder(target) {
-        if (!dragged || dragged.type !== 'folder') return;
-        if (dragged.id === target.id) return;
-        if ((dragged.parentId ?? null) !== (target.parent_id ?? null)) return; // niveaux différents : dropOnFolder gère l'imbrication
+    function reorderFolder(target, event = null) {
+        const item = readDragged(event);
+        if (!item || item.type !== 'folder') return;
+        if (item.id === target.id) return;
+        if ((item.parentId ?? null) !== (target.parent_id ?? null)) return; // niveaux différents : dropOnFolder gère l'imbrication
 
         const parentId = target.parent_id ?? null;
         const siblings = folders.filter((folder) => (folder.parent_id ?? null) === parentId).sort((a, b) => a.position - b.position);
-        const ids = siblings.map((folder) => folder.id).filter((id) => id !== dragged.id);
+        const ids = siblings.map((folder) => folder.id).filter((id) => id !== item.id);
         const targetIndex = ids.indexOf(target.id);
-        ids.splice(targetIndex, 0, dragged.id);
+        ids.splice(targetIndex, 0, item.id);
 
-        router.patch('/memo-folders/reorder', { parent_id: parentId, ordered_ids: ids }, { preserveScroll: true, preserveState: true });
-        endDrag();
+        router.patch('/memo-folders/reorder', { parent_id: parentId, ordered_ids: ids }, { preserveScroll: true, preserveState: true, onSuccess: endDrag, onError: endDrag });
     }
 
     function clearSearch() {
@@ -169,7 +217,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                 <div
                                     onDragOver={(event) => { if (dragged) { event.preventDefault(); setDropTarget('root'); } }}
                                     onDragLeave={() => setDropTarget((current) => (current === 'root' ? null : current))}
-                                    onDrop={(event) => { event.preventDefault(); dropOnRoot(); }}
+                                    onDrop={(event) => { event.preventDefault(); dropOnRoot(event); }}
                                     className={'mb-2 flex items-center justify-between rounded-lg px-2 py-1 transition ' + (dropTarget === 'root' ? 'bg-[#FF6A00]/10 ring-1 ring-[#FF6A00]/30' : '')}
                                 >
                                     <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Dossiers</span>
@@ -207,7 +255,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-white">{activeFolder}</h2><p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p></div>
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} onDragStart={() => startDragMemo(memo)} onDragEnd={endDrag} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
+                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
                     </section>
                 </div>
             </div>
@@ -247,14 +295,24 @@ function FolderNavItem({ folder, active, onCreateChild, onDelete, isDragging, is
 
     function onDrop(event) {
         event.preventDefault();
-        if (nestHover) onDropNest(folder); else onDropReorder(folder);
+        event.stopPropagation();
+        const raw = event.dataTransfer?.getData('application/x-devroad-memo-dnd');
+        let item = null;
+        try { item = raw ? JSON.parse(raw) : null; } catch {}
+        if (item?.type === 'memo') {
+            onDropNest(folder, event);
+        } else if (nestHover) {
+            onDropNest(folder, event);
+        } else {
+            onDropReorder(folder, event);
+        }
         setNestHover(false);
     }
 
     return <div>
         <div
             draggable
-            onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; onDragStartFolder(folder); }}
+            onDragStart={(event) => onDragStartFolder(folder, event)}
             onDragEnd={onDragEnd}
             onDragOver={onDragOver}
             onDragLeave={() => setNestHover(false)}
