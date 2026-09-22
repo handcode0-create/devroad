@@ -178,13 +178,20 @@ function StepsTab({ steps, currentStep, roadmapId }) {
     return (
         <>
             <section>
-                <div className="mb-4">
-                    <h2 className="text-lg font-bold text-white">
-                        Ton parcours
-                    </h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                        Suis les étapes dans l'ordre et valide chaque cours quand tu le maîtrises.
-                    </p>
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold text-white">Tes cours</h2>
+                        <p className="mt-1 text-xs text-slate-500">
+                            Crée, modifie ou supprime les cours de ce parcours. Chaque cours est une étape pédagogique indépendante.
+                        </p>
+                    </div>
+                    <Link
+                        href={`/roadmaps/${roadmapId}/steps/create`}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] transition hover:bg-[#ff781a]"
+                    >
+                        <Pencil size={15} />
+                        Ajouter un cours
+                    </Link>
                 </div>
 
                 {steps.length > 0 ? (
@@ -422,7 +429,17 @@ function StepCard({ step, index, locked = false }) {
             </div>
 
             {!blocked && (
-                <ChevronRight size={17} className="shrink-0 text-slate-700" />
+                <div className="flex shrink-0 items-center gap-1">
+                    <Link
+                        href={`/steps/${step.id}/edit`}
+                        onClick={(event) => event.stopPropagation()}
+                        className="rounded-lg p-2 text-slate-600 transition hover:bg-white/[0.05] hover:text-white"
+                        aria-label={`Modifier ${step.title}`}
+                    >
+                        <Pencil size={14} />
+                    </Link>
+                    <ChevronRight size={17} className="text-slate-700" />
+                </div>
             )}
         </div>
     );
