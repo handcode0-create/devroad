@@ -10,7 +10,7 @@ import { buttonClass } from '@/Components/Ui/buttons';
 import Modal from '@/Components/Ui/Modal';
 import ConfirmModal from '@/Components/Ui/ConfirmModal';
 
-function listUrl({ tag, favorites, recent, q, folder, trash }) {
+function listUrl({ tag, favorites, recent, q, folder, trash, sort }) {
     const params = new URLSearchParams();
     if (tag) params.set('tag', tag);
     if (favorites) params.set('favorites', '1');
@@ -18,6 +18,7 @@ function listUrl({ tag, favorites, recent, q, folder, trash }) {
     if (q) params.set('q', q);
     if (folder) params.set('folder', folder);
     if (trash) params.set('trash', '1');
+    if (sort) params.set('sort', sort);
     const query = params.toString();
     return query ? '/memos?' + query : '/memos';
 }
@@ -41,6 +42,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [bulkProcessing, setBulkProcessing] = useState(false);
     const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
+    const [deleteMemoTarget, setDeleteMemoTarget] = useState(null);
     const [searchInput, setSearchInput] = useState(null);
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
@@ -112,6 +114,21 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     function confirmDeleteFolder() {
         if (!deleteFolderTarget) return;
         router.delete('/memo-folders/' + deleteFolderTarget.id, { preserveScroll: true, onFinish: () => setDeleteFolderTarget(null) });
+    }
+
+    function duplicateMemo(memo) {
+        setActiveMenu(null);
+        router.post('/memos/' + memo.id + '/duplicate', {}, { preserveScroll: true });
+    }
+
+    function deleteMemo(memo) {
+        setActiveMenu(null);
+        setDeleteMemoTarget(memo);
+    }
+
+    function confirmDeleteMemo() {
+        if (!deleteMemoTarget) return;
+        router.delete('/memos/' + deleteMemoTarget.id, { preserveScroll: true, onFinish: () => setDeleteMemoTarget(null) });
     }
 
     function openMoveMemo(memo) {
@@ -294,6 +311,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     }
 
     const folderMap = useMemo(() => new Map(folders.map((folder) => [folder.id, folder])), [folders]);
+    const folderTree = useMemo(() => buildFolderTree(folders), [folders]);
 
     function getFolderPath(folderId) {
         const path = [];
@@ -414,7 +432,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => setSelectedIds([])} className="rounded-lg p-1.5 text-slate-500 hover:text-white" aria-label="Annuler la sélection"><X size={14} /></button>
                                 </div>}
                             </div>
-                            <ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} menuOpen={activeMenu === memo.id} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} /></li>)}</ul><Pagination links={memos.links} />
+                            <ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} menuOpen={activeMenu === memo.id} folderPath={getFolderPath(memo.folder_id)} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} onDuplicate={duplicateMemo} onDelete={deleteMemo} /></li>)}</ul><Pagination links={memos.links} />
                         </> : <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />}
                     </section>
                 </div>
@@ -422,7 +440,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
             <Modal show={folderModal.open} onClose={() => !folderProcessing && setFolderModal((current) => ({ ...current, open: false }))} title={folderModal.mode === 'rename' ? 'Renommer le dossier' : (folderModal.parentId ? 'Créer un sous-dossier' : 'Créer un dossier')} description={folderModal.mode === 'rename' ? 'Modifie le nom sans toucher aux fiches.' : 'Organise tes fiches dans une arborescence claire.'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setFolderModal((current) => ({ ...current, open: false }))} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitFolder} disabled={!folderName.trim() || folderProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{folderProcessing ? 'Enregistrement...' : (folderModal.mode === 'rename' ? 'Renommer' : 'Créer le dossier')}</button></div>}>
                 <label className="block"><span className="mb-2 block text-xs font-semibold text-slate-400">Nom du dossier</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submitFolder()} maxLength={120} placeholder="Ex. Laravel, React, DevOps..." className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40" /></label>
             </Modal>
-            <Modal show={bulkMoveOpen} onClose={() => !bulkProcessing && setBulkMoveOpen(false)} title="Déplacer les fiches sélectionnées" description={selectedIds.length + ' fiche(s) seront déplacée(s).'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setBulkMoveOpen(false)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitBulkMove} disabled={bulkProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F]">Déplacer</button></div>}><select value={bulkMoveFolderId} onChange={(event) => setBulkMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white"><option value="">Sans dossier — racine</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></Modal>
+            <Modal show={bulkMoveOpen} onClose={() => !bulkProcessing && setBulkMoveOpen(false)} title="Déplacer les fiches sélectionnées" description={selectedIds.length + ' fiche(s) seront déplacée(s).'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setBulkMoveOpen(false)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitBulkMove} disabled={bulkProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F]">Déplacer</button></div>}><select value={bulkMoveFolderId} onChange={(event) => setBulkMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white"><option value="">Sans dossier — racine</option>{folderTree.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></Modal>
 
             <ConfirmModal show={bulkDeleteOpen} title={filters.trash ? 'Supprimer définitivement les fiches ?' : 'Mettre les fiches à la corbeille ?'} description={filters.trash ? 'Cette action ne peut pas être annulée.' : 'Les fiches pourront être restaurées depuis la corbeille.'} confirmLabel={filters.trash ? 'Supprimer définitivement' : 'Mettre à la corbeille'} onClose={() => setBulkDeleteOpen(false)} onConfirm={() => { if (filters.trash) { selectedIds.forEach((id) => router.delete('/memos/' + id + '/force-delete', { preserveScroll: true })); setSelectedIds([]); } else { bulkAction('delete'); } setBulkDeleteOpen(false); }} />
 
@@ -514,13 +532,17 @@ function ViewButton({ active, onClick, icon: Icon, label }) {
     return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
 }
 
-function MemoCard({ memo, grid, trash = false, onDragStart, onDragEnd, onMove }) {
+function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = false, folderPath = [], onSelect, onMenu, onDragStart, onDragEnd, onMove, onDuplicate, onDelete }) {
     return <article
         draggable
         onDragStart={(event) => onDragStart(event)}
         onDragEnd={onDragEnd}
-        className={'group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:border-[#FF6A00]/20 hover:bg-[#101B2C] cursor-grab active:cursor-grabbing ' + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}
+        onContextMenu={(event) => { event.preventDefault(); onMenu(); }}
+        className={'group relative overflow-visible rounded-2xl border bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:bg-[#101B2C] cursor-grab active:cursor-grabbing ' + (selected ? 'border-[#FF6A00]/50 ring-1 ring-[#FF6A00]/20' : 'border-white/[0.06] hover:border-[#FF6A00]/20 ') + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}
     >
+        <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(); }} className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-[#08111F]/80 text-slate-600 opacity-0 backdrop-blur transition group-hover:opacity-100 hover:text-white" aria-label={selected ? 'Désélectionner' : 'Sélectionner'}>
+            {selected ? <span className="flex h-4 w-4 items-center justify-center rounded bg-[#FF6A00] text-[#08111F]"><Check size={11} strokeWidth={3} /></span> : <span className="h-4 w-4 rounded border border-white/20" />}
+        </button>
         <Link href={'/memos/' + memo.id} className={'min-w-0 flex-1 ' + (grid ? 'flex flex-col' : 'flex items-center gap-4')} draggable={false}>
             <div className={grid ? 'mb-3 flex items-center justify-between gap-2' : 'flex w-[150px] shrink-0 items-center gap-2'}>
                 <span className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-600"><span className="h-1.5 w-1.5 rounded-full bg-[#FF6A00]" />{memo.is_favorite ? 'Favori' : 'Fiche'}</span>
@@ -528,19 +550,30 @@ function MemoCard({ memo, grid, trash = false, onDragStart, onDragEnd, onMove })
             </div>
             <div className={grid ? 'min-w-0' : 'min-w-0 flex-1'}>
                 <h3 className={'font-semibold text-white transition-colors duration-200 group-hover:text-[#FFB078] ' + (grid ? 'line-clamp-2 text-base leading-6' : 'truncate text-sm')}>{memo.icon ?? '📝'} {memo.title}</h3>
-                <p className={'mt-1 text-xs leading-5 text-slate-500 ' + (grid ? 'line-clamp-4' : 'line-clamp-1')}>{memo.excerpt}</p>
+                {folderPath.length > 0 && <p className="mt-1 truncate text-[10px] font-medium text-[#FF8A3D]/70">{folderPath.map((folder) => folder.name).join(' / ')}</p>}
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{memo.excerpt}</p>
                 {memo.tags?.length > 0 && <div className={'flex flex-wrap gap-1.5 ' + (grid ? 'mt-auto pt-4' : 'mt-2')}>{memo.tags.map((tag) => <TagBadge key={tag.id} name={tag.name} />)}</div>}
             </div>
         </Link>
-<div className={grid ? 'mt-3 flex items-center justify-end gap-2 border-t border-white/[0.06] pt-3' : 'shrink-0'}>{trash ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button> : <><button type="button" onClick={() => onMove(memo)} className="rounded-lg p-1.5 text-slate-600 hover:bg-white/[0.05] hover:text-white" title="Déplacer vers un dossier"><MoreHorizontal size={15} /></button><FavoriteButton memo={memo} /></>}</div>
+        <div className={grid ? 'mt-3 flex items-center justify-end gap-2 border-t border-white/[0.06] pt-3' : 'shrink-0'}>
+            {trash ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button> : <FavoriteButton memo={memo} />}
+        </div>
+        <div className="absolute right-2 top-2 z-20">
+            <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(); }} className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#08111F]/75 text-slate-500 backdrop-blur transition hover:bg-[#101B2C] hover:text-white" aria-label="Actions de la fiche"><MoreHorizontal size={17} /></button>
+            {menuOpen && <div className="absolute right-0 top-9 w-48 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.45)]">
+                <Link href={'/memos/' + memo.id} className="block rounded-lg px-3 py-2 text-xs text-slate-300 hover:bg-white/[0.05]">Ouvrir</Link>
+                {!trash && <><Link href={'/memos/' + memo.id + '/edit'} className="block rounded-lg px-3 py-2 text-xs text-slate-300 hover:bg-white/[0.05]">Modifier</Link><button type="button" onClick={() => onMove(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Déplacer</button><button type="button" onClick={() => onDuplicate(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Dupliquer</button><button type="button" onClick={() => onDelete(memo)} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Mettre à la corbeille</button></>}
+                {trash && <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button>}
+            </div>}
+        </div>
     </article>;
 }
 
-function EmptyState({ filtered }) {
+function EmptyState({ filtered, trash = false, folder = false }) {
     return <div className="rounded-2xl border border-dashed border-white/[0.08] bg-[#0D1725] p-8 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FF6A00]/10 text-[#FF8A3D]"><FileText size={25} aria-hidden="true" /></div>
-        <h2 className="mt-4 text-base font-semibold text-white">{filtered ? 'Aucune fiche ne correspond' : 'Aucune fiche mémo'}</h2>
-        <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">{filtered ? 'Essaie une autre collection ou une autre recherche.' : 'Crée ta première fiche pour construire ton espace de connaissances.'}</p>
-        <Link href={filtered ? '/memos' : '/memos/create'} className={buttonClass('primary') + ' mt-5'}>{filtered ? 'Voir toutes les fiches' : 'Créer une fiche'}</Link>
+        <h2 className="mt-4 text-base font-semibold text-white">{trash ? 'La corbeille est vide' : filtered ? 'Aucune fiche ne correspond' : folder ? 'Ce dossier est vide' : 'Aucune fiche mémo'}</h2>
+        <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">{trash ? 'Les fiches supprimées apparaîtront ici.' : filtered ? 'Essaie une autre recherche, collection ou un autre dossier.' : folder ? 'Crée une fiche ici ou déplace-en une depuis un autre dossier.' : 'Crée ta première fiche pour construire ton espace de connaissances.'}</p>
+        {!trash && <Link href={filtered ? '/memos' : '/memos/create'} className={buttonClass('primary') + ' mt-5'}>{filtered ? 'Voir toutes les fiches' : 'Créer une fiche'}</Link>}
     </div>;
 }
