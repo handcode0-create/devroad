@@ -65,6 +65,38 @@ class RoadmapGeneratorTest extends TestCase
         }
     }
 
+    public function test_la_synchronisation_met_a_jour_les_cours_existants_sans_ecraser_leur_statut(): void
+    {
+        $user = User::factory()->create();
+        $generator = app(RoadmapGenerator::class);
+
+        $roadmap = $generator->create($user, [
+            'title' => 'Ancien parcours Laravel',
+            'technology' => 'laravel',
+            'status' => 'active',
+        ], 'laravel');
+
+        $first = $roadmap->steps()->where('position', 1)->firstOrFail();
+        $first->update([
+            'content' => 'Ancien contenu en base',
+            'status' => 'completed',
+            'exercise_completed_at' => now(),
+        ]);
+
+        $generator->syncRoadmap($roadmap);
+
+        $first->refresh();
+
+        $this->assertSame('completed', $first->status);
+        $this->assertNotNull($first->exercise_completed_at);
+        $this->assertNotSame('Ancien contenu en base', $first->content);
+        $this->assertStringContainsString('## Références de travail', $first->content);
+        $this->assertStringContainsString('Laravel Documentation', $first->content);
+        $this->assertSame('Découvrir Laravel', $first->title);
+        $this->assertSame('routes/web.php', $first->workspace_file);
+        $this->assertNotEmpty($first->workspace_files);
+    }
+
     public function test_la_creation_d_une_roadmap_genere_automatiquement_ses_cours(): void
     {
         $user = User::factory()->create();
