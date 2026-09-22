@@ -63,7 +63,6 @@ class MemoController extends Controller
             'total' => $user->memos()->count(),
             'favorites' => $user->memos()->where('is_favorite', true)->count(),
             'recent' => $user->memos()->where('updated_at', '>=', Carbon::now()->subDays(7))->count(),
-            'trash' => $user->memos()->onlyTrashed()->count(),
         ];
 
         return Inertia::render('Memos/Index', [
@@ -77,7 +76,6 @@ class MemoController extends Controller
                 'tag' => $tag,
                 'q' => $q,
                 'folder' => $folderId,
-                'trash' => $trash,
             ],
         ]);
     }
@@ -126,7 +124,7 @@ class MemoController extends Controller
     public function show(Memo $memo): Response
     {
         Gate::authorize('view', $memo);
-        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'folder.parent', 'attachments:id,memo_id,name,mime_type,size,created_at']);
+        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'attachments:id,memo_id,name,mime_type,size,created_at']);
 
         return Inertia::render('Memos/Show', [
             'memo' => [
@@ -134,8 +132,6 @@ class MemoController extends Controller
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
                 'attachments' => $this->formatAttachments($memo),
-                'cover' => $this->formatCover($memo),
-                'breadcrumbs' => $this->folderBreadcrumbs($memo->folder),
             ],
         ]);
     }
@@ -219,6 +215,11 @@ class MemoController extends Controller
         if ($folderId !== null && ! $request->user()->memoFolders()->whereKey($folderId)->exists()) {
             abort(422, 'Le dossier sélectionné est invalide.');
         }
+
+        $coverId = $request->input('cover_attachment_id');
+        if ($coverId !== null && ! $request->user()->memoAttachments()->whereKey($coverId)->exists()) {
+            abort(422, 'La couverture sélectionnée est invalide.');
+        }
     }
 
     private function storeAttachments(Request $request, Memo $memo): void
@@ -246,29 +247,6 @@ class MemoController extends Controller
             'download_url' => '/memos/attachments/' . $file->id . '/download',
             'created_at' => $file->created_at,
         ])->values()->all();
-    }
-
-    private function formatCover(Memo $memo): ?array
-    {
-        $attachment = $memo->cover_attachment_id
-            ? $memo->attachments->firstWhere('id', $memo->cover_attachment_id)
-            : null;
-
-        return $attachment && $attachment->isImage()
-            ? ['id' => $attachment->id, 'url' => '/memos/attachments/' . $attachment->id, 'name' => $attachment->name]
-            : null;
-    }
-
-    private function folderBreadcrumbs(?MemoFolder $folder): array
-    {
-        $items = [];
-        $current = $folder;
-        $guard = 0;
-        while ($current && $guard++ < 30) {
-            array_unshift($items, $current->only('id', 'name', 'parent_id'));
-            $current = $current->parent;
-        }
-        return $items;
     }
 
     private function formatTags(Memo $memo): array
