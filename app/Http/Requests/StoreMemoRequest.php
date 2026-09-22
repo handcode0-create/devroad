@@ -13,14 +13,49 @@ class StoreMemoRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $content = $this->sanitizeContent((string) $this->input('content', ''));
         $title = trim((string) $this->input('title', ''));
-        $content = trim((string) $this->input('content', ''));
+        $this->merge(['content' => $content]);
+        $content = trim($content);
 
         if ($title === '' && $content !== '') {
             $candidate = preg_replace('/^#+\s*/', '', strtok($content, "\n"));
             $candidate = trim((string) $candidate);
             $this->merge(['title' => mb_substr($candidate !== '' ? $candidate : 'Nouvelle fiche', 0, 255)]);
         }
+    }
+
+    private function sanitizeContent(string $content): string
+    {
+        if (! str_contains($content, '<')) {
+            return $content;
+        }
+
+        $allowed = ['p', 'div', 'br', 'h2', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'hr', 'span'];
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8"><div id="devroad-content">' . $content . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $root = $dom->getElementById('devroad-content');
+        if (! $root) return strip_tags($content);
+
+        $nodes = [];
+        foreach ($root->getElementsByTagName('*') as $node) $nodes[] = $node;
+        foreach ($nodes as $node) {
+            if (! in_array(strtolower($node->tagName), $allowed, true)) {
+                $fragment = $dom->createDocumentFragment();
+                while ($node->firstChild) $fragment->appendChild($node->firstChild);
+                $node->parentNode?->replaceChild($fragment, $node);
+                continue;
+            }
+            while ($node->attributes->length > 0) $node->removeAttributeNode($node->attributes->item(0));
+        }
+
+        $html = '';
+        foreach ($root->childNodes as $child) $html .= $dom->saveHTML($child);
+        return $html;
     }
 
     public function rules(): array
