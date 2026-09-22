@@ -105,7 +105,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
-                                    {folders.map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onDelete={deleteFolder} />)}
+                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onDelete={deleteFolder} />)}
                                     {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
@@ -150,10 +150,21 @@ function NavItem({ href, active, icon: Icon, label, count }) {
     </Link>;
 }
 
-function FolderNavItem({ folder, active, onCreateChild, onDelete, depth = 0 }) {
+function buildFolderTree(folders) {
+    const byParent = new Map();
+    folders.forEach((folder) => {
+        const key = folder.parent_id ?? 0;
+        if (!byParent.has(key)) byParent.set(key, []);
+        byParent.get(key).push(folder);
+    });
+    const walk = (parentId, depth = 0) => (byParent.get(parentId) ?? []).flatMap((folder) => [{ ...folder, depth }, ...walk(folder.id, depth + 1)]);
+    return walk(0);
+}
+
+function FolderNavItem({ folder, active, onCreateChild, onDelete }) {
     return <div>
         <div className={'group flex items-center gap-1 rounded-xl pr-1 transition ' + (active ? 'bg-[#FF6A00]/10' : 'hover:bg-white/[0.035]')}>
-            <Link href={listUrl({ folder: active ? null : folder.id })} className={'flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium ' + (active ? 'text-[#FF8A3D]' : 'text-slate-500 hover:text-slate-200')} style={{ paddingLeft: 10 + depth * 14 }}>
+            <Link href={listUrl({ folder: active ? null : folder.id })} className={'flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium ' + (active ? 'text-[#FF8A3D]' : 'text-slate-500 hover:text-slate-200')} style={{ paddingLeft: 10 + (folder.depth ?? 0) * 14 }}>
                 <Folder size={14} className={active ? 'text-[#FF8A3D]' : 'text-slate-600'} />
                 <span className="min-w-0 flex-1 truncate">{folder.name}</span>
                 {typeof folder.memos_count === 'number' && <span className="text-[10px] text-slate-700">{folder.memos_count}</span>}
