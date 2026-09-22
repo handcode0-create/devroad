@@ -250,6 +250,36 @@ class MemoTest extends TestCase
                 ->where('memos.data.0.title', 'Mon mémo'));
     }
 
+    public function test_les_pieces_jointes_inline_sont_conservees_et_les_urls_externes_retirees(): void
+    {
+        $user = User::factory()->create();
+        $memo = $user->memos()->create(['title' => 'Source', 'content' => 'source']);
+        $attachment = $memo->attachments()->create([
+            'user_id' => $user->id,
+            'name' => 'image.png',
+            'mime_type' => 'image/png',
+            'size' => 3,
+            'data' => 'abc',
+        ]);
+
+        $content = '<figure data-attachment-id="' . $attachment->id . '"><img src="/memos/attachments/' . $attachment->id . '" alt="image"></figure>'
+            . '<p><a href="/memos/attachments/' . $attachment->id . '/download">Télécharger</a></p>'
+            . '<img src="https://example.com/evil.png">';
+
+        $this->actingAs($user)
+            ->put(route('memos.update', $memo), [
+                'title' => 'Source',
+                'content' => $content,
+            ])
+            ->assertRedirect(route('memos.edit', $memo));
+
+        $saved = $memo->fresh()->content;
+
+        $this->assertStringContainsString('/memos/attachments/' . $attachment->id, $saved);
+        $this->assertStringContainsString('data-attachment-id="' . $attachment->id . '"', $saved);
+        $this->assertStringNotContainsString('example.com/evil.png', $saved);
+    }
+
     public function test_une_couverture_doit_appartenir_au_memo_modifie(): void
     {
         $user = User::factory()->create();
