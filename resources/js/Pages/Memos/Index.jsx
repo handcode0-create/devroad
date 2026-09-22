@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
+import { Bookmark, Check, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import Pagination from '@/Components/Ui/Pagination';
@@ -34,9 +34,44 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [moveMemoTarget, setMoveMemoTarget] = useState(null);
     const [moveFolderId, setMoveFolderId] = useState('');
     const [moveProcessing, setMoveProcessing] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [activeMenu, setActiveMenu] = useState(null);
+    const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+    const [bulkMoveFolderId, setBulkMoveFolderId] = useState('');
+    const [bulkProcessing, setBulkProcessing] = useState(false);
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
+    const [searchInput, setSearchInput] = useState(null);
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
     useEffect(() => { try { localStorage.setItem('devroad:memos:view', view); } catch {} }, [view]);
+
+    useEffect(() => {
+        setSelectedIds([]);
+        setActiveMenu(null);
+    }, [filters.folder, filters.q, filters.tag, filters.favorites, filters.recent, filters.trash, filters.sort]);
+
+    useEffect(() => {
+        const handler = (event) => {
+            const tag = event.target?.tagName?.toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select' || event.target?.isContentEditable) {
+                if (event.key === 'Escape') setActiveMenu(null);
+                return;
+            }
+            if (event.key === '/') {
+                event.preventDefault();
+                document.querySelector('[data-memo-search]')?.focus();
+            } else if (event.key === 'n') {
+                event.preventDefault();
+                window.location.href = filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create';
+            } else if (event.key === 'Escape') {
+                setActiveMenu(null);
+                setSelectedIds([]);
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [filters.folder]);
 
     function submitSearch(event) {
         event.preventDefault();
@@ -46,6 +81,8 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
             favorites: filters.favorites ? 1 : undefined,
             recent: filters.recent ? 1 : undefined,
             trash: filters.trash ? 1 : undefined,
+            folder: filters.folder || undefined,
+            sort: filters.sort || undefined,
         }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
@@ -78,8 +115,50 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     }
 
     function openMoveMemo(memo) {
+        setActiveMenu(null);
         setMoveMemoTarget(memo);
         setMoveFolderId(memo.folder_id ? String(memo.folder_id) : '');
+    }
+
+    function toggleSelected(id) {
+        setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    }
+
+    function toggleSelectAll() {
+        const ids = items.map((memo) => memo.id);
+        setSelectedIds((current) => current.length === ids.length ? [] : ids);
+    }
+
+    function bulkAction(action, extra = {}) {
+        if (!selectedIds.length || bulkProcessing) return;
+        setBulkProcessing(true);
+        router.post('/memos/bulk', { ids: selectedIds, action, ...extra }, {
+            preserveScroll: true,
+            onSuccess: () => setSelectedIds([]),
+            onFinish: () => setBulkProcessing(false),
+        });
+    }
+
+    function openBulkMove() {
+        setBulkMoveFolderId('');
+        setBulkMoveOpen(true);
+    }
+
+    function submitBulkMove() {
+        bulkAction('move', { folder_id: bulkMoveFolderId || null });
+        setBulkMoveOpen(false);
+    }
+
+    function changeSort(sort) {
+        router.get('/memos', {
+            q: filters.q || undefined,
+            tag: filters.tag || undefined,
+            favorites: filters.favorites ? 1 : undefined,
+            recent: filters.recent ? 1 : undefined,
+            folder: filters.folder || undefined,
+            trash: filters.trash ? 1 : undefined,
+            sort,
+        }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     function moveMemo() {
@@ -209,8 +288,25 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
             favorites: filters.favorites ? 1 : undefined,
             recent: filters.recent ? 1 : undefined,
             trash: filters.trash ? 1 : undefined,
+            folder: filters.folder || undefined,
+            sort: filters.sort || undefined,
         }, { preserveState: true, replace: true });
     }
+
+    const folderMap = useMemo(() => new Map(folders.map((folder) => [folder.id, folder])), [folders]);
+
+    function getFolderPath(folderId) {
+        const path = [];
+        let current = folderId ? folderMap.get(Number(folderId)) : null;
+        let guard = 0;
+        while (current && guard++ < 30) {
+            path.unshift(current);
+            current = current.parent_id ? folderMap.get(Number(current.parent_id)) : null;
+        }
+        return path;
+    }
+
+    const activeFolderPath = getFolderPath(filters.folder);
 
     const activeFolder = useMemo(() => {
         if (filters.favorites) return 'Favoris';
@@ -283,26 +379,55 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                 <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
                                     <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
-                                    <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher dans tes fiches..." className="h-10 w-full rounded-xl border border-white/[0.06] bg-[#08111F] pl-9 pr-10 text-sm text-white outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-slate-600 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/5" />
+                                    <input data-memo-search type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher dans tes fiches..." className="h-10 w-full rounded-xl border border-white/[0.06] bg-[#08111F] pl-9 pr-10 text-sm text-white outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-slate-600 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/5" />
                                     {query && <button type="button" onClick={clearSearch} aria-label="Effacer la recherche" className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-white"><X size={14} /></button>}
                                 </form>
-                                <div className="flex items-center justify-between gap-2"><div className="flex rounded-xl border border-white/[0.06] bg-[#08111F] p-1">
-                                    <ViewButton active={view === 'list'} onClick={() => setView('list')} icon={List} label="Liste" />
-                                    <ViewButton active={view === 'grid'} onClick={() => setView('grid')} icon={LayoutGrid} label="Grille" />
-                                </div></div>
+                                <div className="flex items-center gap-2">
+                                    <select value={filters.sort ?? 'updated_desc'} onChange={(event) => changeSort(event.target.value)} className="h-8 rounded-lg border border-white/[0.06] bg-[#08111F] px-2 text-[11px] font-semibold text-slate-400 outline-none focus:border-[#FF6A00]/30" aria-label="Trier les fiches">
+                                        <option value="updated_desc">Plus récentes</option><option value="updated_asc">Plus anciennes</option><option value="title_asc">A → Z</option><option value="title_desc">Z → A</option><option value="favorite">Favoris d'abord</option>
+                                    </select>
+                                    <div className="flex rounded-xl border border-white/[0.06] bg-[#08111F] p-1">
+                                        <ViewButton active={view === 'list'} onClick={() => setView('list')} icon={List} label="Liste" />
+                                        <ViewButton active={view === 'grid'} onClick={() => setView('grid')} icon={LayoutGrid} label="Grille" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                            <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-white">{activeFolder}</h2><p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p></div>
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
+                                    <Link href="/memos" className="hover:text-[#FF8A3D]">Mémos</Link>
+                                    {activeFolderPath.map((folder) => <span key={folder.id} className="flex items-center gap-1"><span className="text-slate-700">/</span><Link href={listUrl({ folder: folder.id, sort: filters.sort })} className="hover:text-[#FF8A3D]">{folder.name}</Link></span>)}
+                                </div>
+                                <h2 className="mt-1 truncate text-sm font-semibold text-white">{activeFolder}</h2>
+                                <p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p>
+                            </div>
+                            {filters.trash && counts.trash > 0 && <button type="button" onClick={() => setEmptyTrashOpen(true)} className="rounded-xl border border-red-400/15 bg-red-400/[0.05] px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/10">Vider la corbeille</button>}
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
+                        {items.length > 0 ? <>
+                            <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-white/[0.05] bg-[#0D1725]/70 px-3 py-2">
+                                <label className="flex items-center gap-2 text-xs font-semibold text-slate-400"><input type="checkbox" checked={items.length > 0 && selectedIds.length === items.length} onChange={toggleSelectAll} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" /><span>{selectedIds.length ? selectedIds.length + ' sélectionnée(s)' : 'Sélectionner'}</span></label>
+                                {selectedIds.length > 0 && <div className="flex flex-wrap items-center gap-1.5">
+                                    {!filters.trash && <><button type="button" onClick={openBulkMove} className="rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08]">Déplacer</button><button type="button" onClick={() => bulkAction('favorite')} className="rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08]">Favori</button><button type="button" onClick={() => setBulkDeleteOpen(true)} className="rounded-lg bg-red-400/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-red-300 hover:bg-red-400/10">Supprimer</button></>}
+                                    {filters.trash && <><button type="button" onClick={() => bulkAction('restore')} className="rounded-lg bg-[#FF6A00]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D]">Restaurer</button><button type="button" onClick={() => setBulkDeleteOpen(true)} className="rounded-lg bg-red-400/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-red-300">Supprimer définitivement</button></>}
+                                    <button type="button" onClick={() => setSelectedIds([])} className="rounded-lg p-1.5 text-slate-500 hover:text-white" aria-label="Annuler la sélection"><X size={14} /></button>
+                                </div>}
+                            </div>
+                            <ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} menuOpen={activeMenu === memo.id} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} /></li>)}</ul><Pagination links={memos.links} />
+                        </> : <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />}
                     </section>
                 </div>
             </div>
             <Modal show={folderModal.open} onClose={() => !folderProcessing && setFolderModal((current) => ({ ...current, open: false }))} title={folderModal.mode === 'rename' ? 'Renommer le dossier' : (folderModal.parentId ? 'Créer un sous-dossier' : 'Créer un dossier')} description={folderModal.mode === 'rename' ? 'Modifie le nom sans toucher aux fiches.' : 'Organise tes fiches dans une arborescence claire.'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setFolderModal((current) => ({ ...current, open: false }))} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitFolder} disabled={!folderName.trim() || folderProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{folderProcessing ? 'Enregistrement...' : (folderModal.mode === 'rename' ? 'Renommer' : 'Créer le dossier')}</button></div>}>
                 <label className="block"><span className="mb-2 block text-xs font-semibold text-slate-400">Nom du dossier</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submitFolder()} maxLength={120} placeholder="Ex. Laravel, React, DevOps..." className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40" /></label>
             </Modal>
+            <Modal show={bulkMoveOpen} onClose={() => !bulkProcessing && setBulkMoveOpen(false)} title="Déplacer les fiches sélectionnées" description={selectedIds.length + ' fiche(s) seront déplacée(s).'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setBulkMoveOpen(false)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitBulkMove} disabled={bulkProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F]">Déplacer</button></div>}><select value={bulkMoveFolderId} onChange={(event) => setBulkMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white"><option value="">Sans dossier — racine</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></Modal>
+
+            <ConfirmModal show={bulkDeleteOpen} title={filters.trash ? 'Supprimer définitivement les fiches ?' : 'Mettre les fiches à la corbeille ?'} description={filters.trash ? 'Cette action ne peut pas être annulée.' : 'Les fiches pourront être restaurées depuis la corbeille.'} confirmLabel={filters.trash ? 'Supprimer définitivement' : 'Mettre à la corbeille'} onClose={() => setBulkDeleteOpen(false)} onConfirm={() => { if (filters.trash) { selectedIds.forEach((id) => router.delete('/memos/' + id + '/force-delete', { preserveScroll: true })); setSelectedIds([]); } else { bulkAction('delete'); } setBulkDeleteOpen(false); }} />
+
+            <ConfirmModal show={emptyTrashOpen} title="Vider la corbeille ?" description="Toutes les fiches supprimées seront définitivement effacées." confirmLabel="Vider la corbeille" onClose={() => setEmptyTrashOpen(false)} onConfirm={() => { router.post('/memos/empty-trash', {}, { preserveScroll: true }); setEmptyTrashOpen(false); }} />
+
             <ConfirmModal show={Boolean(deleteFolderTarget)} title={'Supprimer « ' + (deleteFolderTarget?.name ?? '') + ' » ?'} description="Les fiches seront conservées mais retirées de ce dossier. Les sous-dossiers remonteront d'un niveau." confirmLabel="Supprimer le dossier" onClose={() => setDeleteFolderTarget(null)} onConfirm={confirmDeleteFolder} />
             <Modal show={Boolean(moveMemoTarget)} onClose={() => !moveProcessing && setMoveMemoTarget(null)} title="Déplacer la fiche" description="Choisis le dossier de destination, ou remets-la à la racine." footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setMoveMemoTarget(null)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={moveMemo} disabled={moveProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{moveProcessing ? 'Déplacement...' : 'Déplacer'}</button></div>}>
                 <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3"><p className="mb-2 truncate text-xs font-semibold text-white">{moveMemoTarget?.icon ?? '📝'} {moveMemoTarget?.title}</p><select value={moveFolderId} onChange={(event) => setMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#0D1725] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40"><option value="">Sans dossier — racine</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></div>
