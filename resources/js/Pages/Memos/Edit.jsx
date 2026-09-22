@@ -2,7 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import MemoForm from '@/Components/Memos/MemoForm';
-import { normalizeMemoContent } from '@/Components/Memos/MemoEditor';
+import { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function Edit({ memo, folders = [] }) {
     const form = useForm({
@@ -20,7 +20,20 @@ export default function Edit({ memo, folders = [] }) {
 
     function submit(event) {
         event.preventDefault();
-        form.transform((data) => ({ ...data, _method: 'put' })).post('/memos/' + memo.id, { forceFormData: true });
+
+        form.transform((data) => {
+            const content = normalizeMemoContent(data.content);
+            const title = data.title.trim() || autoMemoTitle(content) || '';
+
+            return {
+                ...data,
+                title,
+                content,
+                _method: 'put',
+            };
+        }).post('/memos/' + memo.id, {
+            forceFormData: true,
+        });
     }
 
     return (
@@ -28,7 +41,14 @@ export default function Edit({ memo, folders = [] }) {
             <Head title={'Modifier ' + memo.title} />
             <div className="mx-auto max-w-3xl">
                 <PageHeader title="Modifier la fiche" backHref={'/memos/' + memo.id} backLabel={memo.title} />
-                <MemoForm form={form} folders={folders} attachments={memo.attachments ?? []} onSubmit={submit} submitLabel="Enregistrer" cancelHref={'/memos/' + memo.id} />
+                <MemoForm
+                    form={form}
+                    folders={folders}
+                    attachments={memo.attachments ?? []}
+                    onSubmit={submit}
+                    submitLabel="Enregistrer"
+                    cancelHref={'/memos/' + memo.id}
+                />
             </div>
         </AppLayout>
     );
