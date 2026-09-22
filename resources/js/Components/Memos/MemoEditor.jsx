@@ -54,7 +54,7 @@ function escapeHtml(value) {
 
 export function memoValueToHtml(value) {
     const raw = String(value ?? '');
-    if (/<(?:p|div|h[1-6]|strong|b|ul|ol|li|blockquote|pre|code|br|hr)\\b/i.test(raw)) {
+    if (/<(?:p|div|h[1-6]|strong|b|ul|ol|li|blockquote|pre|code|br|hr|a|img|figure)\\b/i.test(raw)) {
         return sanitizeMemoHtml(raw);
     }
 
