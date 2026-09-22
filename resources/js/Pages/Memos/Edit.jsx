@@ -37,7 +37,25 @@ export default function Edit({ memo, folders = [] }) {
             };
         }).post('/memos/' + memo.id, {
             forceFormData: true,
-            onSuccess: () => setSaved(true),
+            onSuccess: (page) => {
+                const nextMemo = page.props.memo ?? memo;
+                const nextData = {
+                    title: nextMemo.title ?? '',
+                    content: normalizeMemoContent(nextMemo.content ?? ''),
+                    formatting: nextMemo.formatting ?? { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 },
+                    folder_id: nextMemo.folder?.id ?? null,
+                    attachments: [],
+                    tags: (nextMemo.tags ?? []).map((tag) => tag.name),
+                    is_favorite: Boolean(nextMemo.is_favorite),
+                    icon: nextMemo.icon ?? '📝',
+                    cover_attachment_id: nextMemo.cover_attachment_id ?? null,
+                    is_full_width: Boolean(nextMemo.is_full_width),
+                };
+
+                form.setData(nextData);
+                form.defaults(nextData);
+                setSaved(true);
+            },
         });
     }
 
