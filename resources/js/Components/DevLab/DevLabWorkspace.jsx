@@ -8,7 +8,7 @@ import MobileSymbolBar from "@/Components/DevLab/MobileSymbolBar";
 import RuntimeSelector from "@/Components/DevLab/RuntimeSelector";
 import DevLabTerminal from "@/Components/DevLab/DevLabTerminal";
 
-export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, onImportFiles }) {
+export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, onDuplicate, onDelete, onImportFiles }) {
     const files = project.files ?? [];
     const [active, setActive] = useState(files[0]?.path ?? "");
     const [draft, setDraft] = useState(files[0]?.content ?? "");
@@ -136,6 +136,34 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
         event.currentTarget.releasePointerCapture?.(event.pointerId);
     }
 
+    async function renameFile(file) {
+        const renamed = await onRename?.(file);
+        if (renamed?.path) {
+            setActive(renamed.path);
+            setDraft(renamed.content ?? draft);
+            setSaved(true);
+        }
+    }
+
+    async function duplicateFile(file) {
+        const duplicated = await onDuplicate?.(file);
+        if (duplicated?.path) {
+            setActive(duplicated.path);
+            setDraft(duplicated.content ?? "");
+            setSaved(true);
+        }
+    }
+
+    async function removeFile(file) {
+        const deleted = await onDelete?.(file);
+        if (!deleted) return;
+        const remaining = files.filter((item) => item.id !== file.id);
+        const next = remaining[0];
+        setActive(next?.path ?? "");
+        setDraft(next?.content ?? "");
+        setSaved(true);
+    }
+
     async function save() {
         if (!current || saved) return;
         try {
@@ -221,6 +249,9 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                     onSelect={setActive}
                     onCreate={onNewFile}
                     onImport={() => importRef.current?.click()}
+                    onRename={renameFile}
+                    onDuplicate={duplicateFile}
+                    onDelete={removeFile}
                 />
             </div>
 
@@ -236,7 +267,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onDelete, 
                         setSaved(false);
                     }}
                     onCopy={copy}
-                    onDelete={() => current && onDelete(current)}
+                    onDelete={() => current && removeFile(current)}
                 />
             </div>
 
