@@ -49,6 +49,68 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
         router.delete('/memo-folders/' + folder.id, { preserveScroll: true });
     }
 
+    // --- Glisser-déposer -------------------------------------------------
+    // dragged : { type: 'folder' | 'memo', id, parentId } — parentId sert à
+    // ne réordonner qu'entre dossiers d'un même niveau (mêmes « frères »).
+    const [dragged, setDragged] = useState(null);
+    const [dropTarget, setDropTarget] = useState(null); // id de dossier survolé (ou 'root')
+
+    function startDragFolder(folder) {
+        setDragged({ type: 'folder', id: folder.id, parentId: folder.parent_id ?? null });
+    }
+
+    function startDragMemo(memo) {
+        setDragged({ type: 'memo', id: memo.id });
+    }
+
+    function endDrag() {
+        setDragged(null);
+        setDropTarget(null);
+    }
+
+    // Dépose SUR un dossier : une fiche s'y range, un dossier s'y imbrique.
+    function dropOnFolder(folder) {
+        if (!dragged) return;
+
+        if (dragged.type === 'memo') {
+            router.patch('/memos/' + dragged.id + '/move', { folder_id: folder.id }, { preserveScroll: true, preserveState: true });
+        } else if (dragged.type === 'folder' && dragged.id !== folder.id) {
+            router.patch('/memo-folders/' + dragged.id, { parent_id: folder.id }, { preserveScroll: true, preserveState: true });
+        }
+
+        endDrag();
+    }
+
+    // Dépose sur l'en-tête « Dossiers » : remonte un dossier à la racine,
+    // ou retire une fiche de son dossier.
+    function dropOnRoot() {
+        if (!dragged) return;
+
+        if (dragged.type === 'memo') {
+            router.patch('/memos/' + dragged.id + '/move', { folder_id: null }, { preserveScroll: true, preserveState: true });
+        } else if (dragged.type === 'folder' && dragged.parentId !== null) {
+            router.patch('/memo-folders/' + dragged.id, { parent_id: null }, { preserveScroll: true, preserveState: true });
+        }
+
+        endDrag();
+    }
+
+    // Réordonne un dossier parmi ses frères (même parent), à la position de « target ».
+    function reorderFolder(target) {
+        if (!dragged || dragged.type !== 'folder') return;
+        if (dragged.id === target.id) return;
+        if ((dragged.parentId ?? null) !== (target.parent_id ?? null)) return; // niveaux différents : dropOnFolder gère l'imbrication
+
+        const parentId = target.parent_id ?? null;
+        const siblings = folders.filter((folder) => (folder.parent_id ?? null) === parentId).sort((a, b) => a.position - b.position);
+        const ids = siblings.map((folder) => folder.id).filter((id) => id !== dragged.id);
+        const targetIndex = ids.indexOf(target.id);
+        ids.splice(targetIndex, 0, dragged.id);
+
+        router.patch('/memo-folders/reorder', { parent_id: parentId, ordered_ids: ids }, { preserveScroll: true, preserveState: true });
+        endDrag();
+    }
+
     function clearSearch() {
         setQuery('');
         router.get('/memos', {
@@ -100,12 +162,17 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                 <NavItem href={listUrl({ recent: true })} active={Boolean(filters.recent)} icon={Sparkles} label="Récents" count={counts.recent} />
                             </div>
                             <div className="mt-5 border-t border-white/[0.06] pt-4">
-                                <div className="mb-2 flex items-center justify-between px-2">
+                                <div
+                                    onDragOver={(event) => { if (dragged) { event.preventDefault(); setDropTarget('root'); } }}
+                                    onDragLeave={() => setDropTarget((current) => (current === 'root' ? null : current))}
+                                    onDrop={(event) => { event.preventDefault(); dropOnRoot(); }}
+                                    className={'mb-2 flex items-center justify-between rounded-lg px-2 py-1 transition ' + (dropTarget === 'root' ? 'bg-[#FF6A00]/10 ring-1 ring-[#FF6A00]/30' : '')}
+                                >
                                     <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Dossiers</span>
                                     <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
-                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onDelete={deleteFolder} />)}
+                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onDelete={deleteFolder} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
                                     {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
@@ -136,7 +203,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-white">{activeFolder}</h2><p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p></div>
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
+                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} onDragStart={() => startDragMemo(memo)} onDragEnd={endDrag} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
                     </section>
                 </div>
             </div>
@@ -161,9 +228,40 @@ function buildFolderTree(folders) {
     return walk(0);
 }
 
-function FolderNavItem({ folder, active, onCreateChild, onDelete }) {
+function FolderNavItem({ folder, active, onCreateChild, onDelete, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
+    // Survol dans la moitié basse de la ligne = « insérer après » (réordonner) ;
+    // reste de la ligne = « déposer dedans » (imbriquer comme sous-dossier).
+    const [nestHover, setNestHover] = useState(false);
+
+    function onDragOver(event) {
+        if (!canDrop) return;
+        event.preventDefault();
+        onDragOverTarget();
+        const rect = event.currentTarget.getBoundingClientRect();
+        setNestHover(event.clientY - rect.top < rect.height * 0.7);
+    }
+
+    function onDrop(event) {
+        event.preventDefault();
+        if (nestHover) onDropNest(folder); else onDropReorder(folder);
+        setNestHover(false);
+    }
+
     return <div>
-        <div className={'group flex items-center gap-1 rounded-xl pr-1 transition ' + (active ? 'bg-[#FF6A00]/10' : 'hover:bg-white/[0.035]')}>
+        <div
+            draggable
+            onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; onDragStartFolder(folder); }}
+            onDragEnd={onDragEnd}
+            onDragOver={onDragOver}
+            onDragLeave={() => setNestHover(false)}
+            onDrop={onDrop}
+            className={
+                'group flex items-center gap-1 rounded-xl pr-1 transition ' +
+                (active ? 'bg-[#FF6A00]/10' : 'hover:bg-white/[0.035]') +
+                (isDragging ? ' opacity-40' : '') +
+                (isDropTarget ? (nestHover ? ' bg-[#FF6A00]/10 ring-1 ring-[#FF6A00]/40' : ' border-t-2 border-[#FF6A00]') : '')
+            }
+        >
             <Link href={listUrl({ folder: active ? null : folder.id })} className={'flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium ' + (active ? 'text-[#FF8A3D]' : 'text-slate-500 hover:text-slate-200')} style={{ paddingLeft: 10 + (folder.depth ?? 0) * 14 }}>
                 <Folder size={14} className={active ? 'text-[#FF8A3D]' : 'text-slate-600'} />
                 <span className="min-w-0 flex-1 truncate">{folder.name}</span>
@@ -179,8 +277,13 @@ function ViewButton({ active, onClick, icon: Icon, label }) {
     return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
 }
 
-function MemoCard({ memo, grid }) {
-    return <article className={'group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:border-[#FF6A00]/20 hover:bg-[#101B2C] ' + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}>
+function MemoCard({ memo, grid, onDragStart, onDragEnd }) {
+    return <article
+        draggable
+        onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
+        onDragEnd={onDragEnd}
+        className={'group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:border-[#FF6A00]/20 hover:bg-[#101B2C] cursor-grab active:cursor-grabbing ' + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}
+    >
         <Link href={'/memos/' + memo.id} className={'min-w-0 flex-1 ' + (grid ? 'flex flex-col' : 'flex items-center gap-4')}>
             <div className={grid ? 'mb-3 flex items-center justify-between gap-2' : 'flex w-[150px] shrink-0 items-center gap-2'}>
                 <span className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-600"><span className="h-1.5 w-1.5 rounded-full bg-[#FF6A00]" />{memo.is_favorite ? 'Favori' : 'Fiche'}</span>
