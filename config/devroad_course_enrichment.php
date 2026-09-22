@@ -1,6 +1,7 @@
 <?php
 
-return {
+return json_decode(<<<'JSON'
+{
     "laravel": {
         "sources": [
             [
@@ -244,4 +245,5 @@ return {
             }
         }
     }
-};
+}
+JSON, true);
