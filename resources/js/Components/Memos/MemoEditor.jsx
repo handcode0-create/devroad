@@ -27,6 +27,44 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
     function update(key, value) { onFormattingChange({ ...style, [key]: value }); }
     function adjustSize(delta) { update('fontSize', Math.min(32, Math.max(12, Number(style.fontSize) + delta))); }
 
+    function applyTextTransform(mode) {
+        const el = textareaRef.current;
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+
+        if (start === end) {
+            update('textTransform', mode);
+            return;
+        }
+
+        const selected = content.slice(start, end);
+        const markers = {
+            uppercase: ['[[upper]]', '[[/upper]]'],
+            lowercase: ['[[lower]]', '[[/lower]]'],
+            capitalize: ['[[capitalize]]', '[[/capitalize]]'],
+            none: ['', ''],
+        };
+        const [prefix, suffix] = markers[mode] ?? markers.none;
+
+        let value = selected;
+        if (mode === 'none') {
+            value = selected
+                .replace(/\[\[upper\]\]|\[\[\/upper\]\]|\[\[lower\]\]|\[\[\/lower\]\]|\[\[capitalize\]\]|\[\[\/capitalize\]\]/g, '');
+        } else {
+            value = prefix + selected
+                .replace(/\[\[upper\]\]|\[\[\/upper\]\]|\[\[lower\]\]|\[\[\/lower\]\]|\[\[capitalize\]\]|\[\[\/capitalize\]\]/g, '') + suffix;
+        }
+
+        const next = content.slice(0, start) + value + content.slice(end);
+        onContentChange(next);
+
+        requestAnimationFrame(() => {
+            el.focus();
+            el.setSelectionRange(start, start + value.length);
+        });
+    }
+
     function transformSelection(prefix, suffix = '') {
         const el = textareaRef.current; if (!el) return;
         const start = el.selectionStart; const end = el.selectionEnd;
@@ -78,7 +116,7 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
         <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.06] bg-[#0D1725] p-2">
             <div className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-[#08111F] px-1.5"><Type size={14} className="ml-1 text-slate-600" /><select value={style.fontFamily} onChange={(e) => update('fontFamily', e.target.value)} className="h-8 border-0 bg-transparent px-1 text-xs text-slate-300 outline-none" aria-label="Police">{FONTS.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}</select></div>
             <div className="flex items-center rounded-lg border border-white/[0.06] bg-[#08111F]"><button type="button" onClick={() => adjustSize(-1)} className="flex h-8 w-8 items-center justify-center text-slate-500 hover:text-white"><Minus size={13} /></button><span className="min-w-8 text-center text-[11px] text-slate-400">{style.fontSize}</span><button type="button" onClick={() => adjustSize(1)} className="flex h-8 w-8 items-center justify-center text-slate-500 hover:text-white"><Plus size={13} /></button></div>
-            <div className="flex rounded-lg border border-white/[0.06] bg-[#08111F] p-0.5"><FormatButton active={style.textTransform === 'none'} onClick={() => update('textTransform', 'none')} label="Normal"><Type size={14} /></FormatButton><FormatButton active={style.textTransform === 'uppercase'} onClick={() => update('textTransform', 'uppercase')} label="Majuscules"><CaseUpper size={14} /></FormatButton><FormatButton active={style.textTransform === 'lowercase'} onClick={() => update('textTransform', 'lowercase')} label="Minuscules"><CaseLower size={14} /></FormatButton></div>
+            <div className="flex rounded-lg border border-white/[0.06] bg-[#08111F] p-0.5"><FormatButton active={style.textTransform === 'none'} onClick={() => applyTextTransform('none')} label="Normal"><Type size={14} /></FormatButton><FormatButton active={style.textTransform === 'uppercase'} onClick={() => applyTextTransform('uppercase')} label="Majuscules"><CaseUpper size={14} /></FormatButton><FormatButton active={style.textTransform === 'lowercase'} onClick={() => applyTextTransform('lowercase')} label="Minuscules"><CaseLower size={14} /></FormatButton></div>
             <div className="flex rounded-lg border border-white/[0.06] bg-[#08111F] p-0.5"><FormatButton active={style.textAlign === 'left'} onClick={() => update('textAlign', 'left')} label="Gauche"><AlignLeft size={14} /></FormatButton><FormatButton active={style.textAlign === 'center'} onClick={() => update('textAlign', 'center')} label="Centre"><AlignCenter size={14} /></FormatButton><FormatButton active={style.textAlign === 'right'} onClick={() => update('textAlign', 'right')} label="Droite"><AlignRight size={14} /></FormatButton><FormatButton active={style.textAlign === 'justify'} onClick={() => update('textAlign', 'justify')} label="Justifié"><AlignJustify size={14} /></FormatButton></div>
             <button type="button" onClick={() => transformSelection('**', '**')} className="flex h-8 items-center rounded-lg border border-white/[0.06] bg-[#08111F] px-2 text-xs font-bold text-slate-500 hover:text-white" title="Gras">B</button>
             <div className="h-6 w-px bg-white/[0.06]" />
