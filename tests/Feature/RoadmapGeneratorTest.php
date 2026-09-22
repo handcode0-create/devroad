@@ -3,12 +3,44 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\RoadmapGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RoadmapGeneratorTest extends TestCase
 {
     use RefreshDatabase;
+
+
+    public function test_chaque_technologie_configuree_genere_un_workspace_exploitable(): void
+    {
+        $user = User::factory()->create();
+        $generator = app(RoadmapGenerator::class);
+
+        $technologies = [
+            'laravel', 'react', 'javascript', 'typescript', 'php', 'html', 'css',
+            'tailwind', 'node', 'git', 'github', 'docker', 'mysql', 'postgresql',
+        ];
+
+        foreach ($technologies as $technology) {
+            $roadmap = $generator->create($user, [
+                'title' => 'Parcours ' . $technology,
+                'status' => 'active',
+            ], $technology);
+
+            $steps = $roadmap->steps;
+
+            $this->assertNotEmpty($steps, "Aucun cours généré pour {$technology}.");
+
+            foreach ($steps as $step) {
+                $this->assertNotEmpty($step->workspace_language, "Runtime manquant pour {$technology} / {$step->title}.");
+                $this->assertNotEmpty($step->workspace_file, "Fichier principal manquant pour {$technology} / {$step->title}.");
+                $this->assertIsArray($step->workspace_files);
+                $this->assertNotEmpty($step->workspace_files);
+                $this->assertNotEmpty($step->workspace_files[0]['path'] ?? null);
+            }
+        }
+    }
 
     public function test_la_creation_d_une_roadmap_genere_automatiquement_ses_cours(): void
     {
