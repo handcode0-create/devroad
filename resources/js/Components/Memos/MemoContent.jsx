@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
+import { sanitizeMemoHtml } from '@/Components/Memos/MemoEditor';
 
 const DEFAULT_FORMATTING = { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 };
 const ALLOWED_FONTS = new Set(['Inter', 'Poppins', 'Space Grotesk', 'JetBrains Mono', 'Manrope', 'Lora']);
@@ -65,9 +66,19 @@ function renderTextBlock(text, style, key) {
 }
 
 export default function MemoContent({ content, formatting }) {
+    const rawContent = String(content ?? '');
+    const isRichHtml = /<(?:p|div|h[1-6]|strong|b|em|i|u|s|ul|ol|li|blockquote|pre|code|br|hr)\\b/i.test(rawContent);
+    const richHtml = isRichHtml ? sanitizeMemoHtml(rawContent) : null;
     const parts = []; const fence = new RegExp('```([\\w+-]*)\\n([\\s\\S]*?)```', 'g'); let last = 0; let match;
     while ((match = fence.exec(content ?? '')) !== null) { if (match.index > last) parts.push({ type: 'text', value: content.slice(last, match.index) }); parts.push({ type: 'code', lang: match[1], value: match[2].replace(/\n$/, '') }); last = match.index + match[0].length; }
     if (last < (content ?? '').length) parts.push({ type: 'text', value: content.slice(last) });
     const style = safeFormatting(formatting);
-    return <div className="space-y-4" style={{ fontFamily: FONT_STACKS[style.fontFamily] ?? FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}>{parts.map((part, index) => part.type === 'code' ? <CodeBlock key={index} lang={part.lang} value={part.value} /> : renderTextBlock(part.value, style, index))}</div>;
+    return <div
+        className="space-y-4 prose prose-invert max-w-none [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:mb-2 [&_h4]:mt-4 [&_h4]:text-lg [&_h4]:font-semibold [&_p]:leading-7 [&_li]:leading-7 [&_blockquote]:border-l-2 [&_blockquote]:border-[#FF6A00]/50 [&_blockquote]:pl-4 [&_blockquote]:italic"
+        style={{ fontFamily: FONT_STACKS[style.fontFamily] ?? FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}
+    >
+        {richHtml
+            ? <div dangerouslySetInnerHTML={{ __html: richHtml }} />
+            : parts.map((part, index) => part.type === 'code' ? <CodeBlock key={index} lang={part.lang} value={part.value} /> : renderTextBlock(part.value, style, index))}
+    </div>;
 }
