@@ -7,7 +7,11 @@ export default function FileExplorer({
     onSelect,
     onCreate,
     onImport,
+    onRename,
+    onDuplicate,
+    onDelete,
 }) {
+    const [openMenu, setOpenMenu] = useState(null);
     return (
         <aside className="hidden border-r border-white/[0.06] bg-[#07101A] lg:block">
             <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-3">
@@ -64,14 +68,11 @@ export default function FileExplorer({
                             className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 opacity-100 transition hover:bg-white/[0.06] hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
                             aria-label={"Actions de " + file.path}
                             title="Actions du fichier"
-                            popoverTarget={"devlab-file-menu-" + file.id}
                         >
                             <MoreVertical size={14} />
                         </button>
                         <div
-                            id={"devlab-file-menu-" + file.id}
-                            popover="auto"
-                            className="absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl"
+                            className={(openMenu === file.id ? "block " : "hidden ") + "absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl"
                         >
                             <button type="button" onClick={() => { setOpenMenu(null); onRename(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
                                 <Pencil size={13} /> Renommer
