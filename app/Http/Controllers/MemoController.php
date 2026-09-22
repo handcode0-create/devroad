@@ -26,10 +26,12 @@ class MemoController extends Controller
         $q = $request->query('q');
         $q = is_string($q) ? trim($q) : '';
         $recent = $request->boolean('recent');
+        $trash = $request->boolean('trash');
         $folderId = $request->query('folder');
         $folderId = is_numeric($folderId) ? (int) $folderId : null;
 
-        $memos = $user->memos()
+        $memosQuery = $trash ? $user->memos()->onlyTrashed() : $user->memos();
+        $memos = $memosQuery
             ->with(['tags:id,name,slug', 'folder:id,name,parent_id'])
             ->when($request->boolean('favorites'), fn ($query) => $query->where('is_favorite', true))
             ->when($recent, fn ($query) => $query->where('updated_at', '>=', Carbon::now()->subDays(7)))
@@ -54,6 +56,9 @@ class MemoController extends Controller
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
                 'folder_id' => $memo->folder_id,
+                'icon' => $memo->icon,
+                'is_full_width' => $memo->is_full_width,
+                'deleted_at' => $memo->deleted_at,
             ]);
 
         $tags = $user->tags()->has('memos')->withCount('memos')->orderBy('name')->get(['id', 'name', 'slug']);
@@ -63,6 +68,7 @@ class MemoController extends Controller
             'total' => $user->memos()->count(),
             'favorites' => $user->memos()->where('is_favorite', true)->count(),
             'recent' => $user->memos()->where('updated_at', '>=', Carbon::now()->subDays(7))->count(),
+            'trash' => $user->memos()->onlyTrashed()->count(),
         ];
 
         return Inertia::render('Memos/Index', [
@@ -76,6 +82,7 @@ class MemoController extends Controller
                 'tag' => $tag,
                 'q' => $q,
                 'folder' => $folderId,
+                'trash' => $trash,
             ],
         ]);
     }
@@ -124,14 +131,19 @@ class MemoController extends Controller
     public function show(Memo $memo): Response
     {
         Gate::authorize('view', $memo);
-        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'attachments:id,memo_id,name,mime_type,size,created_at']);
+        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'folder.parent', 'attachments:id,memo_id,name,mime_type,size,created_at']);
 
         return Inertia::render('Memos/Show', [
             'memo' => [
                 ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite', 'created_at', 'updated_at'),
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
+                'icon' => $memo->icon,
+                'cover_attachment_id' => $memo->cover_attachment_id,
+                'is_full_width' => $memo->is_full_width,
                 'attachments' => $this->formatAttachments($memo),
+                'cover' => $this->formatCover($memo),
+                'breadcrumbs' => $this->folderBreadcrumbs($memo->folder),
             ],
         ]);
     }
@@ -143,7 +155,7 @@ class MemoController extends Controller
 
         return Inertia::render('Memos/Edit', [
             'memo' => [
-                ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite'),
+                ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite', 'icon', 'cover_attachment_id', 'is_full_width'),
                 'tags' => $this->formatTags($memo),
                 'folder' => $memo->folder ? $memo->folder->only('id', 'name', 'parent_id') : null,
                 'attachments' => $this->formatAttachments($memo),
@@ -183,6 +195,47 @@ class MemoController extends Controller
         $memo->delete();
 
         return redirect()->route('memos.index');
+    }
+
+    public function duplicate(Memo $memo): RedirectResponse
+    {
+        Gate::authorize('view', $memo);
+
+        $copy = DB::transaction(function () use ($memo) {
+            $memo->loadMissing(['attachments', 'tags']);
+            $copy = $memo->replicate();
+            $copy->title = Str::limit($memo->title . ' — Copie', 255, '');
+            $copy->is_favorite = false;
+            $copy->cover_attachment_id = null;
+            $copy->save();
+
+            foreach ($memo->attachments as $attachment) {
+                $newAttachment = $attachment->replicate();
+                $newAttachment->memo_id = $copy->id;
+                $newAttachment->user_id = $copy->user_id;
+                $newAttachment->save();
+                if ($memo->cover_attachment_id === $attachment->id) {
+                    $copy->cover_attachment_id = $newAttachment->id;
+                }
+            }
+
+            $copy->save();
+            $copy->tags()->sync($memo->tags->modelKeys());
+
+            return $copy;
+        });
+
+        return redirect()->route('memos.edit', $copy)->with('success', 'Fiche dupliquée.');
+    }
+
+    public function restore(Request $request, int $memo): RedirectResponse
+    {
+        $model = $request->user()->memos()->withTrashed()->findOrFail($memo);
+        Gate::authorize('delete', $model);
+        abort_unless($model->trashed(), 404);
+        $model->restore();
+
+        return redirect()->route('memos.index')->with('success', 'Fiche restaurée.');
     }
 
     /**
@@ -247,6 +300,29 @@ class MemoController extends Controller
             'download_url' => '/memos/attachments/' . $file->id . '/download',
             'created_at' => $file->created_at,
         ])->values()->all();
+    }
+
+    private function formatCover(Memo $memo): ?array
+    {
+        $attachment = $memo->cover_attachment_id
+            ? $memo->attachments->firstWhere('id', $memo->cover_attachment_id)
+            : null;
+
+        return $attachment && $attachment->isImage()
+            ? ['id' => $attachment->id, 'url' => '/memos/attachments/' . $attachment->id, 'name' => $attachment->name]
+            : null;
+    }
+
+    private function folderBreadcrumbs(?MemoFolder $folder): array
+    {
+        $items = [];
+        $current = $folder;
+        $guard = 0;
+        while ($current && $guard++ < 30) {
+            array_unshift($items, $current->only('id', 'name', 'parent_id'));
+            $current = $current->parent;
+        }
+        return $items;
     }
 
     private function formatTags(Memo $memo): array
