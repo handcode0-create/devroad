@@ -43,6 +43,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [bulkProcessing, setBulkProcessing] = useState(false);
     const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     const [emptyTrashOpen, setEmptyTrashOpen] = useState(false);
+    const [emptyTrashProcessing, setEmptyTrashProcessing] = useState(false);
     const [deleteMemoTarget, setDeleteMemoTarget] = useState(null);
     const [forceDeleteMemoTarget, setForceDeleteMemoTarget] = useState(null);
     const [searchInput, setSearchInput] = useState(null);
@@ -355,11 +356,13 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const activeFolderPath = getFolderPath(filters.folder);
 
     const activeFolder = useMemo(() => {
+        if (filters.trash) return 'Corbeille';
         if (filters.favorites) return 'Favoris';
         if (filters.recent) return 'Récents';
         if (filters.tag) return tags.find((tag) => tag.slug === filters.tag)?.name ?? 'Collection';
+        if (filters.folder) return activeFolderPath.at(-1)?.name ?? 'Dossier';
         return 'Toutes les fiches';
-    }, [filters, tags]);
+    }, [filters, tags, activeFolderPath]);
 
     const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q || filters.folder || filters.trash);
 
@@ -474,7 +477,24 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
 
             <ConfirmModal show={Boolean(deleteMemoTarget)} title={'Mettre « ' + (deleteMemoTarget?.title ?? '') + ' » à la corbeille ?'} description="La fiche pourra être restaurée depuis la corbeille." confirmLabel="Mettre à la corbeille" onClose={() => setDeleteMemoTarget(null)} onConfirm={confirmDeleteMemo} />
             <ConfirmModal show={Boolean(forceDeleteMemoTarget)} title={'Supprimer définitivement « ' + (forceDeleteMemoTarget?.title ?? '') + ' » ?'} description="Cette action est irréversible. Le contenu et les pièces jointes seront définitivement supprimés." confirmLabel="Supprimer définitivement" onClose={() => setForceDeleteMemoTarget(null)} onConfirm={confirmForceDeleteMemo} />
-            <ConfirmModal show={emptyTrashOpen} title="Vider la corbeille ?" description="Toutes les fiches supprimées seront définitivement effacées." confirmLabel="Vider la corbeille" onClose={() => setEmptyTrashOpen(false)} onConfirm={() => { router.post('/memos/empty-trash', {}, { preserveScroll: true }); setEmptyTrashOpen(false); }} />
+            <ConfirmModal
+                show={emptyTrashOpen}
+                title="Vider la corbeille ?"
+                description="Toutes les fiches supprimées seront définitivement effacées."
+                confirmLabel={emptyTrashProcessing ? 'Suppression...' : 'Vider la corbeille'}
+                onClose={() => !emptyTrashProcessing && setEmptyTrashOpen(false)}
+                onConfirm={() => {
+                    if (emptyTrashProcessing) return;
+                    setEmptyTrashProcessing(true);
+                    router.post('/memos/empty-trash', {}, {
+                        preserveScroll: true,
+                        onFinish: () => {
+                            setEmptyTrashProcessing(false);
+                            setEmptyTrashOpen(false);
+                        },
+                    });
+                }}
+            />
 
             <ConfirmModal show={Boolean(deleteFolderTarget)} title={'Supprimer « ' + (deleteFolderTarget?.name ?? '') + ' » ?'} description="Les fiches seront conservées mais retirées de ce dossier. Les sous-dossiers remonteront d'un niveau." confirmLabel="Supprimer le dossier" onClose={() => setDeleteFolderTarget(null)} onConfirm={confirmDeleteFolder} />
             <Modal show={Boolean(moveMemoTarget)} onClose={() => !moveProcessing && setMoveMemoTarget(null)} title="Déplacer la fiche" description="Choisis le dossier de destination, ou remets-la à la racine." footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setMoveMemoTarget(null)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={moveMemo} disabled={moveProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{moveProcessing ? 'Déplacement...' : 'Déplacer'}</button></div>}>
@@ -551,7 +571,7 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, acti
                 <span className="min-w-0 flex-1 truncate">{folder.name}</span>
                 {typeof folder.memos_count === 'number' && <span className="text-[10px] text-slate-700">{folder.memos_count}</span>}
             </Link>
-            <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); }} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white group-hover:flex" title="Actions du dossier"><MoreHorizontal size={14} /></button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); }} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white sm:hidden sm:group-hover:flex" title="Actions du dossier"><MoreHorizontal size={14} /></button>
             {activeMenu === folder.id && <div
                 className="absolute right-1 top-9 z-[70] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.45)]"
                 onMouseDown={(event) => event.stopPropagation()}
