@@ -22,6 +22,13 @@ export const MEMO_FONT_STACKS = {
 function stripInlineCaseMarkers(value) {
     return String(value ?? '').replace(/\[\[upper\]\]|\[\[\/upper\]\]|\[\[lower\]\]|\[\[\/lower\]\]|\[\[capitalize\]\]|\[\[\/capitalize\]\]/g, '');
 }
+
+export function normalizeMemoContent(value) {
+    return String(value ?? '')
+        .replace(/\[\[upper\]\]([\s\S]*?)\[\[\/upper\]\]/g, (_, text) => text.toUpperCase())
+        .replace(/\[\[lower\]\]([\s\S]*?)\[\[\/lower\]\]/g, (_, text) => text.toLowerCase())
+        .replace(/\[\[capitalize\]\]([\s\S]*?)\[\[\/capitalize\]\]/g, (_, text) => text.replace(/(^|[\s-])\p{L}/gu, (match) => match.toUpperCase()));
+}
 const DEFAULT_FORMATTING = { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 };
 const BLOCKS = [
     { key: 'h1', label: 'Titre 1', prefix: '# ', icon: Heading1 },
