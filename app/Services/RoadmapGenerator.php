@@ -19,39 +19,53 @@ class RoadmapGenerator
     public function create(User $user, array $roadmapData, string $technology): Roadmap
     {
         $course = config("devroad_courses.{$technology}");
+        $enrichment = config("devroad_course_enrichment.{$technology}", []);
 
         if (! is_array($course) || empty($course['lessons'])) {
             throw new InvalidArgumentException("Aucun parcours n'est configuré pour la technologie [{$technology}].");
         }
 
-        return DB::transaction(function () use ($user, $roadmapData, $technology, $course): Roadmap {
+        return DB::transaction(function () use ($user, $roadmapData, $technology, $course, $enrichment): Roadmap {
             $roadmap = $user->roadmaps()->create($roadmapData);
 
             $steps = $course['lessons'];
             $codeExamples = $course['code'] ?? [];
+            $sourceFooter = $this->buildSourceFooter($enrichment['sources'] ?? []);
 
             foreach ($steps as $index => $lesson) {
                 $isStructured = array_key_exists('title', $lesson);
 
-                $title = $isStructured ? $lesson['title'] : ($lesson[0] ?? 'Cours');
-                $description = $isStructured ? ($lesson['description'] ?? null) : ($lesson[1] ?? null);
-                $objective = $isStructured ? ($lesson['objective'] ?? null) : ($lesson[2] ?? null);
-                $content = $isStructured
-                    ? ($lesson['content'] ?? null)
-                    : $this->buildContent($title, $lesson[3] ?? null);
-                $codeExample = $isStructured
-                    ? ($lesson['code_example'] ?? null)
-                    : ($codeExamples[$index] ?? null);
-                $estimatedMinutes = $isStructured
-                    ? ($lesson['estimated_minutes'] ?? 30)
-                    : ($index === count($steps) - 1 ? 60 : 30);
+                $title = $isStructured ? ($lesson['title'] ?? 'Cours') : ($lesson[0] ?? 'Cours');
+                $lessonOverride = $enrichment['lessons'][$title] ?? [];
+
+                $description = $lessonOverride['description']
+                    ?? ($isStructured ? ($lesson['description'] ?? null) : ($lesson[1] ?? null));
+                $objective = $lessonOverride['objective']
+                    ?? ($isStructured ? ($lesson['objective'] ?? null) : ($lesson[2] ?? null));
+                $content = $lessonOverride['content']
+                    ?? ($isStructured
+                        ? ($lesson['content'] ?? null)
+                        : $this->buildContent($title, $lesson[3] ?? null));
+
+                if ($sourceFooter && $content) {
+                    $content = rtrim($content) . "\n\n" . $sourceFooter;
+                }
+
+                $codeExample = $lessonOverride['code_example']
+                    ?? ($isStructured ? ($lesson['code_example'] ?? null) : ($codeExamples[$index] ?? null));
+                $estimatedMinutes = $lessonOverride['estimated_minutes']
+                    ?? ($isStructured ? ($lesson['estimated_minutes'] ?? 30) : ($index === count($steps) - 1 ? 60 : 30));
+
                 $workspace = $this->buildWorkspaceMetadata(
                     $technology,
                     $title,
                     $codeExample,
-                    $isStructured ? ($lesson['workspace_file'] ?? null) : null,
-                    $isStructured ? ($lesson['workspace_language'] ?? null) : null,
-                    $isStructured ? ($lesson['workspace_files'] ?? null) : null,
+                    $lessonOverride['workspace_file']
+                        ?? ($isStructured ? ($lesson['workspace_file'] ?? null) : null),
+                    $lessonOverride['workspace_language']
+                        ?? ($isStructured ? ($lesson['workspace_language'] ?? null) : null),
+                    $lessonOverride['workspace_files']
+                        ?? ($isStructured ? ($lesson['workspace_files'] ?? null) : null),
                 );
 
                 $exercise = $this->buildExercise(
@@ -59,7 +73,7 @@ class RoadmapGenerator
                     $description,
                     $objective,
                     $codeExample,
-                    $isStructured ? $lesson : []
+                    array_merge($isStructured ? $lesson : [], $lessonOverride)
                 );
 
                 $roadmap->steps()->create([
@@ -156,6 +170,21 @@ class RoadmapGenerator
             'file' => $file,
             'files' => $files,
         ];
+    }
+
+    private function buildSourceFooter(array $sources): ?string
+    {
+        $sources = collect($sources)
+            ->filter(fn ($source) => is_array($source) && ! empty($source[0]) && ! empty($source[1]))
+            ->map(fn ($source) => '- [' . $source[0] . '](' . $source[1] . ')' . (! empty($source[2]) ? ' — ' . $source[2] : ''))
+            ->values()
+            ->all();
+
+        if ($sources === []) {
+            return null;
+        }
+
+        return "## Références de travail\n\nCe cours est une adaptation pédagogique originale construite à partir de la documentation publique suivante. Le contenu de DevRoad n'est pas une copie de ces ressources.\n\n" . implode("\n", $sources);
     }
 
     private function buildExercise(
