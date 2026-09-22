@@ -186,7 +186,7 @@ class MemoController extends Controller
             $this->storeAttachments($request, $memo);
         });
 
-        return redirect()->route('memos.show', $memo);
+        return back()->with('success', 'Fiche enregistrée.');
     }
 
     public function toggleFavorite(Memo $memo): RedirectResponse
