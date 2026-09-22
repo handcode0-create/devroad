@@ -14,16 +14,11 @@ class StoreMemoRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $content = $this->sanitizeContent((string) $this->input('content', ''));
-        $title = trim((string) $this->input('title', ''));
-        $this->merge(['content' => $content]);
-        $content = trim($content);
 
-        if ($title === '' && $content !== '') {
-            $plain = trim(preg_replace('/\s+/', ' ', strip_tags($content)));
-            $candidate = preg_replace('/^#+\s*/', '', $plain);
-            $candidate = trim((string) $candidate);
-            $this->merge(['title' => mb_substr($candidate !== '' ? $candidate : 'Nouvelle fiche', 0, 255)]);
-        }
+        $this->merge([
+            'title' => trim((string) $this->input('title', '')),
+            'content' => $content,
+        ]);
     }
 
     private function sanitizeContent(string $content): string
