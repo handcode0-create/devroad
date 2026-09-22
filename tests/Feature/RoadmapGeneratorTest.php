@@ -42,6 +42,29 @@ class RoadmapGeneratorTest extends TestCase
         }
     }
 
+    public function test_les_cours_enrichis_utilisent_un_contenu_pedagogique_et_des_references(): void
+    {
+        $user = User::factory()->create();
+        $generator = app(RoadmapGenerator::class);
+
+        foreach (['laravel', 'javascript', 'react', 'nextjs', 'typescript'] as $technology) {
+            $roadmap = $generator->create($user, [
+                'title' => 'Parcours enrichi ' . $technology,
+                'status' => 'active',
+            ], $technology);
+
+            $step = $roadmap->steps()->first();
+
+            $this->assertNotEmpty($step->content);
+            $this->assertStringContainsString('## Références de travail', $step->content);
+            $this->assertNotSame(
+                $step->description,
+                $step->content,
+                "Le contenu pédagogique ne doit pas être réduit à la description pour {$technology}."
+            );
+        }
+    }
+
     public function test_la_creation_d_une_roadmap_genere_automatiquement_ses_cours(): void
     {
         $user = User::factory()->create();
