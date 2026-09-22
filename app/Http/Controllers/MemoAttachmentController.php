@@ -47,7 +47,7 @@ class MemoAttachmentController extends Controller
         return response($attachment->data, 200, [
             'Content-Type' => $attachment->mime_type,
             'Content-Length' => (string) $attachment->size,
-            'Content-Disposition' => $disposition . '; filename="' . addslashes($attachment->name) . '"',
+            'Content-Disposition' => $disposition . '; filename="' . addslashes($this->safeFilename($attachment->name)) . '"',
             'Cache-Control' => 'private, max-age=3600',
             'X-Content-Type-Options' => 'nosniff',
         ]);
@@ -60,9 +60,16 @@ class MemoAttachmentController extends Controller
         return response($attachment->data, 200, [
             'Content-Type' => $attachment->mime_type,
             'Content-Length' => (string) $attachment->size,
-            'Content-Disposition' => 'attachment; filename="' . addslashes($attachment->name) . '"',
+            'Content-Disposition' => 'attachment; filename="' . addslashes($this->safeFilename($attachment->name)) . '"',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    private function safeFilename(string $name): string
+    {
+        $name = preg_replace('/[\\x00-\\x1F\\x7F\\r\\n"]/u', '', $name) ?? '';
+        $name = trim($name);
+        return $name !== '' ? $name : 'piece-jointe';
     }
 
     public function destroy(Request $request, MemoAttachment $attachment): RedirectResponse
