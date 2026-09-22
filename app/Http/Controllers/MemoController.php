@@ -50,11 +50,7 @@ class MemoController extends Controller
                 'tags' => $this->formatTags($memo),
             ]);
 
-        $tags = $user->tags()
-            ->has('memos')
-            ->withCount('memos')
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug']);
+        $tags = $user->tags()->has('memos')->withCount('memos')->orderBy('name')->get(['id', 'name', 'slug']);
 
         $counts = [
             'total' => $user->memos()->count(),
@@ -78,28 +74,35 @@ class MemoController extends Controller
     public function create(): Response
     {
         Gate::authorize('create', Memo::class);
+
         return Inertia::render('Memos/Create');
     }
 
     public function store(StoreMemoRequest $request): RedirectResponse
     {
         Gate::authorize('create', Memo::class);
+
         $memo = DB::transaction(function () use ($request) {
             $memo = $request->user()->memos()->create($request->safe()->except('tags'));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
+
             return $memo;
         });
+
         return redirect()->route('memos.show', $memo);
     }
 
     public function storeFromStep(StoreMemoRequest $request, RoadmapStep $step): RedirectResponse
     {
         Gate::authorize('view', $step);
+
         $memo = DB::transaction(function () use ($request) {
             $memo = $request->user()->memos()->create($request->safe()->except('tags'));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
+
             return $memo;
         });
+
         return redirect()->route('steps.show', $step)->with('success', 'Mémo créé depuis le cours.');
     }
 
@@ -107,8 +110,12 @@ class MemoController extends Controller
     {
         Gate::authorize('view', $memo);
         $memo->load('tags:id,name,slug');
+
         return Inertia::render('Memos/Show', [
-            'memo' => [...$memo->only('id', 'title', 'content', 'is_favorite', 'created_at', 'updated_at'), 'tags' => $this->formatTags($memo)],
+            'memo' => [
+                ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite', 'created_at', 'updated_at'),
+                'tags' => $this->formatTags($memo),
+            ],
         ]);
     }
 
@@ -116,18 +123,27 @@ class MemoController extends Controller
     {
         Gate::authorize('update', $memo);
         $memo->load('tags:id,name,slug');
+
         return Inertia::render('Memos/Edit', [
-            'memo' => [...$memo->only('id', 'title', 'content', 'is_favorite'), 'tags' => $this->formatTags($memo)],
+            'memo' => [
+                ...$memo->only('id', 'title', 'content', 'formatting', 'is_favorite'),
+                'tags' => $this->formatTags($memo),
+            ],
         ]);
     }
 
     public function update(UpdateMemoRequest $request, Memo $memo): RedirectResponse
     {
         Gate::authorize('update', $memo);
+
         DB::transaction(function () use ($request, $memo) {
             $memo->update($request->safe()->except('tags'));
-            if ($request->has('tags')) $memo->syncTagNames($request->validated('tags', []) ?? []);
+
+            if ($request->has('tags')) {
+                $memo->syncTagNames($request->validated('tags', []) ?? []);
+            }
         });
+
         return redirect()->route('memos.show', $memo);
     }
 
@@ -135,6 +151,7 @@ class MemoController extends Controller
     {
         Gate::authorize('update', $memo);
         $memo->update(['is_favorite' => ! $memo->is_favorite]);
+
         return back();
     }
 
@@ -142,11 +159,15 @@ class MemoController extends Controller
     {
         Gate::authorize('delete', $memo);
         $memo->delete();
+
         return redirect()->route('memos.index');
     }
 
     private function formatTags(Memo $memo): array
     {
-        return $memo->tags->map(fn ($tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])->values()->all();
+        return $memo->tags
+            ->map(fn ($tag) => ['id' => $tag->id, 'name' => $tag->name, 'slug' => $tag->slug])
+            ->values()
+            ->all();
     }
 }
