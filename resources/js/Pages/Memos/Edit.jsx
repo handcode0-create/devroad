@@ -2,11 +2,12 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import MemoForm from '@/Components/Memos/MemoForm';
+import { normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function Edit({ memo }) {
     const form = useForm({
         title: memo.title ?? '',
-        content: memo.content ?? '',
+        content: normalizeMemoContent(memo.content ?? ''),
         formatting: memo.formatting ?? { fontFamily: 'Inter', fontSize: 16, textTransform: 'none', textAlign: 'left', fontWeight: 400 },
         tags: (memo.tags ?? []).map((tag) => tag.name),
         is_favorite: Boolean(memo.is_favorite),
