@@ -37,6 +37,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [moveProcessing, setMoveProcessing] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeMenu, setActiveMenu] = useState(null);
+    const [activeFolderMenu, setActiveFolderMenu] = useState(null);
     const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
     const [bulkMoveFolderId, setBulkMoveFolderId] = useState('');
     const [bulkProcessing, setBulkProcessing] = useState(false);
@@ -387,7 +388,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
-                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onDelete={deleteFolder} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
+                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onDelete={deleteFolder} activeMenu={activeFolderMenu} onMenu={(id) => setActiveFolderMenu((current) => current === id ? null : id)} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
                                     {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
@@ -482,7 +483,7 @@ function buildFolderTree(folders) {
     return walk(0);
 }
 
-function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
+function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, activeMenu, onMenu, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
     // Survol dans la moitié basse de la ligne = « insérer après » (réordonner) ;
     // reste de la ligne = « déposer dedans » (imbriquer comme sous-dossier).
     const [nestHover, setNestHover] = useState(false);
@@ -511,7 +512,7 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, isDr
         setNestHover(false);
     }
 
-    return <div>
+    return <div className="relative">
         <div
             draggable
             onDragStart={(event) => onDragStartFolder(folder, event)}
@@ -531,9 +532,12 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, isDr
                 <span className="min-w-0 flex-1 truncate">{folder.name}</span>
                 {typeof folder.memos_count === 'number' && <span className="text-[10px] text-slate-700">{folder.memos_count}</span>}
             </Link>
-            <button type="button" onClick={() => onCreateChild(folder.id)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-[#FF8A3D] group-hover:flex" title="Créer un sous-dossier"><Plus size={12} /></button>
-            <button type="button" onClick={() => onRename(folder)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white group-hover:flex" title="Renommer"><Pencil size={12} /></button>
-            <button type="button" onClick={() => onDelete(folder)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-red-300 group-hover:flex" title="Supprimer le dossier"><Trash2 size={12} /></button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); }} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white group-hover:flex" title="Actions du dossier"><MoreHorizontal size={14} /></button>
+            {activeMenu === folder.id && <div className="absolute right-1 top-9 z-30 w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.45)]">
+                <button type="button" onClick={() => { onCreateChild(folder.id); onMenu(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Nouveau sous-dossier</button>
+                <button type="button" onClick={() => { onRename(folder); onMenu(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Renommer</button>
+                <button type="button" onClick={() => { onDelete(folder); onMenu(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer</button>
+            </div>}
         </div>
     </div>;
 }
