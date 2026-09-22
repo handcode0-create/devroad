@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,12 +11,16 @@ use Illuminate\Support\Str;
 
 class Memo extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'title',
         'content',
         'formatting',
         'is_favorite',
         'folder_id',
+        'icon',
+        'cover_attachment_id',
+        'is_full_width',
     ];
 
     protected function casts(): array
@@ -23,6 +28,7 @@ class Memo extends Model
         return [
             'formatting' => 'array',
             'is_favorite' => 'boolean',
+            'is_full_width' => 'boolean',
         ];
     }
 
@@ -34,6 +40,11 @@ class Memo extends Model
     public function folder(): BelongsTo
     {
         return $this->belongsTo(MemoFolder::class, 'folder_id');
+    }
+
+    public function coverAttachment(): BelongsTo
+    {
+        return $this->belongsTo(MemoAttachment::class, 'cover_attachment_id');
     }
 
     public function attachments(): HasMany

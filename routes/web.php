@@ -112,6 +112,8 @@ Route::middleware('auth')->group(function () {
     Route::get('memos/attachments/{attachment}/download', [MemoAttachmentController::class, 'download'])->name('memos.attachments.download');
     Route::delete('memos/attachments/{attachment}', [MemoAttachmentController::class, 'destroy'])->name('memos.attachments.destroy');
     Route::post('memos/{memo}/attachments', [MemoAttachmentController::class, 'store'])->name('memos.attachments.store');
+    Route::post('memos/{memo}/duplicate', [MemoController::class, 'duplicate'])->name('memos.duplicate');
+    Route::post('memos/{memo}/restore', [MemoController::class, 'restore'])->name('memos.restore');
     Route::resource('memos', MemoController::class);
     Route::patch('memos/{memo}/favorite', [MemoController::class, 'toggleFavorite'])->name('memos.favorite');
     Route::patch('memos/{memo}/move', [MemoController::class, 'move'])->name('memos.move');
