@@ -58,7 +58,7 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
   try{
    const deleted=await request(API+"/"+project.id+"/files/"+file.id,{method:"DELETE"});
    setProject(p=>({...p,files:p.files.filter(f=>f.id!==file.id)}));
-   return deleted !== undefined || true;
+   return true;
   }catch(e){setError(requestError(e));return false}
  }
  return <div className="fixed inset-0 z-[60] flex flex-col bg-[#08111F] text-white">
