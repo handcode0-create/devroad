@@ -16,6 +16,47 @@ class RoadmapGenerator
      * The catalog is configuration-driven so the same templates can be reused
      * by HTTP flows, seeders and future admin tooling.
      */
+    public function syncRoadmap(Roadmap $roadmap): Roadmap
+    {
+        $technology = $roadmap->technology;
+        $course = config("devroad_courses.{$technology}");
+        $enrichment = config("devroad_course_enrichment.{$technology}", []);
+
+        if (! is_array($course) || empty($course['lessons'])) {
+            throw new InvalidArgumentException("Aucun parcours n'est configuré pour la technologie [{$technology}].");
+        }
+
+        return DB::transaction(function () use ($roadmap, $course, $enrichment, $technology): Roadmap {
+            $steps = $course['lessons'];
+            $codeExamples = $course['code'] ?? [];
+            $sourceFooter = $this->buildSourceFooter($enrichment['sources'] ?? []);
+
+            foreach ($steps as $index => $lesson) {
+                $payload = $this->buildStepPayload(
+                    $technology,
+                    $lesson,
+                    $index,
+                    count($steps),
+                    $codeExamples,
+                    $enrichment,
+                    $sourceFooter,
+                );
+
+                $step = $roadmap->steps()->where('position', $index + 1)->first();
+
+                if ($step) {
+                    $step->update($payload);
+                    continue;
+                }
+
+                $payload['status'] = RoadmapStep::TODO;
+                $roadmap->steps()->create($payload);
+            }
+
+            return $roadmap->fresh('steps');
+        });
+    }
+
     public function create(User $user, array $roadmapData, string $technology): Roadmap
     {
         $course = config("devroad_courses.{$technology}");
