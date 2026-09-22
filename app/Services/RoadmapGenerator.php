@@ -50,7 +50,8 @@ class RoadmapGenerator
                     $title,
                     $codeExample,
                     $isStructured ? ($lesson['workspace_file'] ?? null) : null,
-                    $isStructured ? ($lesson['workspace_language'] ?? null) : null
+                    $isStructured ? ($lesson['workspace_language'] ?? null) : null,
+                    $isStructured ? ($lesson['workspace_files'] ?? null) : null,
                 );
 
                 $exercise = $this->buildExercise(
@@ -69,6 +70,7 @@ class RoadmapGenerator
                     'code_example' => $codeExample,
                     'workspace_file' => $workspace['file'],
                     'workspace_language' => $workspace['language'],
+                    'workspace_files' => $workspace['files'],
                     'exercise_title' => $exercise['title'],
                     'exercise_description' => $exercise['description'],
                     'exercise_hint' => $exercise['hint'],
@@ -90,7 +92,8 @@ class RoadmapGenerator
         string $title,
         ?string $codeExample,
         ?string $workspaceFile,
-        ?string $workspaceLanguage
+        ?string $workspaceLanguage,
+        ?array $workspaceFiles = null,
     ): array {
         $language = $workspaceLanguage;
 
@@ -108,6 +111,10 @@ class RoadmapGenerator
 
         $file = $workspaceFile;
 
+        if (! $file && is_array($workspaceFiles) && $workspaceFiles !== []) {
+            $file = $workspaceFiles[0]['path'] ?? null;
+        }
+
         if (! $file) {
             $file = match ($language) {
                 'laravel' => 'routes/web.php',
@@ -119,9 +126,26 @@ class RoadmapGenerator
             };
         }
 
+        $files = collect($workspaceFiles ?: [])
+            ->filter(fn ($item) => is_array($item) && ! empty($item['path']))
+            ->map(fn ($item) => [
+                'path' => $item['path'],
+                'content' => (string) ($item['content'] ?? ''),
+            ])
+            ->values()
+            ->all();
+
+        if ($files === []) {
+            $files = [[
+                'path' => $file,
+                'content' => $codeExample ?? '',
+            ]];
+        }
+
         return [
             'language' => $language,
             'file' => $file,
+            'files' => $files,
         ];
     }
 
