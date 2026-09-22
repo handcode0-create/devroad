@@ -607,6 +607,86 @@ class RoadmapStepTest extends TestCase
         ]);
     }
 
+
+    public function test_le_proprietaire_peut_creer_modifier_et_supprimer_un_cours(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $this->roadmapAvecEtapes($user, 0);
+
+        $this->withoutVite();
+        $this->actingAs($user)->get(route('roadmaps.steps.create', $roadmap))->assertOk();
+
+        $this->actingAs($user)
+            ->post(route('roadmaps.steps.store', $roadmap), [
+                'title' => 'Models Eloquent',
+                'description' => 'Comprendre les modèles.',
+                'objective' => 'Définir et utiliser un modèle.',
+                'content' => 'Le modèle représente la donnée.',
+                'code_example' => '<?php class Roadmap extends Model {}',
+                'workspace_language' => 'laravel',
+                'workspace_files' => [
+                    ['path' => 'app/Models/Roadmap.php', 'content' => '<?php class Roadmap extends Model {}'],
+                    ['path' => 'app/Http/Controllers/RoadmapController.php', 'content' => '<?php class RoadmapController extends Controller {}'],
+                ],
+                'estimated_minutes' => 30,
+                'position' => 1,
+            ])
+            ->assertRedirect(route('roadmaps.show', $roadmap));
+
+        $step = $roadmap->steps()->first();
+
+        $this->assertSame(
+            ['app/Models/Roadmap.php', 'app/Http/Controllers/RoadmapController.php'],
+            collect($step->workspace_files)->pluck('path')->all()
+        );
+
+        $this->actingAs($user)->get(route('steps.edit', $step))->assertOk();
+
+        $this->actingAs($user)
+            ->put(route('steps.update', $step), [
+                'title' => 'Models Eloquent — mis à jour',
+                'workspace_language' => 'laravel',
+                'workspace_files' => [
+                    ['path' => 'app/Models/Roadmap.php', 'content' => '<?php class Roadmap extends Model { protected $fillable = []; }'],
+                ],
+            ])
+            ->assertRedirect(route('roadmaps.show', $roadmap));
+
+        $this->assertDatabaseHas('roadmap_steps', [
+            'id' => $step->id,
+            'title' => 'Models Eloquent — mis à jour',
+        ]);
+
+        $this->actingAs($user)->delete(route('steps.destroy', $step))->assertRedirect(route('roadmaps.show', $roadmap));
+        $this->assertDatabaseMissing('roadmap_steps', ['id' => $step->id]);
+    }
+
+    public function test_le_workspace_multi_fichiers_est_expose_dans_un_cours(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create(['title' => 'Laravel', 'technology' => 'laravel']);
+        $step = $roadmap->steps()->create([
+            'title' => 'Models',
+            'position' => 1,
+            'workspace_file' => 'app/Models/Roadmap.php',
+            'workspace_language' => 'laravel',
+            'workspace_files' => [
+                ['path' => 'app/Models/Roadmap.php', 'content' => '<?php class Roadmap extends Model {}'],
+                ['path' => 'app/Http/Controllers/RoadmapController.php', 'content' => '<?php class RoadmapController extends Controller {}'],
+            ],
+        ]);
+
+        $this->withoutVite();
+        $this->actingAs($user)
+            ->get(route('steps.show', $step))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Steps/Show', false)
+                ->where('step.workspace.filename', 'app/Models/Roadmap.php')
+                ->has('step.workspace.files', 2)
+                ->where('step.workspace.files.1.path', 'app/Http/Controllers/RoadmapController.php')
+            );
+    }
+
     public function test_le_proprietaire_peut_supprimer_une_etape(): void
     {
         $user = User::factory()->create();
