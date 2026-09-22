@@ -178,6 +178,12 @@ class MemoController extends Controller
 
         DB::transaction(function () use ($request, $memo) {
             $this->assertFolderBelongsToUser($request);
+
+            $coverId = $request->input('cover_attachment_id');
+            if ($coverId !== null && ! $memo->attachments()->whereKey($coverId)->exists()) {
+                abort(422, 'La couverture sélectionnée doit appartenir à cette fiche.');
+            }
+
             $memo->update($request->safe()->except(['tags', 'attachments']));
 
             if ($request->has('tags')) {
@@ -186,7 +192,7 @@ class MemoController extends Controller
             $this->storeAttachments($request, $memo);
         });
 
-        return back()->with('success', 'Fiche enregistrée.');
+        return redirect()->route('memos.edit', $memo)->with('success', 'Fiche enregistrée.');
     }
 
     public function toggleFavorite(Memo $memo): RedirectResponse
