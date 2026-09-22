@@ -9,6 +9,21 @@ export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, fold
     const { data, setData, errors, processing } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
+
+    function addFiles(event) {
+        const incoming = Array.from(event.target.files ?? []);
+        const merged = [...selectedFiles, ...incoming].filter((file, index, files) =>
+            files.findIndex((candidate) => candidate.name === file.name && candidate.size === file.size && candidate.lastModified === file.lastModified) === index,
+        );
+        const valid = merged.filter((file) => file.size <= 5 * 1024 * 1024).slice(0, 8);
+        setData('attachments', valid);
+        event.target.value = '';
+    }
+
+    function removeFile(index) {
+        setData('attachments', selectedFiles.filter((_, fileIndex) => fileIndex !== index));
+    }
+
     function applyAutoTitle(title) { if (title) setData('title', title); }
     function handleSubmit(event) {
         const normalizedContent = normalizeMemoContent(data.content);
