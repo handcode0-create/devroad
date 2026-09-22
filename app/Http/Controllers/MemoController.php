@@ -177,12 +177,7 @@ class MemoController extends Controller
         Gate::authorize('update', $memo);
 
         DB::transaction(function () use ($request, $memo) {
-            $this->assertFolderBelongsToUser($request);
-
-            $coverId = $request->input('cover_attachment_id');
-            if ($coverId !== null && ! $memo->attachments()->whereKey($coverId)->exists()) {
-                abort(422, 'La couverture sélectionnée doit appartenir à cette fiche.');
-            }
+            $this->assertFolderBelongsToUser($request, $memo);
 
             $memo->update($request->safe()->except(['tags', 'attachments']));
 
@@ -337,7 +332,7 @@ class MemoController extends Controller
         return back()->with('success', 'Fiche déplacée.');
     }
 
-    private function assertFolderBelongsToUser(Request $request): void
+    private function assertFolderBelongsToUser(Request $request, ?Memo $memo = null): void
     {
         $folderId = $request->input('folder_id');
         if ($folderId !== null && ! $request->user()->memoFolders()->whereKey($folderId)->exists()) {
@@ -345,8 +340,12 @@ class MemoController extends Controller
         }
 
         $coverId = $request->input('cover_attachment_id');
-        if ($coverId !== null && ! $request->user()->memoAttachments()->whereKey($coverId)->exists()) {
-            abort(422, 'La couverture sélectionnée est invalide.');
+        if ($coverId !== null) {
+            abort_unless(
+                $memo !== null && $memo->attachments()->whereKey($coverId)->exists(),
+                422,
+                'La couverture sélectionnée doit appartenir à cette fiche.'
+            );
         }
     }
 
