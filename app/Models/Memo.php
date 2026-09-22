@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Memo extends Model
@@ -14,6 +15,7 @@ class Memo extends Model
         'content',
         'formatting',
         'is_favorite',
+        'folder_id',
     ];
 
     protected function casts(): array
@@ -27,6 +29,16 @@ class Memo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(MemoFolder::class, 'folder_id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(MemoAttachment::class);
     }
 
     public function tags(): BelongsToMany
