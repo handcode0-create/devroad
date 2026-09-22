@@ -1,12 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
+import { Bookmark, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import Pagination from '@/Components/Ui/Pagination';
 import FavoriteButton from '@/Components/Memos/FavoriteButton';
 import TagBadge from '@/Components/Memos/TagBadge';
 import { buttonClass } from '@/Components/Ui/buttons';
+import Modal from '@/Components/Ui/Modal';
+import ConfirmModal from '@/Components/Ui/ConfirmModal';
 
 function listUrl({ tag, favorites, recent, q, folder, trash }) {
     const params = new URLSearchParams();
@@ -25,6 +27,13 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [query, setQuery] = useState(filters.q ?? '');
     const [mobileLibraryOpen, setMobileLibraryOpen] = useState(false);
     const [view, setView] = useState(() => { try { return localStorage.getItem('devroad:memos:view') || 'list'; } catch { return 'list'; } });
+    const [folderModal, setFolderModal] = useState({ open: false, mode: 'create', folder: null, parentId: null });
+    const [folderName, setFolderName] = useState('');
+    const [folderProcessing, setFolderProcessing] = useState(false);
+    const [deleteFolderTarget, setDeleteFolderTarget] = useState(null);
+    const [moveMemoTarget, setMoveMemoTarget] = useState(null);
+    const [moveFolderId, setMoveFolderId] = useState('');
+    const [moveProcessing, setMoveProcessing] = useState(false);
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
     useEffect(() => { try { localStorage.setItem('devroad:memos:view', view); } catch {} }, [view]);
@@ -41,14 +50,46 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     }
 
     function createFolder(parentId = null) {
-        const name = window.prompt(parentId ? 'Nom du sous-dossier' : 'Nom du dossier');
-        if (!name?.trim()) return;
-        router.post('/memo-folders', { name: name.trim(), parent_id: parentId }, { preserveScroll: true });
+        setFolderModal({ open: true, mode: 'create', folder: null, parentId });
+        setFolderName('');
+    }
+
+    function renameFolder(folder) {
+        setFolderModal({ open: true, mode: 'rename', folder, parentId: folder.parent_id ?? null });
+        setFolderName(folder.name);
+    }
+
+    function submitFolder() {
+        const name = folderName.trim();
+        if (!name || folderProcessing) return;
+        setFolderProcessing(true);
+        const options = { preserveScroll: true, onSuccess: () => setFolderModal((current) => ({ ...current, open: false })), onFinish: () => setFolderProcessing(false) };
+        if (folderModal.mode === 'rename') router.patch('/memo-folders/' + folderModal.folder.id, { name }, options);
+        else router.post('/memo-folders', { name, parent_id: folderModal.parentId }, options);
     }
 
     function deleteFolder(folder) {
-        if (!window.confirm('Supprimer le dossier « ' + folder.name + ' » ? Les fiches resteront conservées.')) return;
-        router.delete('/memo-folders/' + folder.id, { preserveScroll: true });
+        setDeleteFolderTarget(folder);
+    }
+
+    function confirmDeleteFolder() {
+        if (!deleteFolderTarget) return;
+        router.delete('/memo-folders/' + deleteFolderTarget.id, { preserveScroll: true, onFinish: () => setDeleteFolderTarget(null) });
+    }
+
+    function openMoveMemo(memo) {
+        setMoveMemoTarget(memo);
+        setMoveFolderId(memo.folder_id ? String(memo.folder_id) : '');
+    }
+
+    function moveMemo() {
+        if (!moveMemoTarget || moveProcessing) return;
+        setMoveProcessing(true);
+        router.patch('/memos/' + moveMemoTarget.id + '/move', { folder_id: moveFolderId || null }, {
+            preserveScroll: true, preserveState: true,
+            onSuccess: () => setMoveMemoTarget(null),
+            onFinish: () => setMoveProcessing(false),
+        });
     }
 
     // --- Glisser-déposer -------------------------------------------------
@@ -224,7 +265,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
-                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onDelete={deleteFolder} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
+                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onDelete={deleteFolder} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
                                     {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
@@ -255,10 +296,18 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                             <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-white">{activeFolder}</h2><p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p></div>
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
+                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
                     </section>
                 </div>
             </div>
+            <Modal show={folderModal.open} onClose={() => !folderProcessing && setFolderModal((current) => ({ ...current, open: false }))} title={folderModal.mode === 'rename' ? 'Renommer le dossier' : (folderModal.parentId ? 'Créer un sous-dossier' : 'Créer un dossier')} description={folderModal.mode === 'rename' ? 'Modifie le nom sans toucher aux fiches.' : 'Organise tes fiches dans une arborescence claire.'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setFolderModal((current) => ({ ...current, open: false }))} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitFolder} disabled={!folderName.trim() || folderProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{folderProcessing ? 'Enregistrement...' : (folderModal.mode === 'rename' ? 'Renommer' : 'Créer le dossier')}</button></div>}>
+                <label className="block"><span className="mb-2 block text-xs font-semibold text-slate-400">Nom du dossier</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submitFolder()} maxLength={120} placeholder="Ex. Laravel, React, DevOps..." className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40" /></label>
+            </Modal>
+            <ConfirmModal show={Boolean(deleteFolderTarget)} title={'Supprimer « ' + (deleteFolderTarget?.name ?? '') + ' » ?'} description="Les fiches seront conservées mais retirées de ce dossier. Les sous-dossiers remonteront d'un niveau." confirmLabel="Supprimer le dossier" onClose={() => setDeleteFolderTarget(null)} onConfirm={confirmDeleteFolder} />
+            <Modal show={Boolean(moveMemoTarget)} onClose={() => !moveProcessing && setMoveMemoTarget(null)} title="Déplacer la fiche" description="Choisis le dossier de destination, ou remets-la à la racine." footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setMoveMemoTarget(null)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={moveMemo} disabled={moveProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{moveProcessing ? 'Déplacement...' : 'Déplacer'}</button></div>}>
+                <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3"><p className="mb-2 truncate text-xs font-semibold text-white">{moveMemoTarget?.icon ?? '📝'} {moveMemoTarget?.title}</p><select value={moveFolderId} onChange={(event) => setMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#0D1725] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40"><option value="">Sans dossier — racine</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></div>
+            </Modal>
+
         </AppLayout>
     );
 }
@@ -280,7 +329,7 @@ function buildFolderTree(folders) {
     return walk(0);
 }
 
-function FolderNavItem({ folder, active, onCreateChild, onDelete, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
+function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
     // Survol dans la moitié basse de la ligne = « insérer après » (réordonner) ;
     // reste de la ligne = « déposer dedans » (imbriquer comme sous-dossier).
     const [nestHover, setNestHover] = useState(false);
@@ -330,6 +379,7 @@ function FolderNavItem({ folder, active, onCreateChild, onDelete, isDragging, is
                 {typeof folder.memos_count === 'number' && <span className="text-[10px] text-slate-700">{folder.memos_count}</span>}
             </Link>
             <button type="button" onClick={() => onCreateChild(folder.id)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-[#FF8A3D] group-hover:flex" title="Créer un sous-dossier"><Plus size={12} /></button>
+            <button type="button" onClick={() => onRename(folder)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white group-hover:flex" title="Renommer"><Pencil size={12} /></button>
             <button type="button" onClick={() => onDelete(folder)} className="hidden h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-red-300 group-hover:flex" title="Supprimer le dossier"><Trash2 size={12} /></button>
         </div>
     </div>;
@@ -339,10 +389,10 @@ function ViewButton({ active, onClick, icon: Icon, label }) {
     return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
 }
 
-function MemoCard({ memo, grid, trash = false, onDragStart, onDragEnd }) {
+function MemoCard({ memo, grid, trash = false, onDragStart, onDragEnd, onMove }) {
     return <article
         draggable
-        onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
+        onDragStart={(event) => onDragStart(event)}
         onDragEnd={onDragEnd}
         className={'group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:border-[#FF6A00]/20 hover:bg-[#101B2C] cursor-grab active:cursor-grabbing ' + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}
     >
@@ -357,7 +407,7 @@ function MemoCard({ memo, grid, trash = false, onDragStart, onDragEnd }) {
                 {memo.tags?.length > 0 && <div className={'flex flex-wrap gap-1.5 ' + (grid ? 'mt-auto pt-4' : 'mt-2')}>{memo.tags.map((tag) => <TagBadge key={tag.id} name={tag.name} />)}</div>}
             </div>
         </Link>
-        <div className={grid ? 'mt-3 flex items-center justify-end gap-2 border-t border-white/[0.06] pt-3' : 'shrink-0'}>{trash ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button> : <FavoriteButton memo={memo} />}</div>
+<div className={grid ? 'mt-3 flex items-center justify-end gap-2 border-t border-white/[0.06] pt-3' : 'shrink-0'}>{trash ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button> : <><button type="button" onClick={() => onMove(memo)} className="rounded-lg p-1.5 text-slate-600 hover:bg-white/[0.05] hover:text-white" title="Déplacer vers un dossier"><MoreHorizontal size={15} /></button><FavoriteButton memo={memo} /></>}</div>
     </article>;
 }
 
