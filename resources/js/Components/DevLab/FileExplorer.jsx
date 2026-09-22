@@ -12,6 +12,7 @@ export default function FileExplorer({
     onDelete,
 }) {
     const [openMenu, setOpenMenu] = useState(null);
+
     return (
         <aside className="hidden border-r border-white/[0.06] bg-[#07101A] lg:block">
             <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-3">
@@ -51,36 +52,74 @@ export default function FileExplorer({
                         key={file.path}
                         className={[
                             "group relative mb-1 flex w-full items-center rounded-lg text-[11px]",
-                            activeFile === file.path ? "bg-[#FF6A00]/10 text-[#FF8A3D]" : "text-slate-500 hover:bg-white/[0.03] hover:text-white",
+                            activeFile === file.path
+                                ? "bg-[#FF6A00]/10 text-[#FF8A3D]"
+                                : "text-slate-500 hover:bg-white/[0.03] hover:text-white",
                         ].join(" ")}
                     >
                         <button
                             type="button"
-                            onClick={() => { setOpenMenu(null); onSelect(file.path); }}
+                            onClick={() => {
+                                setOpenMenu(null);
+                                onSelect(file.path);
+                            }}
                             className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 text-left"
                         >
                             <Folder size={12} className="shrink-0" />
                             <span className="truncate">{file.path}</span>
                         </button>
+
                         <button
                             type="button"
-                            onClick={(event) => { event.stopPropagation(); setOpenMenu((current) => current === file.id ? null : file.id); }}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                setOpenMenu((current) =>
+                                    current === file.path ? null : file.path,
+                                );
+                            }}
                             className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white/[0.06] hover:text-white"
                             aria-label={"Actions de " + file.path}
                             title="Actions du fichier"
                         >
                             <MoreVertical size={14} />
                         </button>
+
                         <div
-                            className={(openMenu === file.id ? "block " : "hidden ") + "absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl"
+                            className={[
+                                "absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl",
+                                openMenu === file.path ? "block" : "hidden",
+                            ].join(" ")}
                         >
-                            <button type="button" onClick={() => { setOpenMenu(null); onRename(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setOpenMenu(null);
+                                    onRename(file);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]"
+                            >
                                 <Pencil size={13} /> Renommer
                             </button>
-                            <button type="button" onClick={() => { setOpenMenu(null); onDuplicate(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setOpenMenu(null);
+                                    onDuplicate(file);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]"
+                            >
                                 <Copy size={13} /> Dupliquer
                             </button>
-                            <button type="button" onClick={() => { setOpenMenu(null); onDelete(file); }} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setOpenMenu(null);
+                                    onDelete(file);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]"
+                            >
                                 <Trash2 size={13} /> Supprimer
                             </button>
                         </div>
