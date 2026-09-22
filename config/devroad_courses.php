@@ -199,28 +199,96 @@ Chaque changement structurel doit être versionné dans Git avec une migration.'
                 [
                     'title' => 'Models et Eloquent',
                     'workspace_file' => 'app/Models/Roadmap.php',
-                    'description' => 'Manipuler les données avec Eloquent plutôt qu\\\'avec du SQL brut partout.',
-                    'objective' => 'Créer un modèle, définir ses champs autorisés et interagir avec une table.',
-                    'content' => '## Eloquent
+                    'workspace_language' => 'laravel',
+                    'description' => 'Définir un modèle Eloquent correctement, puis utiliser ce modèle depuis la couche applicative.',
+                    'objective' => 'Comprendre la responsabilité d’un modèle Eloquent et distinguer sa définition de son utilisation dans un contrôleur.',
+                    'content' => '## Le rôle d’un modèle Eloquent
 
-Eloquent représente les tables de la base sous forme de modèles PHP.
+Un modèle représente une ressource persistée et centralise sa configuration : attributs autorisés, casts et relations. Il ne sert pas à stocker arbitrairement du code métier HTTP.
 
-Les méthodes comme create, where, find et update permettent de travailler avec les données de manière expressive.
+## Définir le modèle
 
-## Fillable
+Le fichier app/Models/Roadmap.php contient la classe Roadmap. On y définit notamment $fillable pour les attributs autorisés lors d’une affectation de masse.
 
-La propriété $fillable protège les créations massives et définit les attributs acceptés par create() et update().',
-                    'code_example' => '$roadmap = Roadmap::create([
-    \'title\' => \'Apprendre Laravel\',
-    \'description\' => \'Parcours personnel\',
-    \'status\' => \'active\',
-]);
+## Utiliser le modèle
 
-$roadmaps = Roadmap::query()
-    ->where(\'status\', \'active\')
-    ->latest()
-    ->get();',
-                    'estimated_minutes' => 35,
+La création et les requêtes sont déclenchées par la couche applicative, par exemple un contrôleur. On peut ensuite utiliser create(), where(), latest() et get() pour manipuler les données.
+
+## La séparation à retenir
+
+Model = représentation et comportement de la donnée.
+
+Controller / Action = orchestration de la requête HTTP et utilisation du modèle.
+
+Ne place donc pas Roadmap::create() directement dans app/Models/Roadmap.php.',
+                    'code_example' => '<?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Roadmap extends Model
+{
+    protected $fillable = [
+        \'title\',
+        \'description\',
+        \'status\',
+    ];
+}',
+                    'workspace_files' => [
+                        [
+                            'path' => 'app/Models/Roadmap.php',
+                            'content' => '<?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Roadmap extends Model
+{
+    protected $fillable = [
+        \'title\',
+        \'description\',
+        \'status\',
+    ];
+}',
+                        ],
+                        [
+                            'path' => 'app/Http/Controllers/RoadmapController.php',
+                            'content' => '<?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\Roadmap;
+use Illuminate\\Http\\Request;
+
+class RoadmapController extends Controller
+{
+    public function index(Request $request)
+    {
+        $roadmaps = $request->user()
+            ->roadmaps()
+            ->where(\'status\', \'active\')
+            ->latest()
+            ->get();
+
+        return response()->json($roadmaps);
+    }
+
+    public function store(Request $request)
+    {
+        $roadmap = $request->user()->roadmaps()->create([
+            \'title\' => $request->string(\'title\'),
+            \'description\' => $request->string(\'description\'),
+            \'status\' => \'active\',
+        ]);
+
+        return response()->json($roadmap, 201);
+    }
+}',
+                        ],
+                    ],
+                    'estimated_minutes' => 40,
                 ],
                 [
                     'title' => 'Relations Eloquent',
