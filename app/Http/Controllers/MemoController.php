@@ -256,7 +256,7 @@ class MemoController extends Controller
 
         DB::transaction(function () use ($memos, $data) {
             foreach ($memos as $memo) {
-                Gate::authorize('update', $memo);
+                Gate::authorize(in_array($data['action'], ['delete', 'restore', 'force_delete'], true) ? 'delete' : 'update', $memo);
 
                 match ($data['action']) {
                     'move' => $memo->update(['folder_id' => $data['folder_id'] ?? null]),
