@@ -56,7 +56,7 @@ export default function FileExplorer({
                     >
                         <button
                             type="button"
-                            onClick={() => onSelect(file.path)}
+                            onClick={() => { setOpenMenu(null); onSelect(file.path); }}
                             className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 text-left"
                         >
                             <Folder size={12} className="shrink-0" />
@@ -65,7 +65,7 @@ export default function FileExplorer({
                         <button
                             type="button"
                             onClick={(event) => { event.stopPropagation(); setOpenMenu((current) => current === file.id ? null : file.id); }}
-                            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 opacity-100 transition hover:bg-white/[0.06] hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+                            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white/[0.06] hover:text-white"
                             aria-label={"Actions de " + file.path}
                             title="Actions du fichier"
                         >
