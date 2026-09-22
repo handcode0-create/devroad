@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Download, File, Folder, Image as ImageIcon, Pencil, Trash2, X } from 'lucide-react';
+import { Copy, Download, File, Folder, Image as ImageIcon, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
@@ -19,12 +19,12 @@ export default function Show({ memo }) {
     return (
         <AppLayout>
             <Head title={memo.title} />
-            <div className="mx-auto max-w-3xl">
-                <PageHeader title={memo.title} backHref="/memos" backLabel="Fiches mémo" actions={<FavoriteButton memo={memo} />} />
+            <div className={memo.is_full_width ? "mx-auto max-w-[1400px]" : "mx-auto max-w-3xl"}>
+                <PageHeader title={(memo.icon ?? "📝") + " " + memo.title} backHref="/memos" backLabel="Fiches mémo" actions={<FavoriteButton memo={memo} />} />
                 {memo.tags?.length > 0 && <ul className="-mt-2 mb-5 flex flex-wrap gap-2" aria-label="Tags">{memo.tags.map((tag) => <li key={tag.id}><Link href={'/memos?tag=' + tag.slug}><TagBadge name={tag.name} /></Link></li>)}</ul>}
-                {memo.folder && <div className="mb-3 flex items-center gap-2 text-xs text-slate-500"><Folder size={14} className="text-[#FF8A3D]" />{memo.folder.name}</div>}
-                <article className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-6">
-                    <MemoContent content={memo.content} formatting={memo.formatting} />
+                {memo.breadcrumbs?.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-1 text-xs text-slate-500"><Folder size={14} className="mr-1 text-[#FF8A3D]" />{memo.breadcrumbs.map((item, index) => <span key={item.id}>{index > 0 && <span className="mx-1 text-slate-700">/</span>}{item.name}</span>)}</div>}
+                <article className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-6">
+                    {memo.cover && <div className="-mx-5 -mt-5 mb-6 overflow-hidden sm:-mx-6 sm:-mt-6"><img src={memo.cover.url} alt={memo.title} className="max-h-80 w-full object-cover" /></div>}\n                    <MemoContent content={memo.content} formatting={memo.formatting} />
                     {memo.attachments?.length > 0 && <section className="mt-8 border-t border-white/[0.06] pt-5">
                         <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Fichiers et médias</h2>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -41,7 +41,7 @@ export default function Show({ memo }) {
                     </section>}
                 </article>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                    <Link href={'/memos/' + memo.id + '/edit'} className={buttonClass('primary')}><Pencil size={16} />Modifier</Link>
+                    <Link href={'/memos/' + memo.id + '/edit'} className={buttonClass('primary')}><Pencil size={16} />Modifier</Link>\n                    <button type="button" onClick={() => router.post('/memos/' + memo.id + '/duplicate')} className={buttonClass('secondary')}><Copy size={16} />Dupliquer</button>
                     <button type="button" onClick={() => setConfirmDelete(true)} className={buttonClass('danger')}><Trash2 size={16} />Supprimer</button>
                 </div>
             </div>
