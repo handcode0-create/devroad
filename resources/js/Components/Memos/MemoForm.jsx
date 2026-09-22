@@ -5,7 +5,7 @@ import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
 import MemoEditor, { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
-export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, folders = [] }) {
+export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, folders = [], attachments = [] }) {
     const { data, setData, errors, processing } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
@@ -37,7 +37,17 @@ export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, fold
                 <input id="title" type="text" value={data.title} onChange={(e) => setData('title', e.target.value)} placeholder="Titre de la fiche" maxLength={255} autoFocus aria-invalid={errors.title ? 'true' : undefined} className={inputClass} />
             </Field>
             <Field label="Contenu" htmlFor="content" error={errors.content} hint="Les blocs de code entre triples accents restent affichés en monospace.">
-                <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} onAutoTitle={applyAutoTitle} />
+                <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} onAutoTitle={applyAutoTitle} attachments={attachments} />
+            </Field>
+            <Field label="Page" htmlFor="memo-icon" hint="Icône, couverture et largeur de page comme dans Notion.">
+                <div className="grid gap-3 sm:grid-cols-[88px_minmax(0,1fr)]">
+                    <input id="memo-icon" type="text" value={data.icon ?? '📝'} onChange={(e) => setData('icon', e.target.value.slice(0, 4))} className={inputClass + ' text-center text-xl'} aria-label="Icône de la fiche" />
+                    <select id="cover_attachment_id" value={data.cover_attachment_id ?? ''} onChange={(e) => setData('cover_attachment_id', e.target.value || null)} className={inputClass}>
+                        <option value="">Sans couverture</option>
+                        {attachments.filter((file) => file.is_image).map((file) => <option key={file.id} value={file.id}>{file.name}</option>)}
+                    </select>
+                </div>
+                <label className="mt-3 flex items-center gap-2 text-xs text-slate-400"><input type="checkbox" checked={Boolean(data.is_full_width)} onChange={(e) => setData('is_full_width', e.target.checked)} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" />Page pleine largeur</label>
             </Field>
             <Field label="Dossier" htmlFor="folder_id" hint="Organise tes fiches dans une arborescence.">
                 <div className="flex items-center gap-2">
