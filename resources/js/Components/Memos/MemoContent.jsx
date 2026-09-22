@@ -13,7 +13,15 @@ function safeFormatting(value) {
 }
 
 function inline(text) {
-    return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => part.startsWith('**') ? <strong key={index}>{part.slice(2, -2)}</strong> : part.startsWith('`') ? <code key={index} className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] text-[#FF8A3D]">{part.slice(1, -1)}</code> : part);
+    const pattern = /(\[\[upper\]\][\s\S]*?\[\[\/upper\]\]|\[\[lower\]\][\s\S]*?\[\[\/lower\]\]|\[\[capitalize\]\][\s\S]*?\[\[\/capitalize\]\]|\*\*[^*]+\*\*|`[^`]+`)/g;
+    return text.split(pattern).map((part, index) => {
+        if (part.startsWith('[[upper]]')) return <span key={index}>{part.slice(9, -10).toUpperCase()}</span>;
+        if (part.startsWith('[[lower]]')) return <span key={index}>{part.slice(9, -10).toLowerCase()}</span>;
+        if (part.startsWith('[[capitalize]]')) return <span key={index}>{part.slice(14, -15).replace(/(^|\s)\S/g, (char) => char.toUpperCase())}</span>;
+        if (part.startsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
+        if (part.startsWith('`')) return <code key={index} className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] text-[#FF8A3D]">{part.slice(1, -1)}</code>;
+        return part;
+    });
 }
 
 function CodeBlock({ lang, value }) {
