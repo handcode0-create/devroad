@@ -6,7 +6,7 @@ import TagInput from '@/Components/Memos/TagInput';
 import MemoEditor, { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, folders = [], attachments = [] }) {
-    const { data, setData, errors, processing } = form;
+    const { data, setData, errors, processing, recentlySuccessful } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
 
@@ -70,7 +70,7 @@ export default function MemoForm({ form, onSubmit, submitLabel, cancelHref, fold
             </Field>
             <Field label="Tags" htmlFor="tags" error={tagsError}><TagInput id="tags" value={data.tags} onChange={(tags) => setData('tags', tags)} /></Field>
             <label className="flex items-center gap-2.5 text-sm text-slate-300"><input type="checkbox" checked={data.is_favorite} onChange={(e) => setData('is_favorite', e.target.checked)} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" />Ajouter aux favoris</label>
-            <div className="flex flex-wrap items-center gap-3 pt-1"><button type="submit" disabled={processing} className={buttonClass('primary')}>{processing ? 'Enregistrement...' : submitLabel}</button><Link href={cancelHref} className={buttonClass('secondary')}>Annuler</Link></div>
+            <div className="flex flex-wrap items-center gap-3 pt-1"><button type="submit" disabled={processing} className={buttonClass('primary')}>{processing ? 'Enregistrement...' : recentlySuccessful ? 'Enregistré ✓' : submitLabel}</button><Link href={cancelHref} className={buttonClass('secondary')}>Annuler</Link></div>
         </form>
     );
 }
