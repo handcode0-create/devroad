@@ -22,9 +22,10 @@ export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
     const items = memos?.data ?? [];
     const [query, setQuery] = useState(filters.q ?? '');
     const [mobileLibraryOpen, setMobileLibraryOpen] = useState(false);
-    const [view, setView] = useState('list');
+    const [view, setView] = useState(() => { try { return localStorage.getItem('devroad:memos:view') || 'list'; } catch { return 'list'; } });
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
+    useEffect(() => { try { localStorage.setItem('devroad:memos:view', view); } catch {} }, [view]);
 
     function submitSearch(event) {
         event.preventDefault();
@@ -100,7 +101,7 @@ export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                 <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
                                     <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
-                                    <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher dans tes fiches..." className="h-10 w-full rounded-xl border border-white/[0.06] bg-[#08111F] pl-9 pr-10 text-sm text-white outline-none placeholder:text-slate-600 focus:border-[#FF6A00]/40" />
+                                    <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher dans tes fiches..." className="h-10 w-full rounded-xl border border-white/[0.06] bg-[#08111F] pl-9 pr-10 text-sm text-white outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-slate-600 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/5" />
                                     {query && <button type="button" onClick={clearSearch} aria-label="Effacer la recherche" className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-white"><X size={14} /></button>}
                                 </form>
                                 <div className="flex items-center justify-between gap-2"><div className="flex rounded-xl border border-white/[0.06] bg-[#08111F] p-1">
@@ -113,7 +114,7 @@ export default function Index({ memos, tags = [], filters = {}, counts = {} }) {
                             <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-white">{activeFolder}</h2><p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p></div>
                             {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
                         </div>
-                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid gap-3 sm:grid-cols-2' : 'space-y-3'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
+                        {items.length > 0 ? <><ul className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'}>{items.map((memo) => <li key={memo.id}><MemoCard memo={memo} grid={view === 'grid'} /></li>)}</ul><Pagination links={memos.links} /></> : <EmptyState filtered={hasFilter} />}
                     </section>
                 </div>
             </div>
@@ -128,18 +129,23 @@ function NavItem({ href, active, icon: Icon, label, count }) {
 }
 
 function ViewButton({ active, onClick, icon: Icon, label }) {
-    return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
+    return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
 }
 
 function MemoCard({ memo, grid }) {
-    return <article className={'group flex items-start gap-2 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-4 transition hover:border-[#FF6A00]/20 hover:bg-[#101B2C] ' + (grid ? 'min-h-[175px] flex-col' : '')}>
-        <Link href={'/memos/' + memo.id} className="min-w-0 flex-1">
-            <div className="mb-2 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#FF6A00]" /><span className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-600">{memo.is_favorite ? 'Favori' : 'Fiche'}</span></div>
-            <h3 className="truncate text-sm font-semibold text-white group-hover:text-[#FFB078]">{memo.title}</h3>
-            <p className="mt-1 line-clamp-3 text-xs leading-5 text-slate-500">{memo.excerpt}</p>
-            {memo.tags?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{memo.tags.map((tag) => <TagBadge key={tag.id} name={tag.name} />)}</div>}
+    return <article className={'group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0D1725] transition-all duration-200 ease-out hover:-translate-y-px hover:border-[#FF6A00]/20 hover:bg-[#101B2C] ' + (grid ? 'flex min-h-[230px] flex-col p-4' : 'flex items-center gap-4 px-4 py-3')}>
+        <Link href={'/memos/' + memo.id} className={'min-w-0 flex-1 ' + (grid ? 'flex flex-col' : 'flex items-center gap-4')}>
+            <div className={grid ? 'mb-3 flex items-center justify-between gap-2' : 'flex w-[150px] shrink-0 items-center gap-2'}>
+                <span className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-600"><span className="h-1.5 w-1.5 rounded-full bg-[#FF6A00]" />{memo.is_favorite ? 'Favori' : 'Fiche'}</span>
+                {grid && <span className="text-[10px] text-slate-600">{memo.updated_at ? new Date(memo.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : ''}</span>}
+            </div>
+            <div className={grid ? 'min-w-0' : 'min-w-0 flex-1'}>
+                <h3 className={'font-semibold text-white transition-colors duration-200 group-hover:text-[#FFB078] ' + (grid ? 'line-clamp-2 text-base leading-6' : 'truncate text-sm')}>{memo.title}</h3>
+                <p className={'mt-1 text-xs leading-5 text-slate-500 ' + (grid ? 'line-clamp-4' : 'line-clamp-1')}>{memo.excerpt}</p>
+                {memo.tags?.length > 0 && <div className={'flex flex-wrap gap-1.5 ' + (grid ? 'mt-auto pt-4' : 'mt-2')}>{memo.tags.map((tag) => <TagBadge key={tag.id} name={tag.name} />)}</div>}
+            </div>
         </Link>
-        <FavoriteButton memo={memo} />
+        <div className={grid ? 'mt-3 flex items-center justify-end border-t border-white/[0.06] pt-3' : 'shrink-0'}><FavoriteButton memo={memo} /></div>
     </article>;
 }
 
