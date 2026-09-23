@@ -107,6 +107,13 @@ class DashboardController extends Controller
             ],
             'recent_roadmaps' => $recentRoadmaps,
             'continue_roadmap' => $continueRoadmapData,
+            'learning_profile' => $user->learningProfile ? [
+                'level' => $user->learningProfile->level,
+                'academic_level' => $user->learningProfile->academic_level,
+                'technologies' => $user->learningProfile->technologies ?? [],
+                'goals' => $user->learningProfile->goals ?? [],
+                'assessment_scores' => $user->learningProfile->assessment_scores ?? null,
+            ] : null,
         ]);
     }
 }
