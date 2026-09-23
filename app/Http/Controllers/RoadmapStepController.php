@@ -363,7 +363,7 @@ class RoadmapStepController extends Controller
                 'label' => 'Tailwind CSS',
                 'filename' => $workspaceFile ?: 'index.html',
                 'run_command' => 'preview',
-                'starter' => "<main class="p-6"><h1 class="text-2xl font-bold">Bonjour DevRoad</h1></main>\n",
+                'starter' => "<main class=\"p-6\"><h1 class=\"text-2xl font-bold\">Bonjour DevRoad</h1></main>\n",
                 'preview' => true,
             ],
             'git' => [
