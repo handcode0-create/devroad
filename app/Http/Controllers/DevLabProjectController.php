@@ -101,31 +101,45 @@ class DevLabProjectController extends Controller
             default => 'html',
         };
 
-        $files = $templates->filesFor($template);
-        $workspacePath = $step->workspace_file ?: match ($template) {
-            'laravel' => 'routes/web.php',
-            'php' => 'main.php',
-            'node' => 'main.js',
-            default => 'index.html',
-        };
+        $workspaceFiles = collect($step->workspace_files ?? [])
+            ->filter(fn ($file) => is_array($file) && ! empty($file['path']))
+            ->map(fn ($file) => [
+                'path' => $file['path'],
+                'content' => (string) ($file['content'] ?? ''),
+            ])
+            ->values()
+            ->all();
 
-        if ($step->code_example) {
-            $replaced = false;
+        if ($workspaceFiles !== []) {
+            $files = $workspaceFiles;
+            $workspacePath = $step->workspace_file ?: ($files[0]['path'] ?? 'main.php');
+        } else {
+            $files = $templates->filesFor($template);
+            $workspacePath = $step->workspace_file ?: match ($template) {
+                'laravel' => 'routes/web.php',
+                'php' => 'main.php',
+                'node' => 'main.js',
+                default => 'index.html',
+            };
 
-            foreach ($files as &$file) {
-                if ($file['path'] === $workspacePath) {
-                    $file['content'] = $step->code_example;
-                    $replaced = true;
-                    break;
+            if ($step->code_example) {
+                $replaced = false;
+
+                foreach ($files as &$file) {
+                    if ($file['path'] === $workspacePath) {
+                        $file['content'] = $step->code_example;
+                        $replaced = true;
+                        break;
+                    }
                 }
-            }
-            unset($file);
+                unset($file);
 
-            if (! $replaced) {
-                $files[] = [
-                    'path' => $workspacePath,
-                    'content' => $step->code_example,
-                ];
+                if (! $replaced) {
+                    $files[] = [
+                        'path' => $workspacePath,
+                        'content' => $step->code_example,
+                    ];
+                }
             }
         }
 
