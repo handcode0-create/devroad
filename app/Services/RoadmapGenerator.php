@@ -130,6 +130,8 @@ class RoadmapGenerator
                     'exercise_description' => $exercise['description'],
                     'exercise_hint' => $exercise['hint'],
                     'exercise_solution' => $exercise['solution'],
+                    'difficulty_level' => $this->resolveDifficultyLevel($lesson, $lessonOverride, $index, count($steps), $title),
+                    'academic_level' => $this->resolveAcademicLevel($lesson, $lessonOverride, $title),
                     'estimated_minutes' => $estimatedMinutes,
                     'position' => $index + 1,
                     'status' => $index === 0
@@ -207,8 +209,48 @@ class RoadmapGenerator
             'exercise_description' => $exercise['description'],
             'exercise_hint' => $exercise['hint'],
             'exercise_solution' => $exercise['solution'],
+            'difficulty_level' => $this->resolveDifficultyLevel($lesson, $lessonOverride, $index, $stepCount, $title),
+            'academic_level' => $this->resolveAcademicLevel($lesson, $lessonOverride, $title),
             'estimated_minutes' => $estimatedMinutes,
         ];
+    }
+
+    private function resolveDifficultyLevel(array $lesson, array $override, int $index, int $stepCount, string $title): string
+    {
+        $configured = $override['difficulty_level'] ?? ($lesson['difficulty_level'] ?? null);
+
+        if (in_array($configured, ['beginner', 'intermediate', 'professional'], true)) {
+            return $configured;
+        }
+
+        $normalized = mb_strtolower($title);
+
+        if (preg_match('/découvrir|fondament|introduction|bases|créer un projet|premiers pas|syntax/i', $normalized)) {
+            return 'beginner';
+        }
+
+        if (preg_match('/architecture|performance|sécurité|optimisation|scalabilité|production|ci\/cd|design pattern|avancé|avancée|observabilité/i', $normalized)) {
+            return 'professional';
+        }
+
+        $ratio = $stepCount > 1 ? $index / ($stepCount - 1) : 0;
+
+        return $ratio < 0.4 ? 'beginner' : ($ratio < 0.75 ? 'intermediate' : 'professional');
+    }
+
+    private function resolveAcademicLevel(array $lesson, array $override, string $title): string
+    {
+        $configured = $override['academic_level'] ?? ($lesson['academic_level'] ?? null);
+
+        if (in_array($configured, ['licence', 'engineering'], true)) {
+            return $configured;
+        }
+
+        $normalized = mb_strtolower($title);
+
+        return preg_match('/architecture|performance|sécurité|optimisation|scalabilité|production|ci\/cd|design pattern|observabilité/i', $normalized)
+            ? 'engineering'
+            : 'licence';
     }
 
     private function buildWorkspaceMetadata(
