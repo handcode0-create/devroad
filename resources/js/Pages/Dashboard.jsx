@@ -14,7 +14,7 @@ import {
 import AppLayout from "@/Layouts/AppLayout";
 import technologyLogos from "@/Config/technologyLogos";
 
-export default function Dashboard({ stats, recent_roadmaps, continue_roadmap }) {
+export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, learning_profile }) {
     const { auth } = usePage().props;
 
     const user = auth?.user;
@@ -696,6 +696,22 @@ function EmptyRoadmaps() {
 | Helpers
 |--------------------------------------------------------------------------
 */
+
+
+function formatLearningLevel(level) {
+    return {
+        beginner: 'Débutant',
+        intermediate: 'Intermédiaire',
+        professional: 'Professionnel',
+    }[level] ?? 'Non défini';
+}
+
+function formatAcademicLevel(level) {
+    return {
+        licence: 'Licence',
+        engineering: 'Cycle Ingénieur',
+    }[level] ?? 'Parcours personnalisé';
+}
 
 function getTechnologyLogo(title) {
     if (!title) {
