@@ -66,6 +66,8 @@ class RoadmapStepController extends Controller
                 'estimated_minutes' => $step->estimated_minutes,
                 'position' => $step->position,
                 'status' => $step->status,
+                'difficulty_level' => $step->difficulty_level,
+                'academic_level' => $step->academic_level,
             ],
         ]);
     }
@@ -89,15 +91,6 @@ class RoadmapStepController extends Controller
             ->where('status', '!=', RoadmapStep::COMPLETED)
             ->orderBy('position')
             ->first();
-
-        if (
-            $currentStep &&
-            $currentStep->id !== $step->id &&
-            $step->status !== RoadmapStep::COMPLETED &&
-            $step->position > $currentStep->position
-        ) {
-            return redirect()->route('steps.show', $currentStep);
-        }
 
         if ($step->status === RoadmapStep::TODO) {
             $step->update([
@@ -138,6 +131,8 @@ class RoadmapStepController extends Controller
                 'description' => $step->description,
                 'position' => $step->position,
                 'status' => $step->status,
+                'difficulty_level' => $step->difficulty_level,
+                'academic_level' => $step->academic_level,
                 'objective' => $step->objective,
                 'content' => $step->content,
                 'code_example' => $step->code_example,
