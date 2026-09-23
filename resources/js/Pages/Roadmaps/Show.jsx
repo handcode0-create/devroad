@@ -201,10 +201,6 @@ function StepsTab({ steps, currentStep, roadmapId }) {
                             key={step.id}
                             step={step}
                             index={index}
-                            locked={
-                                step.status === "todo" &&
-                                currentStep?.id !== step.id
-                            }
                         />
                         ))}
                     </div>
@@ -366,10 +362,10 @@ function InfoCard({ label, value }) {
     );
 }
 
-function StepCard({ step, index, locked = false }) {
+function StepCard({ step, index }) {
     const completed = step.status === 'completed';
     const inProgress = step.status === 'in_progress';
-    const blocked = step.status === 'blocked' || locked;
+    const blocked = step.status === 'blocked';
 
     const cardClass = completed
         ? 'border-emerald-500/10 bg-emerald-500/[0.035]'
@@ -420,12 +416,10 @@ function StepCard({ step, index, locked = false }) {
                     </p>
                 )}
 
-                {locked && (
-                    <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600">
-                        <Lock size={11} />
-                        Termine les étapes précédentes pour débloquer ce cours.
-                    </p>
-                )}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <LevelBadge level={step.difficulty_level} />
+                    <AcademicBadge level={step.academic_level} />
+                </div>
             </div>
 
             {!blocked && (
@@ -449,6 +443,18 @@ function StepCard({ step, index, locked = false }) {
     ) : (
         <Link href={`/steps/${step.id}`}>{content}</Link>
     );
+}
+
+function LevelBadge({ level }) {
+    const labels = { beginner: 'Débutant', intermediate: 'Intermédiaire', professional: 'Professionnel' };
+    if (!level) return null;
+    return <span className="rounded-full bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-slate-500">{labels[level] ?? level}</span>;
+}
+
+function AcademicBadge({ level }) {
+    const labels = { licence: 'Licence', engineering: 'Cycle Ingénieur' };
+    if (!level) return null;
+    return <span className="rounded-full bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-slate-500">{labels[level] ?? level}</span>;
 }
 
 function StatusIcon({ status }) {
