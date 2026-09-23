@@ -117,7 +117,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
         >
             <Head title="Personnaliser mon parcours" />
 
-            <div className="mb-7">
+            <form onSubmit={submit} noValidate>\n                <div className="mb-7">
                 <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                     <span>Étape {step + 1} / 4</span>
                     <span>{step === 2 ? assessmentProgress + '% évalué' : 'Profil'}</span>
@@ -280,7 +280,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                 )}
             </div>
 
-            {Object.keys(errors).length > 0 && (
+                {Object.keys(errors).length > 0 && (
                 <p className="mt-4 text-sm text-red-400">{Object.values(errors)[0]}</p>
             )}
         </AuthLayout>
