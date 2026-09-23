@@ -104,93 +104,47 @@ class DevLabController extends Controller
         ?string $technology,
         ?string $codeExample,
         ?string $workspaceFile = null,
-        ?string $workspaceLanguage = null
+        ?string $workspaceLanguage = null,
+        ?array $workspaceFiles = null
     ): array {
-        $profile = match ($workspaceLanguage ?? $technology) {
-            'laravel' => [
-                'language' => 'laravel',
-                'label' => 'Laravel',
-                'filename' => $workspaceFile ?: 'routes/web.php',
-                'run_command' => 'php artisan route:list',
-                'starter' => "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n",
-                'preview' => false,
-            ],
-            'php' => [
-                'language' => 'php',
-                'label' => 'PHP',
-                'filename' => $workspaceFile ?: 'main.php',
-                'run_command' => 'php main.php',
-                'starter' => "<?php\n\n",
-                'preview' => false,
-            ],
-            'node' => [
-                'language' => 'node',
-                'label' => 'Node.js',
-                'filename' => $workspaceFile ?: 'main.js',
-                'run_command' => 'node main.js',
-                'starter' => "console.log('Bonjour DevRoad');\n",
-                'preview' => false,
-            ],
-            'html' => [
-                'language' => 'html',
-                'label' => 'HTML',
-                'filename' => $workspaceFile ?: 'index.html',
-                'run_command' => 'preview',
-                'starter' => "<!doctype html>\n<html lang=\"fr\">\n<head>\n    <meta charset=\"UTF-8\">\n</head>\n<body>\n    <h1>Bonjour DevRoad</h1>\n</body>\n</html>",
-                'preview' => true,
-            ],
-            'css' => [
-                'language' => 'css',
-                'label' => 'CSS',
-                'filename' => $workspaceFile ?: 'styles.css',
-                'run_command' => 'preview',
-                'starter' => "body {\n    font-family: system-ui, sans-serif;\n}",
-                'preview' => true,
-            ],
-            'javascript' => [
-                'language' => 'javascript',
-                'label' => 'JavaScript',
-                'filename' => $workspaceFile ?: 'main.js',
-                'run_command' => 'run',
-                'starter' => "console.log('Bonjour DevRoad');\n",
-                'preview' => true,
-            ],
-            default => null,
-        };
-
+        $profiles = [
+            'laravel' => ['label' => 'Laravel', 'filename' => 'routes/web.php', 'preview' => false],
+            'php' => ['label' => 'PHP', 'filename' => 'main.php', 'preview' => false],
+            'node' => ['label' => 'Node.js', 'filename' => 'main.js', 'preview' => false],
+            'javascript' => ['label' => 'JavaScript', 'filename' => 'main.js', 'preview' => true],
+            'typescript' => ['label' => 'TypeScript', 'filename' => 'main.ts', 'preview' => false],
+            'react' => ['label' => 'React', 'filename' => 'src/App.jsx', 'preview' => false],
+            'nextjs' => ['label' => 'Next.js', 'filename' => 'app/page.tsx', 'preview' => false],
+            'html' => ['label' => 'HTML', 'filename' => 'index.html', 'preview' => true],
+            'css' => ['label' => 'CSS', 'filename' => 'styles.css', 'preview' => true],
+            'tailwind' => ['label' => 'Tailwind CSS', 'filename' => 'index.html', 'preview' => true],
+            'git' => ['label' => 'Git', 'filename' => 'README.md', 'preview' => false],
+            'github' => ['label' => 'GitHub', 'filename' => 'README.md', 'preview' => false],
+            'docker' => ['label' => 'Docker', 'filename' => 'Dockerfile', 'preview' => false],
+            'mysql' => ['label' => 'MySQL', 'filename' => 'schema.sql', 'preview' => false],
+            'postgresql' => ['label' => 'PostgreSQL', 'filename' => 'schema.sql', 'preview' => false],
+        ];
+        $key = $workspaceLanguage ?? $technology;
+        $profile = $profiles[$key] ?? null;
         if ($profile === null) {
-            return [
-                'enabled' => false,
-                'runtime' => 'browser',
-                'preview_enabled' => false,
-                'language' => null,
-                'label' => null,
-                'filename' => null,
-                'run_command' => null,
-                'initial_code' => '',
-                'files' => [],
-            ];
+            return ['enabled'=>false,'runtime'=>'browser','preview_enabled'=>false,'language'=>null,'label'=>null,'filename'=>null,'run_command'=>null,'initial_code'=>'','files'=>[]];
         }
-
-        $runtime = in_array($profile['language'], ['node', 'php', 'laravel'], true)
-            ? 'server'
-            : 'browser';
-
+        $files = collect($workspaceFiles ?: [])->filter(fn($file)=>is_array($file)&&!empty($file['path']))
+            ->map(fn($file)=>['path'=>$file['path'],'content'=>(string)($file['content']??'')])->values()->all();
+        if ($files === []) {
+            $files = [['path'=>$workspaceFile ?: $profile['filename'],'content'=>$codeExample ?: '']];
+        }
         return [
-            'enabled' => true,
-            'runtime' => $runtime,
-            'preview_enabled' => $profile['preview'],
-            'language' => $profile['language'],
-            'label' => $profile['label'],
-            'filename' => $profile['filename'],
-            'run_command' => $profile['run_command'],
-            'initial_code' => $codeExample ?: $profile['starter'],
-            'files' => [
-                [
-                    'path' => $profile['filename'],
-                    'content' => $codeExample ?: $profile['starter'],
-                ],
-            ],
+            'enabled'=>true,
+            'runtime'=>in_array($key,['laravel','php','node'],true)?'server':'browser',
+            'preview_enabled'=>$profile['preview'],
+            'language'=>$key,
+            'label'=>$profile['label'],
+            'filename'=>$files[0]['path'] ?? $profile['filename'],
+            'run_command'=>in_array($key,['laravel','php','node'],true) ? ($key==='laravel'?'php artisan route:list':($key==='node'?'node '.$files[0]['path']:'php '.$files[0]['path'])) : null,
+            'initial_code'=>$files[0]['content'] ?? '',
+            'files'=>$files,
         ];
     }
+
 }
