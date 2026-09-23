@@ -129,6 +129,8 @@ class RoadmapController extends Controller
                         'estimated_minutes' => $step->estimated_minutes,
                         'position' => $step->position,
                         'status' => $step->status,
+                        'difficulty_level' => $step->difficulty_level,
+                        'academic_level' => $step->academic_level,
                     ]
                 )->values(),
             ],
