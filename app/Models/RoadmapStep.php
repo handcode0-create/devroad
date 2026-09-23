@@ -40,6 +40,8 @@ class RoadmapStep extends Model
         'estimated_minutes',
         'position',
         'status',
+        'difficulty_level',
+        'academic_level',
     ];
 
     protected $casts = [
