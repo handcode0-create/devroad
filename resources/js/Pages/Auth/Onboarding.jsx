@@ -9,18 +9,18 @@ const levelLabels = {
     professional: 'Professionnel',
 };
 
-export default function Onboarding({ academicLevels, technologies, goals, categories }) {
+export default function Onboarding({ academicLevels, technologies, goals, categories, profile }) {
     const categoryEntries = Object.entries(categories ?? {});
     const [step, setStep] = useState(0);
     const [categoryIndex, setCategoryIndex] = useState(0);
     const [technologySearch, setTechnologySearch] = useState('');
 
     const { data, setData, post, processing, errors } = useForm({
-        academic_level: '',
-        experience_years: '',
-        technologies: [],
-        goals: [],
-        answers: {},
+        academic_level: profile?.academic_level ?? '',
+        experience_years: profile?.experience_years ?? '',
+        technologies: profile?.technologies ?? [],
+        goals: profile?.goals ?? [],
+        answers: profile?.answers ?? {},
     });
 
     const currentCategory = categoryEntries[categoryIndex]?.[1];
