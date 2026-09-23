@@ -16,10 +16,6 @@ class OnboardingController extends Controller
     {
         $profile = $request->user()->learningProfile;
 
-        if ($profile?->completed_at) {
-            return redirect()->route('dashboard');
-        }
-
         $categories = collect(config('devroad_onboarding.categories'))
             ->map(fn (array $category) => [
                 'label' => $category['label'],
@@ -38,6 +34,13 @@ class OnboardingController extends Controller
             'technologies' => config('devroad_onboarding.technologies'),
             'goals' => config('devroad_onboarding.goals'),
             'categories' => $categories,
+            'profile' => $profile ? [
+                'academic_level' => $profile->academic_level,
+                'experience_years' => $profile->experience_years,
+                'technologies' => $profile->technologies ?? [],
+                'goals' => $profile->goals ?? [],
+                'answers' => $profile->assessment_answers ?? [],
+            ] : null,
         ]);
     }
 
