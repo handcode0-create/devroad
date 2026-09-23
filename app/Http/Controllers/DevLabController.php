@@ -94,6 +94,7 @@ class DevLabController extends Controller
                         $selectedStep->code_example,
                         $selectedStep->workspace_file,
                         $selectedStep->workspace_language,
+                        $selectedStep->workspace_files,
                     ),
                 ]
                 : null,
