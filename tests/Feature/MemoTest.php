@@ -37,12 +37,17 @@ class MemoTest extends TestCase
         $this->assertDatabaseMissing('memos', ['user_id' => $autre->id]);
     }
 
-    public function test_un_memo_sans_titre_ou_sans_contenu_est_refuse(): void
+    public function test_un_memo_sans_titre_genere_un_titre_depuis_le_contenu_et_sans_contenu_est_refuse(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post('/memos', ['title' => '', 'content' => 'abc'])
+        $this->actingAs($user)->post('/memos', ['title' => '', 'content' => 'Ma première note Laravel'])
             ->assertRedirect();
+
+        $this->assertDatabaseHas('memos', [
+            'title' => 'Ma première note Laravel',
+            'user_id' => $user->id,
+        ]);
 
         $this->actingAs($user)->post('/memos', ['title' => 'ab', 'content' => 'abc'])
             ->assertSessionHasErrors('title');
