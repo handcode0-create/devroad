@@ -221,14 +221,34 @@ class MemoController extends Controller
             $copy->cover_attachment_id = null;
             $copy->save();
 
+            $attachmentMap = [];
             foreach ($memo->attachments as $attachment) {
                 $newAttachment = $attachment->replicate();
                 $newAttachment->memo_id = $copy->id;
                 $newAttachment->user_id = $copy->user_id;
                 $newAttachment->save();
+                $attachmentMap[$attachment->id] = $newAttachment->id;
                 if ($memo->cover_attachment_id === $attachment->id) {
                     $copy->cover_attachment_id = $newAttachment->id;
                 }
+            }
+
+            if ($attachmentMap !== []) {
+                $copy->content = preg_replace_callback(
+                    '/data-attachment-id=(["\\'])(\\d+)\\1/i',
+                    fn ($match) => isset($attachmentMap[(int) $match[2]])
+                        ? 'data-attachment-id=' . $match[1] . $attachmentMap[(int) $match[2]] . $match[1]
+                        : $match[0],
+                    $copy->content ?? ''
+                );
+
+                $copy->content = preg_replace_callback(
+                    '#/memos/attachments/(\\d+)(/download)?#',
+                    fn ($match) => isset($attachmentMap[(int) $match[1]])
+                        ? '/memos/attachments/' . $attachmentMap[(int) $match[1]] . ($match[2] ?? '')
+                        : $match[0],
+                    $copy->content ?? ''
+                );
             }
 
             $copy->save();
