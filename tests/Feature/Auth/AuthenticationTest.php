@@ -54,7 +54,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('onboarding.create', absolute: false));
+        $response->assertRedirect(route('onboarding.level', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
