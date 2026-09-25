@@ -7,6 +7,8 @@ import { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEdit
 
 export default function Edit({ memo, folders = [] }) {
     const [saved, setSaved] = useState(false);
+    const [existingAttachments, setExistingAttachments] = useState(memo.attachments ?? []);
+    const [attachmentProcessingId, setAttachmentProcessingId] = useState(null);
 
     const form = useForm({
         title: memo.title ?? '',
@@ -20,6 +22,19 @@ export default function Edit({ memo, folders = [] }) {
         cover_attachment_id: memo.cover_attachment_id ?? null,
         is_full_width: Boolean(memo.is_full_width),
     });
+
+    function deleteAttachment(attachment) {
+        if (attachmentProcessingId || !window.confirm('Supprimer « ' + attachment.name + ' » ?')) return;
+        setAttachmentProcessingId(attachment.id);
+        router.delete('/memos/attachments/' + attachment.id, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setExistingAttachments((current) => current.filter((item) => item.id !== attachment.id));
+                if (Number(form.data.cover_attachment_id) === Number(attachment.id)) form.setData('cover_attachment_id', null);
+            },
+            onFinish: () => setAttachmentProcessingId(null),
+        });
+    }
 
     function submit(normalized = null) {
         setSaved(false);
@@ -38,6 +53,7 @@ export default function Edit({ memo, folders = [] }) {
             forceFormData: true,
             onSuccess: (page) => {
                 const nextMemo = page.props.memo ?? memo;
+                setExistingAttachments(nextMemo.attachments ?? []);
                 const nextData = {
                     title: nextMemo.title ?? '',
                     content: normalizeMemoContent(nextMemo.content ?? ''),
@@ -66,7 +82,9 @@ export default function Edit({ memo, folders = [] }) {
                 <MemoForm
                     form={form}
                     folders={folders}
-                    attachments={memo.attachments ?? []}
+                    attachments={existingAttachments}
+                    onDeleteAttachment={deleteAttachment}
+                    attachmentProcessingId={attachmentProcessingId}
                     onSubmit={submit}
                     saved={saved}
                     submitLabel="Enregistrer"
