@@ -9,6 +9,7 @@ import TagBadge from '@/Components/Memos/TagBadge';
 import { buttonClass } from '@/Components/Ui/buttons';
 import Modal from '@/Components/Ui/Modal';
 import ConfirmModal from '@/Components/Ui/ConfirmModal';
+import useGsapScrollReveal from '@/hooks/useGsapScrollReveal';
 
 function listUrl({ tag, favorites, recent, q, folder, trash, sort }) {
     const params = new URLSearchParams();
@@ -48,6 +49,8 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [forceDeleteMemoTarget, setForceDeleteMemoTarget] = useState(null);
     const [searchInput, setSearchInput] = useState(null);
     const [loading, setLoading] = useState(false);
+    const animationRef = useRef(null);
+    useGsapScrollReveal(animationRef, [items.length, view, filters.folder, filters.q, filters.trash]);
 
     useEffect(() => { setQuery(filters.q ?? ''); }, [filters.q]);
     useEffect(() => { try { localStorage.setItem('devroad:memos:view', view); } catch {} }, [view]);
@@ -369,7 +372,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     return (
         <AppLayout>
             <Head title="Fiches mémo" />
-            <div className="space-y-5">
+            <div ref={animationRef} className="space-y-5">
                 <PageHeader title="Fiches mémo" subtitle="Un espace de rangement façon Notion pour organiser tes connaissances, commandes et astuces." actions={
                     <Link href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className={buttonClass('primary')}>
                         <Plus size={16} aria-hidden="true" />
@@ -378,7 +381,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                     </Link>
                 } />
 
-                <div className="flex items-center gap-2 lg:hidden">
+                <div data-gsap-reveal className="flex items-center gap-2 lg:hidden">
                     <button type="button" onClick={() => setMobileLibraryOpen((open) => !open)} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0D1725] px-3 py-2 text-xs font-semibold text-slate-300">
                         <Folder size={15} className="text-[#FF8A3D]" /> Rangement
                         <ChevronDown size={14} className={mobileLibraryOpen ? 'rotate-180 transition' : 'transition'} />
@@ -386,8 +389,8 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                     <span className="truncate text-xs text-slate-500">{activeFolder}</span>
                 </div>
 
-                <div className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
-                    <aside className={(mobileLibraryOpen ? 'block' : 'hidden') + ' lg:block'}>
+                <div data-gsap-reveal className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
+                    <aside data-gsap-reveal className={(mobileLibraryOpen ? 'block' : 'hidden') + ' lg:block'}>
                         <div className="sticky top-5 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-3">
                             <div className="mb-3 flex items-center gap-2 px-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF6A00]/10 text-[#FF8A3D]"><Folder size={16} /></div>
@@ -423,7 +426,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                         </div>
                     </aside>
 
-                    <section className="min-w-0">
+                    <section data-gsap-reveal className="min-w-0">
                         <div className="mb-4 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-3">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                 <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
