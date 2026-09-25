@@ -4,12 +4,15 @@ import BottomNav from '@/Components/Navigation/BottomNav';
 import ToastViewport from '@/Components/Ui/ToastViewport';
 import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
 import { Box, Code2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
 
 export default function AppLayout({ children }) {
     const { auth } = usePage().props;
     const [navigating, setNavigating] = useState(false);
     const [loadingLabel, setLoadingLabel] = useState('Chargement...');
+    const contentRef = useRef(null);
+    const currentUrl = usePage().url;
     const user = auth?.user;
 
     useEffect(() => {
@@ -19,6 +22,34 @@ export default function AppLayout({ children }) {
             document.documentElement.dataset.theme = 'dark';
         };
     }, [user?.light_mode]);
+
+    useLayoutEffect(() => {
+        const root = contentRef.current;
+        const page = root?.firstElementChild;
+
+        if (!root || !page || typeof window === 'undefined') return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const targets = Array.from(page.children);
+        if (!targets.length) return;
+
+        const context = gsap.context(() => {
+            gsap.fromTo(
+                targets,
+                { autoAlpha: 0, y: 16 },
+                {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration: 0.52,
+                    stagger: 0.055,
+                    ease: 'power3.out',
+                    clearProps: 'transform,opacity,visibility',
+                },
+            );
+        }, root);
+
+        return () => context.revert();
+    }, [currentUrl]);
 
     useEffect(() => {
         const removeStartListener = router.on('start', (event) => {
@@ -93,7 +124,7 @@ export default function AppLayout({ children }) {
                 </header>
 
                 <main className="min-h-[calc(100dvh-64px)] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:min-h-[calc(100dvh-72px)] lg:pb-8">
-                    <div className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
+                    <div ref={contentRef} className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
                         {children}
                     </div>
                 </main>
