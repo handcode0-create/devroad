@@ -11,6 +11,7 @@ import {
     Settings2,
     ShieldCheck,
     Target,
+    GraduationCap,
     UserRound,
     Sun,
     Moon,
@@ -85,6 +86,22 @@ export default function Edit({
         });
     };
 
+    const learningProfile = usePage().props.learningProfile;
+
+    const levelLabels = {
+        beginner: 'Débutant',
+        intermediate: 'Intermédiaire',
+        professional: 'Professionnel',
+    };
+
+    const levelDescriptions = {
+        beginner: 'Tu construis tes fondamentaux et tes premières habitudes de développement.',
+        intermediate: 'Tu consolides tes pratiques et développes des projets plus structurés.',
+        professional: 'Tu approfondis l’architecture, la qualité et les pratiques de production.',
+    };
+
+    const selectedLevel = learningProfile?.level;
+    const recommendedLevel = learningProfile?.assessment_scores?.recommended_level;
     const preferencesSaved = status === 'preferences-updated';
 
     const toggleLightMode = (value) => {
@@ -150,6 +167,29 @@ export default function Edit({
                             <ShieldCheck size={14} />
                             Compte sécurisé
                         </div>
+                    </div>
+                </section>
+
+                <section
+                    id="niveau-apprentissage"
+                    className="scroll-mt-24 overflow-hidden rounded-3xl border border-[#FF6A00]/15 bg-gradient-to-br from-[#FF6A00]/10 via-[#0D1725] to-[#0D1725] p-5 sm:p-7"
+                >
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FF6A00]/10 text-[#FF8A3D]">
+                                <GraduationCap size={22} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#FF8A3D]">Niveau d’apprentissage</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <h2 className="text-xl font-bold text-white">{levelLabels[selectedLevel] ?? 'Non défini'}</h2>
+                                    {selectedLevel && <span className="rounded-full border border-[#FF6A00]/25 bg-[#FF6A00]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FF8A3D]">Niveau choisi</span>}
+                                </div>
+                                <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-400">{levelDescriptions[selectedLevel] ?? 'Choisis ton niveau pour personnaliser les évaluations et recommandations DevRoad.'}</p>
+                                {recommendedLevel && recommendedLevel !== selectedLevel && <p className="mt-2 text-xs text-slate-500">Le questionnaire recommande : <span className="font-semibold text-slate-300">{levelLabels[recommendedLevel]}</span>.</p>}
+                            </div>
+                        </div>
+                        <Link href={route('onboarding.level')} className="inline-flex w-full shrink-0 items-center justify-center rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-4 py-2.5 text-sm font-bold text-[#FF8A3D] transition hover:bg-[#FF6A00]/15 sm:w-auto">Modifier mon niveau</Link>
                     </div>
                 </section>
 
