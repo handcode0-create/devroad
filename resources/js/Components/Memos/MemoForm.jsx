@@ -94,7 +94,6 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
                     </div>
                 )}
                 <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3">
-                <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3">
                     <label htmlFor="attachments" data-disabled={attachments.length + selectedFiles.length >= 8 ? 'true' : undefined} className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/[0.08] px-4 py-4 text-xs font-semibold text-slate-400 transition hover:border-[#FF6A00]/30 hover:text-white">
                         <ImagePlus size={16} className="text-[#FF8A3D]" />
                         {attachments.length + selectedFiles.length >= 8 ? 'Limite de 8 fichiers atteinte' : 'Ajouter des fichiers ou images'}
