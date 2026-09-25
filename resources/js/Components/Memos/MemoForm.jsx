@@ -30,7 +30,12 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
 
     function handleSubmit(event) {
         event.preventDefault();
-        onSubmit(event);
+        if (!processing) onSubmit();
+    }
+
+    function handleButtonClick(event) {
+        event.preventDefault();
+        if (!processing) onSubmit();
     }
 
     return (
@@ -101,7 +106,7 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
             </label>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
-                <button type="submit" disabled={processing} className={buttonClass('primary')}>
+                <button type="button" onClick={handleButtonClick} disabled={processing} className={buttonClass('primary')}>
                     {processing ? 'Enregistrement...' : saved && !isDirty ? 'Enregistré ✓' : submitLabel}
                 </button>
                 <Link href={cancelHref} className={buttonClass('secondary')}>Annuler</Link>
