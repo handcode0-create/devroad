@@ -238,7 +238,7 @@ class MemoController extends Controller
 
             if ($attachmentMap !== []) {
                 $copy->content = preg_replace_callback(
-                    '/data-attachment-id=(["\\'])(\\d+)\\1/i',
+                    "/data-attachment-id=(\"|')(\\d+)\\1/i",
                     fn ($match) => isset($attachmentMap[(int) $match[2]])
                         ? 'data-attachment-id=' . $match[1] . $attachmentMap[(int) $match[2]] . $match[1]
                         : $match[0],
