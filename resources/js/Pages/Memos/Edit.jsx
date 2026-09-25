@@ -27,7 +27,7 @@ export default function Edit({ memo, folders = [] }) {
 
         form.transform((data) => {
             const content = normalized?.content ?? normalizeMemoContent(data.content);
-            const title = normalized?.title ?? data.title.trim() || autoMemoTitle(content) || '';
+            const title = normalized?.title ?? (data.title.trim() || autoMemoTitle(content) || '');
 
             return {
                 ...data,
