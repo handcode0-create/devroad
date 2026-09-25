@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AuthLayout, { AuthLink } from '@/Components/Auth/AuthLayout';
 import AuthButton from '@/Components/Auth/AuthButton';
