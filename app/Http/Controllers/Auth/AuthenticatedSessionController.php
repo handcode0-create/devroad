@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
 
         $destination = $request->user()->learningProfile?->completed_at
             ? route('dashboard', absolute: false)
-            : route('onboarding.create', absolute: false);
+            : route('onboarding.level', absolute: false);
 
         return redirect()->intended($destination);
     }
