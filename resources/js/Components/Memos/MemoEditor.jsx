@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, CaseLower, CaseUpper, CheckSquare, Code2, FileText, Heading1, Heading2, Heading3, Image as ImageIcon, List, ListOrdered, Minus, Paperclip, Plus, Quote, Sparkles, Type } from 'lucide-react';
 
 const FONTS = [
@@ -130,6 +130,21 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
     const editorRef = useRef(null);
     const [slashOpen, setSlashOpen] = useState(false);
     const initializedRef = useRef(false);
+    const lastEmittedContentRef = useRef(null);
+
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        const next = sanitizeMemoHtml(content ?? '');
+        if (!initializedRef.current) return;
+        if (lastEmittedContentRef.current === next) return;
+        if (sanitizeMemoHtml(editor.innerHTML) === next) {
+            lastEmittedContentRef.current = next;
+            return;
+        }
+        editor.innerHTML = memoValueToHtml(content ?? '');
+        lastEmittedContentRef.current = next;
+    }, [content]);
 
     function update(key, value) {
         onFormattingChange({ ...style, [key]: value });
@@ -141,6 +156,7 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
 
     function emitContent() {
         const html = sanitizeMemoHtml(editorRef.current?.innerHTML ?? '');
+        lastEmittedContentRef.current = html;
         onContentChange(html);
         return html;
     }
@@ -386,4 +402,4 @@ function SlashMenu({ query, attachments, onSelect, onInsertAttachment }) {
         {query === 'image' && attachments.filter((item) => item.is_image).length > 0 && <div className="mt-2 flex gap-2 overflow-x-auto border-t border-white/[0.05] pt-2">{attachments.filter((item) => item.is_image).slice(0, 6).map((item) => <button key={item.id} type="button" onClick={() => onInsertAttachment(item)} className="shrink-0 overflow-hidden rounded-lg border border-white/[0.06]"><img src={item.url} alt={item.name} className="h-14 w-14 object-cover" /></button>)}</div>}
     </div>;
 }
-function FormatButton({ active, onClick, label, children }) { return <button type="button" onClick={onClick} aria-label={label} title={label} className={'flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-[#08111F] transition ' + (active ? 'text-white' : 'text-slate-500 hover:text-white')}>{children}</button>; }
+function FormatButton({ active, onClick, label, children }) { return <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={onClick} aria-label={label} title={label} className={'flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-[#08111F] transition ' + (active ? 'text-white' : 'text-slate-500 hover:text-white')}>{children}</button>; }
