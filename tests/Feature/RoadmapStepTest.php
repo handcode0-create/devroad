@@ -126,16 +126,15 @@ class RoadmapStepTest extends TestCase
         ]);
     }
 
-    public function test_une_etape_suivante_est_verrouillee_tant_que_la_courante_n_est_pas_terminee(): void
+    public function test_une_etape_suivante_reste_accessible_tant_que_la_courante_n_est_pas_terminee(): void
     {
         $user = User::factory()->create();
         $roadmap = $this->roadmapAvecEtapes($user, 3);
-        $premiere = $roadmap->steps()->where('position', 1)->first();
         $deuxieme = $roadmap->steps()->where('position', 2)->first();
 
         $this->actingAs($user)
             ->get(route('steps.show', $deuxieme))
-            ->assertRedirect(route('steps.show', $premiere));
+            ->assertOk();
     }
 
     public function test_consulter_l_etape_courante_enregistre_le_suivi(): void
