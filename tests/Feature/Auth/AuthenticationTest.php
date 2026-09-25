@@ -41,7 +41,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('app.splash', absolute: false));
     }
 
     public function test_users_without_learning_profile_are_sent_to_onboarding(): void
