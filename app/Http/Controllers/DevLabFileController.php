@@ -49,6 +49,12 @@ class DevLabFileController extends Controller
 
     private function validateFile(Request $request, DevLabProject $project, ?DevLabFile $file = null): array
     {
+        // Normaliser avant la règle unique : « foo\\bar » et « foo/bar »
+        // désignent le même fichier dans le workspace.
+        $request->merge([
+            'path' => str_replace('\\', '/', trim((string) $request->input('path', ''))),
+        ]);
+
         $validated = $request->validate([
             'path' => ['required', 'string', 'max:' . self::MAX_PATH_LENGTH,
                 Rule::unique('devlab_files', 'path')->where(fn ($query) => $query->where('devlab_project_id', $project->id))->ignore($file?->id)],
