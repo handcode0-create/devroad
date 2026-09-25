@@ -53,6 +53,19 @@ class MemoTest extends TestCase
         $this->assertDatabaseCount('memos', 0);
     }
 
+    public function test_la_recherche_des_memos_est_insensible_a_la_casse(): void
+    {
+        $user = User::factory()->create();
+        $user->memos()->create(['title' => 'Laravel Routing', 'content' => 'middleware']);
+        $user->memos()->create(['title' => 'Docker', 'content' => 'containers']);
+
+        $this->withoutVite();
+        $this->actingAs($user)
+            ->get(route('memos.index', ['q' => 'laravel']))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('memos.data.0.title', 'Laravel Routing'));
+    }
+
     public function test_un_memo_cree_depuis_le_formulaire_associe_et_dedoublonne_les_tags(): void
     {
         $user = User::factory()->create();
