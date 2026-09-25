@@ -24,6 +24,12 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'learningProfile' => $user->learningProfile ? [
+                'level' => $user->learningProfile->level,
+                'level_source' => $user->learningProfile->level_source,
+                'assessment_scores' => $user->learningProfile->assessment_scores,
+                'completed_at' => $user->learningProfile->completed_at?->toIso8601String(),
+            ] : null,
             'preferences' => [
                 'learning_goal' => $user->learning_goal,
                 'daily_goal_minutes' => $user->daily_goal_minutes,
