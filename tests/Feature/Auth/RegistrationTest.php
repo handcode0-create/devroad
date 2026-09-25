@@ -54,13 +54,14 @@ class RegistrationTest extends TestCase
         $user = User::factory()->create();
 
         $answers = [];
-        foreach (config('devroad_onboarding.categories') as $category) {
+        foreach (config('devroad_assessment.levels.intermediate.categories') as $category) {
             foreach ($category['questions'] as $question) {
                 $answers[$question['id']] = $question['options'][0]['id'];
             }
         }
 
         $response = $this->actingAs($user)->postJson(route('onboarding.store'), [
+            'level' => 'intermediate',
             'academic_level' => 'engineering',
             'experience_years' => 3,
             'technologies' => ['php', 'laravel', 'javascript'],
@@ -74,9 +75,37 @@ class RegistrationTest extends TestCase
 
         $this->assertNotNull($profile);
         $this->assertSame('engineering', $profile->academic_level);
-        $this->assertSame('professional', $profile->level);
+        $this->assertSame('intermediate', $profile->level);
+        $this->assertSame('intermediate', $profile->assessment_scores['assessed_level']);
         $this->assertSame(['php', 'laravel', 'javascript'], $profile->technologies);
         $this->assertNotNull($profile->completed_at);
+    }
+
+    public function test_assessment_questions_are_specific_to_the_selected_level(): void
+    {
+        $beginner = $this->get(route('onboarding.level'));
+        $beginner->assertStatus(302);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('onboarding.level.store'), [
+            'level' => 'beginner',
+        ]);
+
+        $beginnerPage = $this->actingAs($user)->get(route('onboarding.create'));
+        $beginnerPage->assertStatus(200);
+
+        $this->actingAs($user)->post(route('onboarding.level.store'), [
+            'level' => 'professional',
+        ]);
+
+        $professionalPage = $this->actingAs($user)->get(route('onboarding.create'));
+        $professionalPage->assertStatus(200);
+
+        $this->assertNotSame(
+            config('devroad_assessment.levels.beginner.categories.fundamentals.questions.0.question'),
+            config('devroad_assessment.levels.professional.categories.fundamentals.questions.0.question')
+        );
     }
 
     public function test_incomplete_onboarding_is_rejected(): void
