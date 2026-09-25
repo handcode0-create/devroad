@@ -15,7 +15,8 @@ import {
     Play,
     BookMarked,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import useGsapScrollReveal from '@/hooks/useGsapScrollReveal';
 
 import AppLayout from '@/Layouts/AppLayout';
 import technologyLogos from '@/Config/technologyLogos';
@@ -28,6 +29,8 @@ const TABS = [
 
 export default function Show({ roadmap }) {
     const [activeTab, setActiveTab] = useState('steps');
+    const animationRef = useRef(null);
+    useGsapScrollReveal(animationRef, [activeTab, steps.length, resources.length]);
     const progress = clampProgress(roadmap?.progress);
     const steps = Array.isArray(roadmap?.steps) ? roadmap.steps : [];
     const resources = Array.isArray(roadmap?.resources) ? roadmap.resources : [];
@@ -41,8 +44,8 @@ export default function Show({ roadmap }) {
         <AppLayout>
             <Head title={roadmap?.title ?? 'Feuille de route'} />
 
-            <div className="space-y-6">
-                <div className="flex items-center justify-between gap-4">
+            <div ref={animationRef} className="space-y-6">
+                <div data-gsap-reveal className="flex items-center justify-between gap-4">
                     <Link
                         href="/roadmaps"
                         className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
@@ -60,7 +63,7 @@ export default function Show({ roadmap }) {
                     </Link>
                 </div>
 
-                <section className="overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725]">
+                <section data-gsap-reveal className="overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725]">
                     <div className="p-5 sm:p-7">
                         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                             <div className="flex min-w-0 items-start gap-4">
@@ -130,7 +133,7 @@ export default function Show({ roadmap }) {
                     </div>
                 </section>
 
-                <nav className="grid grid-cols-3 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-1.5" aria-label="Navigation de la roadmap">
+                <nav data-gsap-reveal className="grid grid-cols-3 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-1.5" aria-label="Navigation de la roadmap">
                     {TABS.map((tab) => {
                         const Icon = tab.icon;
                         const active = activeTab === tab.id;
@@ -177,7 +180,7 @@ export default function Show({ roadmap }) {
 function StepsTab({ steps, currentStep, roadmapId }) {
     return (
         <>
-            <section>
+            <section data-gsap-reveal>
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 className="text-lg font-bold text-white">Tes cours</h2>
