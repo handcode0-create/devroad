@@ -15,15 +15,8 @@ class StoreMemoRequest extends FormRequest
     {
         $content = $this->sanitizeContent((string) $this->input('content', ''));
 
-        $title = trim((string) $this->input('title', ''));
-        if ($title === '') {
-            $plain = html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            $plain = preg_replace('/\\s+/u', ' ', trim($plain)) ?? '';
-            $title = mb_substr($plain, 0, 255);
-        }
-
         $this->merge([
-            'title' => $title,
+            'title' => trim((string) $this->input('title', '')),
             'content' => $content,
         ]);
     }
