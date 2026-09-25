@@ -249,6 +249,39 @@ class MemoTest extends TestCase
         $this->assertNull($memo->fresh()->deleted_at);
     }
 
+    public function test_la_duplication_remappe_les_references_des_pieces_jointes(): void
+    {
+        $user = User::factory()->create();
+        $memo = $user->memos()->create([
+            'title' => 'Avec pièce jointe',
+            'content' => 'contenu',
+        ]);
+        $attachment = $memo->attachments()->create([
+            'user_id' => $user->id,
+            'name' => 'image.png',
+            'mime_type' => 'image/png',
+            'size' => 3,
+            'data' => 'abc',
+        ]);
+        $memo->update([
+            'content' => '<figure data-attachment-id="' . $attachment->id . '"><img src="/memos/attachments/' . $attachment->id . '"></figure>'
+                . '<a href="/memos/attachments/' . $attachment->id . '/download">Télécharger</a>',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('memos.duplicate', $memo))
+            ->assertRedirect();
+
+        $copy = $user->memos()->where('title', 'Avec pièce jointe — Copie')->firstOrFail();
+        $newAttachment = $copy->attachments()->firstOrFail();
+
+        $this->assertNotSame($attachment->id, $newAttachment->id);
+        $this->assertStringContainsString('data-attachment-id="' . $newAttachment->id . '"', $copy->content);
+        $this->assertStringContainsString('/memos/attachments/' . $newAttachment->id . '"', $copy->content);
+        $this->assertStringContainsString('/memos/attachments/' . $newAttachment->id . '/download', $copy->content);
+        $this->assertStringNotContainsString('data-attachment-id="' . $attachment->id . '"', $copy->content);
+    }
+
     public function test_les_actions_groupees_et_la_corbeille_definitive_sont_isolees_par_utilisateur(): void
     {
         $user = User::factory()->create();
