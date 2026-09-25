@@ -69,7 +69,7 @@ class RegistrationTest extends TestCase
             'answers' => $answers,
         ]);
 
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('app.splash', absolute: false));
 
         $profile = UserLearningProfile::where('user_id', $user->id)->first();
 
