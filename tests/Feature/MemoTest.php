@@ -58,6 +58,65 @@ class MemoTest extends TestCase
         $this->assertDatabaseCount('memos', 1);
     }
 
+    public function test_un_memo_cree_depuis_le_formulaire_associe_et_dedoublonne_les_tags(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('memos.store'), [
+                'title' => 'Mes notes',
+                'content' => 'Contenu des notes',
+                'tags' => ['Laravel', 'laravel', ' React ', '', null],
+            ])
+            ->assertRedirect();
+
+        $memo = $user->memos()->latest('id')->first();
+
+        $this->assertNotNull($memo);
+        $this->assertCount(2, $memo->tags);
+        $this->assertSame(
+            ['laravel', 'react'],
+            $memo->tags()->orderBy('slug')->pluck('slug')->all()
+        );
+        $this->assertDatabaseHas('tags', [
+            'user_id' => $user->id,
+            'name' => 'Laravel',
+            'slug' => 'laravel',
+        ]);
+    }
+
+    public function test_la_mise_a_jour_dun_memo_remplace_les_tags_et_ne_touche_pas_ceux_dun_autre_utilisateur(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        $memo = $user->memos()->create(['title' => 'Tags', 'content' => 'contenu']);
+        $memo->syncTagNames(['Laravel', 'Git']);
+
+        $foreignMemo = $other->memos()->create(['title' => 'Autre', 'content' => 'contenu']);
+        $foreignMemo->syncTagNames(['Laravel']);
+
+        $this->actingAs($user)
+            ->put(route('memos.update', $memo), [
+                'title' => 'Tags modifiés',
+                'content' => 'contenu',
+                'tags' => ['React', 'react'],
+            ])
+            ->assertRedirect(route('memos.edit', $memo));
+
+        $this->assertSame(['react'], $memo->fresh()->tags()->pluck('slug')->all());
+        $this->assertSame(['laravel'], $foreignMemo->fresh()->tags()->pluck('slug')->all());
+
+        $this->assertDatabaseHas('tags', [
+            'user_id' => $user->id,
+            'slug' => 'react',
+        ]);
+        $this->assertDatabaseHas('tags', [
+            'user_id' => $other->id,
+            'slug' => 'laravel',
+        ]);
+    }
+
     public function test_un_memo_peut_etre_cree_directement_depuis_un_cours(): void
     {
         $user = User::factory()->create();
