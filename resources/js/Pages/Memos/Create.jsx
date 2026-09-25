@@ -2,7 +2,6 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import MemoForm from '@/Components/Memos/MemoForm';
-import { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function Create({ folders = [], defaultFolderId = null }) {
     const form = useForm({
@@ -18,21 +17,9 @@ export default function Create({ folders = [], defaultFolderId = null }) {
         is_full_width: false,
     });
 
-    function submit(event, normalized = null) {
+    function submit(event) {
         event.preventDefault();
-
-        form.transform((data) => {
-            const content = normalized?.content ?? normalizeMemoContent(data.content);
-            const title = normalized?.title ?? (data.title.trim() || autoMemoTitle(content) || '');
-
-            return {
-                ...data,
-                title,
-                content,
-            };
-        }).post('/memos', {
-            forceFormData: true,
-        });
+        form.post('/memos');
     }
 
     return (
