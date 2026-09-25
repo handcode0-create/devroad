@@ -23,7 +23,7 @@ export default function Create({ folders = [], defaultFolderId = null }) {
 
         form.transform((data) => {
             const content = normalized?.content ?? normalizeMemoContent(data.content);
-            const title = normalized?.title ?? data.title.trim() || autoMemoTitle(content) || '';
+            const title = normalized?.title ?? (data.title.trim() || autoMemoTitle(content) || '');
 
             return {
                 ...data,
