@@ -77,6 +77,25 @@ class MemoAttachmentController extends Controller
     public function destroy(Request $request, MemoAttachment $attachment): RedirectResponse
     {
         abort_unless($attachment->user_id === $request->user()->id, 404);
+
+        $memo = $attachment->memo;
+        $id = (int) $attachment->id;
+        $content = (string) $memo->content;
+        $content = preg_replace(
+            '#<figure\\b[^>]*data-attachment-id=["\\\']' . $id . '["\\\'][^>]*>.*?</figure>#is',
+            '',
+            $content
+        ) ?? $content;
+        $content = preg_replace(
+            '#<p>\\s*<a\\b[^>]*href=["\\\']/memos/attachments/' . $id . '(?:/download)?["\\\'][^>]*>.*?</a>\\s*</p>#is',
+            '',
+            $content
+        ) ?? $content;
+
+        if ($content !== $memo->content) {
+            $memo->update(['content' => $content]);
+        }
+
         $attachment->delete();
 
         return back()->with('success', 'Fichier supprimé.');
