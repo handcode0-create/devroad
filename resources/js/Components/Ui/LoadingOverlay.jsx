@@ -21,6 +21,7 @@ export default function LoadingOverlay({ visible = false, label = 'Chargement...
 
     return (
         <div
+            ref={rootRef}
             className="fixed inset-0 z-[200] flex items-center justify-center bg-[#050B12]/45 px-4 backdrop-blur-[2px]"
             role="status"
             aria-live="polite"
