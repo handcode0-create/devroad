@@ -478,17 +478,18 @@ class RoadmapStepController extends Controller
     ): RedirectResponse {
         $this->authorize('update', $roadmap);
 
-        $data = $request->validated();
+        DB::transaction(function () use ($request, $roadmap) {
+            $roadmap->user()->lockForUpdate()->first();
 
-        if (!array_key_exists('position', $data)) {
-            $lastPosition = $roadmap->steps()->max('position');
+            $data = $request->validated();
 
-            $data['position'] = $lastPosition === null
-                ? 1
-                : $lastPosition + 1;
-        }
+            if (! array_key_exists('position', $data)) {
+                $lastPosition = $roadmap->steps()->max('position');
+                $data['position'] = $lastPosition === null ? 1 : $lastPosition + 1;
+            }
 
-        $roadmap->steps()->create($data);
+            $roadmap->steps()->create($data);
+        });
 
         return redirect()
             ->route('roadmaps.show', $roadmap)
