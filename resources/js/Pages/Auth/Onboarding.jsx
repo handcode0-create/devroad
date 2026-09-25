@@ -16,6 +16,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
     const [technologySearch, setTechnologySearch] = useState('');
 
     const { data, setData, post, processing, errors } = useForm({
+        level: profile?.level ?? '',
         academic_level: profile?.academic_level ?? '',
         experience_years: profile?.experience_years ?? '',
         technologies: profile?.technologies ?? [],
@@ -107,7 +108,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                 'Quelques informations pour personnaliser ton expérience.',
                 'Choisis ce que tu veux apprendre. Aucun parcours ne sera verrouillé.',
                 'Réponds naturellement : cette évaluation sert à adapter les recommandations.',
-                'Ton niveau personnalise ton accueil, pas ton accès aux cours.',
+                'Ton niveau choisi est conservé. Le questionnaire fournit aussi une recommandation.',
             ][step]}
             footer={
                 <AuthLink href={route('logout')} method="post" as="button">
@@ -231,14 +232,36 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
 
             {step === 3 && (
                 <section className="space-y-5">
-                    <div className="rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] p-5 text-center">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
-                            Niveau recommandé
-                        </p>
-                        <p className="mt-2 text-3xl font-bold text-white">{levelLabels[estimatedLevel]}</p>
-                        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
-                            Tu peux modifier ton parcours plus tard. Aucun niveau ne bloque les cours.
-                        </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] p-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                Ton niveau
+                            </p>
+                            <p className="mt-2 text-2xl font-bold text-white">
+                                {levelLabels[data.level] ?? 'Non défini'}
+                            </p>
+                            <p className="mt-2 text-xs leading-5 text-slate-400">
+                                Niveau choisi au début de ton inscription.
+                            </p>
+                            <Link
+                                href={route('onboarding.level')}
+                                className="mt-3 inline-flex text-xs font-semibold text-[#FF8A3D] hover:text-[#FFA66E]"
+                            >
+                                Modifier mon niveau
+                            </Link>
+                        </div>
+
+                        <div className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                Recommandation du questionnaire
+                            </p>
+                            <p className="mt-2 text-2xl font-bold text-white">
+                                {levelLabels[estimatedLevel]}
+                            </p>
+                            <p className="mt-2 text-xs leading-5 text-slate-400">
+                                Cette recommandation est enregistrée avec ton score sans remplacer ton choix.
+                            </p>
+                        </div>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
