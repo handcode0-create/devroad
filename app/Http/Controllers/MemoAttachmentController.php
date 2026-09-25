@@ -19,6 +19,8 @@ class MemoAttachmentController extends Controller
             'attachments.*' => ['file', 'max:5120', 'mimes:jpg,jpeg,png,gif,webp,pdf,txt,md,json,csv,zip'],
         ]);
 
+        abort_if($memo->attachments()->count() + count($data['attachments']) > 8, 422, 'Une fiche ne peut pas contenir plus de 8 pièces jointes.');
+
         foreach ($data['attachments'] as $file) {
             $memo->attachments()->create([
                 'user_id' => $request->user()->id,
