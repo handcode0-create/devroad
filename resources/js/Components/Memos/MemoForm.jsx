@@ -32,17 +32,12 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
         event.preventDefault();
 
         const normalizedContent = normalizeMemoContent(data.content);
+        const normalizedTitle = data.title.trim() || autoMemoTitle(normalizedContent) || '';
 
-        if (normalizedContent !== data.content) {
-            setData('content', normalizedContent);
-        }
-
-        if (!data.title.trim()) {
-            const title = autoMemoTitle(normalizedContent);
-            if (title) setData('title', title);
-        }
-
-        onSubmit(event);
+        onSubmit(event, {
+            title: normalizedTitle,
+            content: normalizedContent,
+        });
     }
 
     return (
