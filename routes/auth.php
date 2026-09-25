@@ -32,11 +32,16 @@ Route::middleware('guest')->group(function () {
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
 
-    Route::post('reset-password', [NewPasswordController::class, 'store'])
-        ->name('password.store');
+    Route::post('reset-password', [NewPasswordController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('onboarding/level', [OnboardingController::class, 'level'])
+        ->name('onboarding.level');
+
+    Route::post('onboarding/level', [OnboardingController::class, 'storeLevel'])
+        ->name('onboarding.level.store');
+
     Route::get('onboarding', [OnboardingController::class, 'create'])
         ->name('onboarding.create');
 
