@@ -65,7 +65,7 @@ class RegistrationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('onboarding.store'), [
+        $response = $this->actingAs($user)->postJson(route('onboarding.store'), [
             'academic_level' => 'licence',
             'experience_years' => 0,
             'technologies' => ['php'],
