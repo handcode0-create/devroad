@@ -1,11 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { File, Folder, ImagePlus, X } from 'lucide-react';
+import { Download, File, Folder, ImagePlus, Trash2, X } from 'lucide-react';
 import { Field, inputClass } from '@/Components/Ui/Field';
 import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
 import MemoEditor, { autoMemoTitle } from '@/Components/Memos/MemoEditor';
 
-export default function MemoForm({ form, onSubmit, saved = false, submitLabel, cancelHref, folders = [], attachments = [] }) {
+export default function MemoForm({ form, onSubmit, saved = false, submitLabel, cancelHref, folders = [], attachments = [], onDeleteAttachment = null, attachmentProcessingId = null }) {
     const { data, setData, errors, processing, isDirty } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
@@ -72,13 +72,33 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
                 </div>
             </Field>
 
-            <Field label="Fichiers et images" htmlFor="attachments" hint="Images, PDF, Markdown, JSON, CSV ou ZIP · 5 Mo maximum par fichier.">
+            <Field label="Fichiers et images" htmlFor="attachments" hint={`Images, PDF, Markdown, JSON, CSV ou ZIP · 5 Mo maximum par fichier · ${attachments.length}/8 fichiers déjà enregistrés.`}>
+                {attachments.length > 0 && (
+                    <div className="mb-3 space-y-2">
+                        {attachments.map((file) => (
+                            <div key={file.id} className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#08111F] px-3 py-2.5">
+                                {file.is_image ? <img src={file.url} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <File size={18} className="shrink-0 text-slate-500" />}
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-xs font-medium text-slate-300">{file.name}</p>
+                                    <p className="text-[10px] text-slate-600">{Math.max(1, Math.round(file.size / 1024))} Ko · {file.mime_type}</p>
+                                </div>
+                                <a href={file.download_url} className="rounded-lg p-1.5 text-slate-500 hover:bg-white/[0.05] hover:text-white" title="Télécharger" aria-label={"Télécharger " + file.name}>
+                                    <Download size={14} />
+                                </a>
+                                {onDeleteAttachment && <button type="button" disabled={attachmentProcessingId === file.id} onClick={() => onDeleteAttachment(file)} className="rounded-lg p-1.5 text-slate-500 hover:bg-red-400/[0.08] hover:text-red-300 disabled:opacity-40" title="Supprimer" aria-label={"Supprimer " + file.name}>
+                                    <Trash2 size={14} />
+                                </button>}
+                            </div>
+                        ))}
+                    </div>
+                )}
                 <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3">
-                    <label htmlFor="attachments" className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/[0.08] px-4 py-4 text-xs font-semibold text-slate-400 transition hover:border-[#FF6A00]/30 hover:text-white">
+                <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3">
+                    <label htmlFor="attachments" data-disabled={attachments.length + selectedFiles.length >= 8 ? 'true' : undefined} className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/[0.08] px-4 py-4 text-xs font-semibold text-slate-400 transition hover:border-[#FF6A00]/30 hover:text-white">
                         <ImagePlus size={16} className="text-[#FF8A3D]" />
-                        Ajouter des fichiers ou images
+                        {attachments.length + selectedFiles.length >= 8 ? 'Limite de 8 fichiers atteinte' : 'Ajouter des fichiers ou images'}
                     </label>
-                    <input id="attachments" type="file" multiple accept="image/*,.pdf,.md,.txt,.json,.csv,.zip" onChange={addFiles} className="sr-only" />
+                    <input id="attachments" type="file" multiple disabled={attachments.length + selectedFiles.length >= 8} accept="image/*,.pdf,.md,.txt,.json,.csv,.zip" onChange={addFiles} className="sr-only" />
                     {selectedFiles.length > 0 && (
                         <ul className="mt-3 space-y-2">
                             {selectedFiles.map((file, index) => (
