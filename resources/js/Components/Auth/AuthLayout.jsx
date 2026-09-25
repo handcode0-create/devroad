@@ -1,6 +1,8 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import BrandPanel, { Brand } from '@/Components/Auth/BrandPanel';
 import OnboardingSwipe from '@/Components/OnboardingSwipe';
+import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
+import { useEffect, useState } from 'react';
 
 // Mise en page commune des écrans d'authentification.
 // Desktop : panneau de marque (5/11) + formulaire (6/11).
@@ -10,6 +12,18 @@ import OnboardingSwipe from '@/Components/OnboardingSwipe';
 // (0 = /, 1 = /login, 2 = /register). Il active le balayage entre ces écrans
 // (OnboardingSwipe) et les trois points d'étape sur mobile.
 export default function AuthLayout({ title, subtitle, footer, swipeStep, children }) {
+    const [navigating, setNavigating] = useState(false);
+
+    useEffect(() => {
+        const removeStartListener = router.on('start', () => setNavigating(true));
+        const removeFinishListener = router.on('finish', () => setNavigating(false));
+
+        return () => {
+            removeStartListener();
+            removeFinishListener();
+        };
+    }, []);
+
     const layout = (
         <div className="min-h-dvh bg-[#08111F] font-sans text-white lg:grid lg:grid-cols-[5fr_6fr]">
             <BrandPanel />
@@ -58,12 +72,17 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
         </div>
     );
 
-    return swipeStep === undefined ? (
+    return (
+        <>
+            <LoadingOverlay visible={navigating} label="Chargement..." />
+            {swipeStep === undefined ? (
         layout
     ) : (
         <OnboardingSwipe step={swipeStep} className="min-h-dvh">
             {layout}
         </OnboardingSwipe>
+            )}
+        </>
     );
 }
 
