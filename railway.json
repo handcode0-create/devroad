@@ -10,7 +10,7 @@
       "sh scripts/railway-predeploy.sh"
     ],
     "healthcheckPath": "/up",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 121,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
