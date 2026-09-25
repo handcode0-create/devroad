@@ -42,7 +42,7 @@ class RegistrationTest extends TestCase
             }
         }
 
-        $response = $this->actingAs($user)->post(route('onboarding.store'), [
+        $response = $this->actingAs($user)->postJson(route('onboarding.store'), [
             'academic_level' => 'engineering',
             'experience_years' => 3,
             'technologies' => ['php', 'laravel', 'javascript'],
