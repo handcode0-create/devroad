@@ -198,6 +198,32 @@ class MemoAttachmentTest extends TestCase
         $this->assertSame(8, $memo->attachments()->count());
     }
 
+    public function test_supprimer_une_piece_jointe_retire_aussi_ses_references_inline(): void
+    {
+        $user = User::factory()->create();
+        $memo = $this->memoDe($user);
+        $attachment = $memo->attachments()->create([
+            'user_id' => $user->id,
+            'name' => 'image.png',
+            'mime_type' => 'image/png',
+            'size' => 3,
+            'data' => 'abc',
+        ]);
+        $memo->update([
+            'content' => '<p>Avant</p><figure data-attachment-id="' . $attachment->id . '"><img src="/memos/attachments/' . $attachment->id . '" alt="image"></figure><p><a href="/memos/attachments/' . $attachment->id . '/download">image.png</a></p><p>Après</p>',
+        ]);
+
+        $this->actingAs($user)
+            ->delete('/memos/attachments/' . $attachment->id)
+            ->assertRedirect();
+
+        $saved = $memo->fresh()->content;
+        $this->assertStringNotContainsString('data-attachment-id="' . $attachment->id . '"', $saved);
+        $this->assertStringNotContainsString('/memos/attachments/' . $attachment->id, $saved);
+        $this->assertStringContainsString('Avant', $saved);
+        $this->assertStringContainsString('Après', $saved);
+    }
+
     public function test_supprimer_une_fiche_supprime_ses_pieces_jointes(): void
     {
         $user = User::factory()->create();
