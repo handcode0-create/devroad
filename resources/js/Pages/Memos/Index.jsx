@@ -33,6 +33,9 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const [folderName, setFolderName] = useState('');
     const [folderProcessing, setFolderProcessing] = useState(false);
     const [deleteFolderTarget, setDeleteFolderTarget] = useState(null);
+    const [moveFolderTarget, setMoveFolderTarget] = useState(null);
+    const [moveFolderParentId, setMoveFolderParentId] = useState('');
+    const [moveFolderProcessing, setMoveFolderProcessing] = useState(false);
     const [moveMemoTarget, setMoveMemoTarget] = useState(null);
     const [moveFolderId, setMoveFolderId] = useState('');
     const [moveProcessing, setMoveProcessing] = useState(false);
@@ -121,6 +124,24 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     function renameFolder(folder) {
         setFolderModal({ open: true, mode: 'rename', folder, parentId: folder.parent_id ?? null });
         setFolderName(folder.name);
+    }
+
+    function openMoveFolder(folder) {
+        setActiveFolderMenu(null);
+        setMoveFolderTarget(folder);
+        setMoveFolderParentId(folder.parent_id ? String(folder.parent_id) : '');
+    }
+
+    function submitMoveFolder() {
+        if (!moveFolderTarget || moveFolderProcessing) return;
+        const parentId = moveFolderParentId ? Number(moveFolderParentId) : null;
+        if (parentId === moveFolderTarget.id) return;
+        setMoveFolderProcessing(true);
+        router.patch('/memo-folders/' + moveFolderTarget.id, { parent_id: parentId }, {
+            preserveScroll: true,
+            onSuccess: () => setMoveFolderTarget(null),
+            onFinish: () => setMoveFolderProcessing(false),
+        });
     }
 
     function submitFolder() {
@@ -413,7 +434,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
-                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onDelete={deleteFolder} activeMenu={activeFolderMenu} onMenu={(id) => setActiveFolderMenu((current) => current === id ? null : id)} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
+                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onMove={openMoveFolder} onDelete={deleteFolder} activeMenu={activeFolderMenu} onMenu={(id) => setActiveFolderMenu((current) => current === id ? null : id)} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
                                     {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
@@ -499,7 +520,13 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                 }}
             />
 
-            <ConfirmModal show={Boolean(deleteFolderTarget)} title={'Supprimer « ' + (deleteFolderTarget?.name ?? '') + ' » ?'} description="Les fiches seront conservées mais retirées de ce dossier. Les sous-dossiers remonteront d'un niveau." confirmLabel="Supprimer le dossier" onClose={() => setDeleteFolderTarget(null)} onConfirm={confirmDeleteFolder} />
+            <Modal show={Boolean(moveFolderTarget)} onClose={() => !moveFolderProcessing && setMoveFolderTarget(null)} title="Déplacer le dossier" description="Choisis son dossier parent, ou remets-le à la racine." footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setMoveFolderTarget(null)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitMoveFolder} disabled={moveFolderProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{moveFolderProcessing ? 'Déplacement...' : 'Déplacer'}</button></div>}>
+                <select value={moveFolderParentId} onChange={(event) => setMoveFolderParentId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40">
+                    <option value="">Sans dossier — racine</option>
+                    {folderTree.filter((candidate) => candidate.id !== moveFolderTarget?.id && !getFolderPath(candidate.id).some((ancestor) => ancestor.id === moveFolderTarget?.id)).map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}
+                </select>
+            </Modal>
+            <ConfirmModal show={Boolean(deleteFolderTarget) title={'Supprimer « ' + (deleteFolderTarget?.name ?? '') + ' » ?'} description="Les fiches seront conservées mais retirées de ce dossier. Les sous-dossiers remonteront d'un niveau." confirmLabel="Supprimer le dossier" onClose={() => setDeleteFolderTarget(null)} onConfirm={confirmDeleteFolder} />
             <Modal show={Boolean(moveMemoTarget)} onClose={() => !moveProcessing && setMoveMemoTarget(null)} title="Déplacer la fiche" description="Choisis le dossier de destination, ou remets-la à la racine." footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setMoveMemoTarget(null)} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={moveMemo} disabled={moveProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{moveProcessing ? 'Déplacement...' : 'Déplacer'}</button></div>}>
                 <div className="rounded-xl border border-white/[0.06] bg-[#08111F] p-3"><p className="mb-2 truncate text-xs font-semibold text-white">{moveMemoTarget?.icon ?? '📝'} {moveMemoTarget?.title}</p><select value={moveFolderId} onChange={(event) => setMoveFolderId(event.target.value)} className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#0D1725] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40"><option value="">Sans dossier — racine</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{'— '.repeat(folder.depth ?? 0)}{folder.name}</option>)}</select></div>
             </Modal>
@@ -525,7 +552,7 @@ function buildFolderTree(folders) {
     return walk(0);
 }
 
-function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, activeMenu, onMenu, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
+function FolderNavItem({ folder, active, onCreateChild, onRename, onMove, onDelete, activeMenu, onMenu, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
     // Survol dans la moitié basse de la ligne = « insérer après » (réordonner) ;
     // reste de la ligne = « déposer dedans » (imbriquer comme sous-dossier).
     const [nestHover, setNestHover] = useState(false);
@@ -582,6 +609,7 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onDelete, acti
             >
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onCreateChild(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Nouveau sous-dossier</button>
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onRename(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Renommer</button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMove(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Déplacer</button>
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onDelete(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer</button>
             </div>}
         </div>
