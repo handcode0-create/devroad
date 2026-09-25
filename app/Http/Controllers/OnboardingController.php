@@ -5,16 +5,44 @@ namespace App\Http\Controllers;
 use App\Models\UserLearningProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OnboardingController extends Controller
 {
+    public function level(Request $request): Response
+    {
+        return Inertia::render('Auth/LevelSelection', [
+            'level' => $request->user()->learningProfile?->level,
+        ]);
+    }
+
+    public function storeLevel(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'level' => ['required', Rule::in(array_keys(config('devroad_onboarding.levels', [])))],
+        ]);
+
+        $profile = UserLearningProfile::firstOrNew([
+            'user_id' => $request->user()->id,
+        ]);
+
+        $profile->level = $validated['level'];
+        $profile->level_source = 'self_assessed';
+        $profile->save();
+
+        return redirect()->route('onboarding.create');
+    }
+
     public function create(Request $request): Response|RedirectResponse
     {
         $profile = $request->user()->learningProfile;
+
+        if (! $profile?->level) {
+            return redirect()->route('onboarding.level');
+        }
 
         $categories = collect(config('devroad_onboarding.categories'))
             ->map(fn (array $category) => [
@@ -35,6 +63,8 @@ class OnboardingController extends Controller
             'goals' => config('devroad_onboarding.goals'),
             'categories' => $categories,
             'profile' => $profile ? [
+                'level' => $profile->level,
+                'level_source' => $profile->level_source,
                 'academic_level' => $profile->academic_level,
                 'experience_years' => $profile->experience_years,
                 'technologies' => $profile->technologies ?? [],
@@ -92,31 +122,40 @@ class OnboardingController extends Controller
         }
 
         $percentage = $maximum > 0 ? $total / $maximum * 100 : 0;
-        $level = match (true) {
+        $assessmentLevel = match (true) {
             $percentage >= 70 => 'professional',
             $percentage >= 40 => 'intermediate',
             default => 'beginner',
         };
 
-        UserLearningProfile::updateOrCreate(
-            ['user_id' => $request->user()->id],
-            [
-                'academic_level' => $request->string('academic_level')->toString(),
-                'level' => $level,
-                'level_source' => 'assessment',
-                'experience_years' => (int) $request->input('experience_years'),
-                'technologies' => array_values($request->input('technologies')),
-                'goals' => array_values($request->input('goals')),
-                'assessment_scores' => [
-                    'total' => $total,
-                    'max' => $maximum,
-                    'percentage' => (int) round($percentage),
-                    'categories' => $scores,
-                ],
-                'assessment_answers' => $answers,
-                'completed_at' => now(),
-            ]
-        );
+        $profile = UserLearningProfile::firstOrNew([
+            'user_id' => $request->user()->id,
+        ]);
+
+        $profile->fill([
+            'academic_level' => $request->string('academic_level')->toString(),
+            'experience_years' => (int) $request->input('experience_years'),
+            'technologies' => array_values($request->input('technologies')),
+            'goals' => array_values($request->input('goals')),
+            'assessment_scores' => [
+                'total' => $total,
+                'max' => $maximum,
+                'percentage' => (int) round($percentage),
+                'categories' => $scores,
+                'recommended_level' => $assessmentLevel,
+            ],
+            'assessment_answers' => $answers,
+            'completed_at' => now(),
+        ]);
+
+        // The level explicitly chosen by the user during onboarding remains
+        // the profile level. The assessment is stored as a recommendation.
+        if (! $profile->level) {
+            $profile->level = $assessmentLevel;
+            $profile->level_source = 'assessment';
+        }
+
+        $profile->save();
 
         return redirect()->route('dashboard')->with('onboarding_completed', true);
     }
