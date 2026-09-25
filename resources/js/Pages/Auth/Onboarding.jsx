@@ -194,6 +194,15 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
 
             {step === 2 && currentCategory && (
                 <section className="space-y-5">
+                    <div className="rounded-xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.05] px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                            Évaluation · {levelLabels[data.level] ?? 'Niveau'}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                            Les questions sont adaptées au niveau que tu as choisi.
+                        </p>
+                    </div>
+
                     <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
                             Catégorie {categoryIndex + 1} / {categoryEntries.length}
