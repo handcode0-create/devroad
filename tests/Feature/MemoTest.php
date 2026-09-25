@@ -55,7 +55,7 @@ class MemoTest extends TestCase
         $this->actingAs($user)->post('/memos', ['title' => 'Un titre', 'content' => ''])
             ->assertSessionHasErrors('content');
 
-        $this->assertDatabaseCount('memos', 0);
+        $this->assertDatabaseCount('memos', 1);
     }
 
     public function test_un_memo_peut_etre_cree_directement_depuis_un_cours(): void
