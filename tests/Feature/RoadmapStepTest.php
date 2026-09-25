@@ -532,7 +532,7 @@ class RoadmapStepTest extends TestCase
         $this->assertSame('todo', $step->fresh()->status);
     }
 
-    public function test_une_etape_future_peut_etre_consultee_et_terminee_directement(): void
+    public function test_une_etape_future_peut_etre_consultee_mais_reste_soumise_aux_regles_de_progression(): void
     {
         $user = User::factory()->create();
         $roadmap = $this->roadmapAvecEtapes($user, 3);
@@ -548,7 +548,7 @@ class RoadmapStepTest extends TestCase
 
         $this->assertDatabaseHas('roadmap_steps', [
             'id' => $deuxieme->id,
-            'status' => 'completed',
+            'status' => 'in_progress',
         ]);
     }
 
