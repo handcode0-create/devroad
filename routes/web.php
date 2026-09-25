@@ -17,6 +17,10 @@ use App\Http\Controllers\DevLabProjectController;
 use App\Http\Controllers\SandboxController;
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('app.splash');
+    }
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
@@ -49,6 +53,10 @@ Route::get('/robots.txt', function () {
         ['Content-Type' => 'text/plain; charset=UTF-8']
     );
 })->name('robots');
+
+Route::get('/app/splash', function () {
+    return Inertia::render('Auth/AppSplash');
+})->middleware(['auth', 'verified'])->name('app.splash');
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
