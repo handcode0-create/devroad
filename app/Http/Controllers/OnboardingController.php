@@ -156,7 +156,7 @@ class OnboardingController extends Controller
 
         $profile->save();
 
-        return redirect()->route('dashboard')->with('onboarding_completed', true);
+        return redirect()->route('app.splash')->with('onboarding_completed', true);
     }
 
     private function assessmentCategories(string $level): array
