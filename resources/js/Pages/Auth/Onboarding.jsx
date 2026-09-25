@@ -284,6 +284,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                 {Object.keys(errors).length > 0 && (
                 <p className="mt-4 text-sm text-red-400">{Object.values(errors)[0]}</p>
             )}
+                </form>
         </AuthLayout>
     );
 }
