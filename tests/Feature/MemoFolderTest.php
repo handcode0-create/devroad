@@ -192,6 +192,24 @@ class MemoFolderTest extends TestCase
         $this->assertSame(0, $etranger->fresh()->position);
     }
 
+    public function test_supprimer_un_dossier_recompose_les_positions_du_groupe_parent(): void
+    {
+        $user = User::factory()->create();
+        $a = $user->memoFolders()->create(['name' => 'A', 'icon' => 'folder', 'position' => 0]);
+        $middle = $user->memoFolders()->create(['name' => 'À supprimer', 'icon' => 'folder', 'position' => 1]);
+        $b = $user->memoFolders()->create(['name' => 'B', 'icon' => 'folder', 'position' => 2]);
+        $child = $user->memoFolders()->create(['name' => 'Enfant', 'icon' => 'folder', 'position' => 0, 'parent_id' => $middle->id]);
+
+        $this->actingAs($user)
+            ->delete('/memo-folders/' . $middle->id)
+            ->assertRedirect();
+
+        $this->assertSame(0, $a->fresh()->position);
+        $this->assertSame(1, $b->fresh()->position);
+        $this->assertSame(null, $child->fresh()->parent_id);
+        $this->assertSame(2, $child->fresh()->position);
+    }
+
     public function test_supprimer_un_dossier_detache_ses_fiches_et_remonte_ses_sous_dossiers(): void
     {
         $user = User::factory()->create();
