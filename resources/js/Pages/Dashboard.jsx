@@ -635,25 +635,49 @@ function QuickAction({ href, icon: Icon, title, description }) {
             href={href}
             className="
                 group
+                relative
+                isolate
+                flex
+                min-h-[104px]
+                overflow-hidden
                 rounded-2xl
                 border
                 border-white/[0.06]
                 bg-[#0D1725]
-                p-4
+                px-4
+                py-3.5
                 transition
                 hover:border-white/[0.11]
                 hover:bg-[#101B2C]
             "
         >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                <Icon size={19} strokeWidth={2} />
+            <Icon
+                aria-hidden="true"
+                size={76}
+                strokeWidth={1.35}
+                className="
+                    pointer-events-none
+                    absolute
+                    right-3
+                    top-1/2
+                    z-0
+                    -translate-y-1/2
+                    text-[#FF6A00]
+                    opacity-[0.08]
+                    transition
+                    duration-300
+                    group-hover:scale-105
+                    group-hover:opacity-[0.13]
+                "
+            />
+
+            <div className="relative z-10 flex min-w-0 max-w-[82%] flex-col justify-center">
+                <h3 className="text-sm font-semibold text-white">{title}</h3>
+
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {description}
+                </p>
             </div>
-
-            <h3 className="mt-4 text-sm font-semibold text-white">{title}</h3>
-
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-                {description}
-            </p>
         </Link>
     );
 }
