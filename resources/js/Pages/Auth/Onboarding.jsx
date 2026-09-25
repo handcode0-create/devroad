@@ -33,24 +33,48 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
         return total ? Math.round((answered / total) * 100) : 0;
     }, [categoryEntries, data.answers]);
 
-    const estimatedLevel = useMemo(() => {
+    const assessmentStats = useMemo(() => {
         let score = 0;
         let maximum = 0;
+        let correct = 0;
+        let answered = 0;
 
         categoryEntries.forEach((item) => {
             item[1].questions.forEach((question) => {
                 maximum += 2;
+
                 const answer = data.answers[question.id];
-                const option = question.options.find((choice) => choice.id === answer);
-                score += Number(option?.score ?? 0);
+                if (!answer) return;
+
+                answered += 1;
+
+                const selected = question.options.find((choice) => choice.id === answer);
+                if (Number(selected?.score ?? 0) > 0) {
+                    correct += 1;
+                }
+
+                score += Number(selected?.score ?? 0);
             });
         });
 
         const percentage = maximum ? (score / maximum) * 100 : 0;
+
+        return {
+            score,
+            maximum,
+            correct,
+            answered,
+            percentage,
+        };
+    }, [categoryEntries, data.answers]);
+
+    const estimatedLevel = useMemo(() => {
+        const percentage = assessmentStats.percentage;
+
         if (percentage >= 70) return 'professional';
         if (percentage >= 40) return 'intermediate';
         return 'beginner';
-    }, [categoryEntries, data.answers]);
+    }, [assessmentStats.percentage]);
 
     const filteredTechnologies = Object.entries(technologies ?? {}).filter((item) =>
         item[1].toLowerCase().includes(technologySearch.toLowerCase()) ||
@@ -228,30 +252,94 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                         </p>
                     </div>
 
-                    {currentQuestions.map((question, index) => (
-                        <div key={question.id} className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-4">
-                            <p className="text-sm font-semibold leading-6 text-white">
-                                {index + 1}. {question.question}
-                            </p>
-                            <div className="mt-3 space-y-2">
-                                {question.options.map((option) => (
-                                    <button
-                                        key={option.id}
-                                        type="button"
-                                        onClick={() => setData('answers', { ...data.answers, [question.id]: option.id })}
+                    {currentQuestions.map((question, index) => {
+                        const selectedId = data.answers[question.id];
+                        const selectedOption = question.options.find((option) => option.id === selectedId);
+                        const correctOption = question.options.find((option) => Number(option.score) > 0);
+                        const answeredQuestion = Boolean(selectedId);
+                        const isCorrect = answeredQuestion && Number(selectedOption?.score ?? 0) > 0;
+
+                        return (
+                            <div
+                                key={question.id}
+                                className={[
+                                    'rounded-2xl border bg-[#0D1725] p-4 transition',
+                                    answeredQuestion
+                                        ? isCorrect
+                                            ? 'border-emerald-400/20'
+                                            : 'border-red-400/20'
+                                        : 'border-white/[0.06]',
+                                ].join(' ')}
+                            >
+                                <p className="text-sm font-semibold leading-6 text-white">
+                                    {index + 1}. {question.question}
+                                </p>
+
+                                <div className="mt-3 space-y-2">
+                                    {question.options.map((option) => {
+                                        const isSelected = selectedId === option.id;
+                                        const isCorrectAnswer = answeredQuestion && option.id === correctOption?.id;
+
+                                        return (
+                                            <button
+                                                key={option.id}
+                                                type="button"
+                                                onClick={() => setData('answers', { ...data.answers, [question.id]: option.id })}
+                                                className={[
+                                                    'w-full rounded-xl border px-4 py-3 text-left text-sm transition',
+                                                    isSelected && isCorrect
+                                                        ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-100'
+                                                        : isSelected
+                                                            ? 'border-red-400/40 bg-red-400/10 text-red-100'
+                                                            : isCorrectAnswer
+                                                                ? 'border-emerald-400/30 bg-emerald-400/[0.06] text-emerald-200'
+                                                                : 'border-white/[0.07] bg-white/[0.02] text-slate-400 hover:border-white/[0.14] hover:text-white',
+                                                ].join(' ')}
+                                            >
+                                                <span className="flex items-center justify-between gap-3">
+                                                    <span>{option.label}</span>
+                                                    {isSelected && (
+                                                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.1em]">
+                                                            {isCorrect ? 'Correct' : 'À revoir'}
+                                                        </span>
+                                                    )}
+                                                    {!isSelected && isCorrectAnswer && (
+                                                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-300">
+                                                            Bonne réponse
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {answeredQuestion && (
+                                    <div
                                         className={[
-                                            'w-full rounded-xl border px-4 py-3 text-left text-sm transition',
-                                            data.answers[question.id] === option.id
-                                                ? 'border-[#FF6A00]/50 bg-[#FF6A00]/10 text-white'
-                                                : 'border-white/[0.07] bg-white/[0.02] text-slate-400 hover:border-white/[0.14] hover:text-white',
+                                            'mt-3 rounded-xl border px-3.5 py-3',
+                                            isCorrect
+                                                ? 'border-emerald-400/15 bg-emerald-400/[0.06]'
+                                                : 'border-red-400/15 bg-red-400/[0.06]',
                                         ].join(' ')}
                                     >
-                                        {option.label}
-                                    </button>
-                                ))}
+                                        <p className={[
+                                            'text-xs font-bold',
+                                            isCorrect ? 'text-emerald-300' : 'text-red-300',
+                                        ].join(' ')}>
+                                            {isCorrect ? '✓ Bonne réponse' : '✕ Réponse incorrecte'}
+                                        </p>
+
+                                        <p className="mt-1.5 text-xs leading-5 text-slate-400">
+                                            {isCorrect
+                                                ? 'Cette réponse correspond au concept attendu.'
+                                                : <>La bonne réponse est : <strong className="font-semibold text-slate-200">{correctOption?.label}</strong>.</>}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </section>
             )}
 
@@ -289,15 +377,43 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                         </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        {categoryEntries.map((item) => (
-                            <div key={item[0]} className="rounded-xl border border-white/[0.06] bg-[#0D1725] p-4">
-                                <p className="text-sm font-semibold text-white">{item[1].label}</p>
-                                <p className="mt-1 text-xs text-slate-500">
-                                    {item[1].questions.filter((question) => data.answers[question.id]).length}/{item[1].questions.length} réponses
+                    <div className="rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.05] p-4">
+                        <div className="flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                    Résultat de l’évaluation
+                                </p>
+                                <p className="mt-1 text-xl font-bold text-white">
+                                    {assessmentStats.correct} / {assessmentStats.answered} bonnes réponses
                                 </p>
                             </div>
-                        ))}
+                            <p className="text-2xl font-extrabold text-white">
+                                {Math.round(assessmentStats.percentage)}%
+                            </p>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                            Le niveau recommandé est calculé à partir des réponses corrigées, pas uniquement de ton choix initial.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {categoryEntries.map((item) => {
+                            const questions = item[1].questions;
+                            const answeredQuestions = questions.filter((question) => data.answers[question.id]);
+                            const correctAnswers = answeredQuestions.filter((question) => {
+                                const option = question.options.find((choice) => choice.id === data.answers[question.id]);
+                                return Number(option?.score ?? 0) > 0;
+                            });
+
+                            return (
+                                <div key={item[0]} className="rounded-xl border border-white/[0.06] bg-[#0D1725] p-4">
+                                    <p className="text-sm font-semibold text-white">{item[1].label}</p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        {correctAnswers.length}/{questions.length} bonnes réponses
+                                    </p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
             )}
