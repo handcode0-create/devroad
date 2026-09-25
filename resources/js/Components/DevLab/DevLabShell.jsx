@@ -1,5 +1,6 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import useGsapScrollReveal from "@/hooks/useGsapScrollReveal";
 import { ArrowLeft, Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
 
@@ -113,7 +114,23 @@ function inferLegacyTemplate(files){
 function ProjectMenu({onRename,onDuplicate,onDelete}){const [open,setOpen]=useState(false);return <div className="relative"><button onClick={()=>setOpen(!open)} className="min-h-10 min-w-10 rounded-xl text-slate-500 hover:bg-white/[.05]" aria-label="Actions"><MoreVertical size={17}/></button>{open&&<div className="absolute left-0 top-11 z-50 w-44 rounded-xl border border-white/[.08] bg-[#0D1725] p-1.5 shadow-2xl"><Action icon={Pencil} text="Renommer" onClick={()=>{setOpen(false);const n=window.prompt("Nom du projet");if(n)onRename(n)}}/><Action icon={Copy} text="Dupliquer" onClick={()=>{setOpen(false);onDuplicate()}}/><Action danger icon={Trash2} text="Supprimer" onClick={()=>{setOpen(false);if(window.confirm("Supprimer ce projet ?"))onDelete()}}/></div>}</div>}
 function Action({icon:Icon,text,onClick,danger}){return <button onClick={onClick} className={"flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs "+(danger?"text-red-400 hover:bg-red-500/10":"text-slate-400 hover:bg-white/[.05] hover:text-white")}><Icon size={13}/>{text}</button>}
 
-function ProjectHome({projects,loading,onOpen,onCreate}){return <main className="min-h-0 flex-1 overflow-auto p-4 sm:p-8"><div className="mx-auto max-w-6xl"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#FF8A3D]">Workspace</p><h1 className="mt-1 text-2xl font-extrabold sm:text-3xl">Mes projets</h1><p className="mt-2 max-w-xl text-sm text-slate-500">Un espace indépendant pour coder et organiser tes projets DevLab.</p>{loading?<p className="mt-8 text-sm text-slate-500">Chargement…</p>:projects.length?<div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{projects.map(p=><button key={p.id} onClick={()=>onOpen(p.id)} className="rounded-2xl border border-white/[.07] bg-[#0D1725] p-4 text-left hover:border-[#FF6A00]/30"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]"><FolderOpen size={18}/></span><span className="min-w-0"><b className="block truncate text-sm">{p.name}</b><small className="text-[10px] uppercase text-slate-600">{p.template} · {p.files_count??0} fichiers</small></span></div></button>)}</div>:<button onClick={onCreate} className="mt-8 w-full rounded-2xl border border-dashed border-white/[.1] p-10 text-center text-sm text-slate-500 hover:border-[#FF6A00]/30 hover:text-white"><Plus className="mx-auto text-[#FF8A3D]"/><span className="mt-3 block">Créer ton premier projet</span></button>}</div></main>}
+function ProjectHome({projects,loading,onOpen,onCreate}) {
+ const animationRef=useRef(null);
+ useGsapScrollReveal(animationRef,[projects.length,loading]);
+
+ return <main ref={animationRef} className="min-h-0 flex-1 overflow-auto p-4 sm:p-8">
+  <div className="mx-auto max-w-6xl">
+   <p data-gsap-reveal className="text-[10px] font-bold uppercase tracking-[.15em] text-[#FF8A3D]">Workspace</p>
+   <h1 data-gsap-reveal className="mt-1 text-2xl font-extrabold sm:text-3xl">Mes projets</h1>
+   <p data-gsap-reveal className="mt-2 max-w-xl text-sm text-slate-500">Un espace indépendant pour coder et organiser tes projets DevLab.</p>
+   {loading?<p data-gsap-reveal className="mt-8 text-sm text-slate-500">Chargement…</p>:projects.length?
+    <div data-gsap-reveal className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+     {projects.map(p=><button data-gsap-reveal key={p.id} onClick={()=>onOpen(p.id)} className="rounded-2xl border border-white/[.07] bg-[#0D1725] p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#FF6A00]/30"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]"><FolderOpen size={18}/></span><span className="min-w-0"><b className="block truncate text-sm">{p.name}</b><small className="text-[10px] uppercase text-slate-600">{p.template} · {p.files_count??0} fichiers</small></span></div></button>)}
+    </div>
+    :<button data-gsap-reveal onClick={onCreate} className="mt-8 w-full rounded-2xl border border-dashed border-white/[.1] p-10 text-center text-sm text-slate-500 transition hover:border-[#FF6A00]/30 hover:text-white"><Plus className="mx-auto text-[#FF8A3D]"/><span className="mt-3 block">Créer ton premier projet</span></button>}
+  </div>
+ </main>;
+}
 
 function Drawer({projects,onClose,onOpen,onCreate}){return <div className="absolute inset-0 z-40 bg-black/50" onClick={onClose}><aside onClick={e=>e.stopPropagation()} className="h-full w-[min(360px,88vw)] border-r border-white/[.08] bg-[#0B1523]"><div className="flex h-14 items-center justify-between border-b border-white/[.07] px-4"><b>Projets</b><button onClick={onClose} aria-label="Fermer"><X size={17}/></button></div><div className="p-3"><button onClick={onCreate} className="mb-3 flex w-full items-center gap-2 rounded-xl bg-[#FF6A00] px-3 py-2.5 text-xs font-bold text-[#08111F]"><Plus size={14}/> Nouveau projet</button>{projects.map(p=><button key={p.id} onClick={()=>onOpen(p.id)} className="mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-white/[.04]"><FolderOpen size={15} className="text-[#FF8A3D]"/><span className="truncate text-xs">{p.name}</span></button>)}</div></aside></div>}
 
