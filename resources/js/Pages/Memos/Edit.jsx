@@ -21,13 +21,13 @@ export default function Edit({ memo, folders = [] }) {
         is_full_width: Boolean(memo.is_full_width),
     });
 
-    function submit(event) {
+    function submit(event, normalized = null) {
         event.preventDefault();
         setSaved(false);
 
         form.transform((data) => {
-            const content = normalizeMemoContent(data.content);
-            const title = data.title.trim() || autoMemoTitle(content) || '';
+            const content = normalized?.content ?? normalizeMemoContent(data.content);
+            const title = normalized?.title ?? data.title.trim() || autoMemoTitle(content) || '';
 
             return {
                 ...data,
