@@ -172,6 +172,32 @@ class MemoAttachmentTest extends TestCase
         $this->assertDatabaseMissing('memo_attachments', ['id' => $attachment->id]);
     }
 
+    public function test_une_fiche_ne_peut_pas_depasser_huit_pieces_jointes_meme_en_modification(): void
+    {
+        $user = User::factory()->create();
+        $memo = $this->memoDe($user);
+        foreach (range(1, 8) as $i) {
+            $memo->attachments()->create([
+                'user_id' => $user->id,
+                'name' => "existant{$i}.txt",
+                'mime_type' => 'text/plain',
+                'size' => 1,
+                'data' => 'a',
+            ]);
+        }
+
+        $fichier = UploadedFile::fake()->create('neuvieme.txt', 1, 'text/plain');
+        $this->actingAs($user)
+            ->put(route('memos.update', $memo), [
+                'title' => 'Fiche',
+                'content' => 'contenu',
+                'attachments' => [$fichier],
+            ])
+            ->assertStatus(422);
+
+        $this->assertSame(8, $memo->attachments()->count());
+    }
+
     public function test_supprimer_une_fiche_supprime_ses_pieces_jointes(): void
     {
         $user = User::factory()->create();
