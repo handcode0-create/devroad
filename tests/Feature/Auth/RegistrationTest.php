@@ -28,7 +28,25 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        $response->assertRedirect(route('onboarding.level', absolute: false));
+    }
+
+    public function test_new_users_can_choose_their_learning_level_before_onboarding(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('onboarding.level.store'), [
+            'level' => 'intermediate',
+        ]);
+
         $response->assertRedirect(route('onboarding.create', absolute: false));
+
+        $profile = UserLearningProfile::where('user_id', $user->id)->first();
+
+        $this->assertNotNull($profile);
+        $this->assertSame('intermediate', $profile->level);
+        $this->assertSame('self_assessed', $profile->level_source);
+        $this->assertNull($profile->completed_at);
     }
 
     public function test_onboarding_creates_a_personalized_learning_profile(): void
