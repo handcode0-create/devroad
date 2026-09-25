@@ -108,6 +108,57 @@ class RegistrationTest extends TestCase
         );
     }
 
+    public function test_assessment_has_one_correct_answer_per_question(): void
+    {
+        foreach (config('devroad_assessment.levels') as $level => $definition) {
+            foreach ($definition['categories'] as $category) {
+                foreach ($category['questions'] as $question) {
+                    $correctOptions = collect($question['options'])
+                        ->filter(fn (array $option) => (int) ($option['score'] ?? 0) > 0);
+
+                    $this->assertCount(
+                        1,
+                        $correctOptions,
+                        "La question {$question['id']} du niveau {$level} doit avoir une seule bonne réponse."
+                    );
+                }
+            }
+        }
+    }
+
+    public function test_incorrect_answers_are_corrected_and_affect_the_recommendation(): void
+    {
+        $user = User::factory()->create();
+
+        $answers = [];
+        foreach (config('devroad_assessment.levels.intermediate.categories') as $category) {
+            foreach ($category['questions'] as $question) {
+                $wrongOption = collect($question['options'])
+                    ->first(fn (array $option) => (int) ($option['score'] ?? 0) === 0);
+
+                $answers[$question['id']] = $wrongOption['id'];
+            }
+        }
+
+        $response = $this->actingAs($user)->post(route('onboarding.store'), [
+            'level' => 'intermediate',
+            'academic_level' => 'engineering',
+            'experience_years' => 3,
+            'technologies' => ['php'],
+            'goals' => ['backend'],
+            'answers' => $answers,
+        ]);
+
+        $response->assertRedirect(route('app.splash', absolute: false));
+
+        $profile = UserLearningProfile::where('user_id', $user->id)->firstOrFail();
+
+        $this->assertSame(0, $profile->assessment_scores['total']);
+        $this->assertSame(30, $profile->assessment_scores['max']);
+        $this->assertSame(0, $profile->assessment_scores['percentage']);
+        $this->assertSame('beginner', $profile->assessment_scores['recommended_level']);
+    }
+
     public function test_incomplete_onboarding_is_rejected(): void
     {
         $user = User::factory()->create();
