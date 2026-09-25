@@ -21,8 +21,7 @@ export default function Edit({ memo, folders = [] }) {
         is_full_width: Boolean(memo.is_full_width),
     });
 
-    function submit(event, normalized = null) {
-        event.preventDefault();
+    function submit(normalized = null) {
         setSaved(false);
 
         form.transform((data) => {
