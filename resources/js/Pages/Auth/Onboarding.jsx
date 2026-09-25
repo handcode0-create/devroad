@@ -194,18 +194,34 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
 
             {step === 2 && currentCategory && (
                 <section className="space-y-5">
-                    <div className="rounded-xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.05] px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
-                            Évaluation · {levelLabels[data.level] ?? 'Niveau'}
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Les questions sont adaptées au niveau que tu as choisi.
-                        </p>
+                    <div className="rounded-2xl border border-[#FF6A00]/20 bg-gradient-to-br from-[#FF6A00]/10 to-[#FF6A00]/[0.03] p-4 sm:p-5">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#FF8A3D]">
+                                    Évaluation personnalisée
+                                </p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <h2 className="text-lg font-bold text-white">
+                                        Niveau {levelLabels[data.level] ?? 'sélectionné'}
+                                    </h2>
+                                    <span className="rounded-full border border-[#FF6A00]/25 bg-[#FF6A00]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FF8A3D]">
+                                        15 questions
+                                    </span>
+                                </div>
+                                <p className="mt-2 max-w-xl text-xs leading-5 text-slate-400">
+                                    Les questions sont adaptées à ton niveau choisi. Tu vas parcourir 5 catégories pour évaluer tes connaissances.
+                                </p>
+                            </div>
+                            <div className="shrink-0 text-left sm:text-right">
+                                <p className="text-2xl font-bold text-white">{assessmentProgress}%</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">progression</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
-                            Catégorie {categoryIndex + 1} / {categoryEntries.length}
+                            {currentCategory?.label ?? 'Catégorie'} · {categoryIndex + 1} / {categoryEntries.length}
                         </p>
                         <p className="text-xs text-slate-500">
                             {currentQuestions.filter((question) => data.answers[question.id]).length}/{currentQuestions.length}
