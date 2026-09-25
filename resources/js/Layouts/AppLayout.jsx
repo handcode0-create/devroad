@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
 import ToastViewport from '@/Components/Ui/ToastViewport';
+import LoadingSpinner from '@/Components/Ui/LoadingSpinner';
 import { Box, Code2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -34,8 +35,9 @@ export default function AppLayout({ children }) {
             user?.light_mode ? 'theme-light' : '',
         ].join(' ')} data-theme={user?.light_mode ? 'light' : 'dark'}>
             {navigating && (
-                <div className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-transparent">
-                    <div className="h-full w-1/3 animate-pulse bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)]" />
+                <div className="fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-transparent" role="status" aria-label="Chargement de la page">
+                    <div className="h-full w-1/3 animate-[loading-slide_1.1s_ease-in-out_infinite] rounded-full bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)] motion-reduce:animate-none" />
+                    <span className="sr-only"><LoadingSpinner size={1} label="Chargement..." /></span>
                 </div>
             )}
 
