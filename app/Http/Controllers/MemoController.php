@@ -41,10 +41,12 @@ class MemoController extends Controller
             ->when($tag, fn ($query) => $query->whereHas('tags', fn ($t) => $t->where('slug', $tag)))
             ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($search) use ($q) {
-                    $search->where('title', 'ilike', '%' . $q . '%')
-                        ->orWhere('content', 'ilike', '%' . $q . '%')
-                        ->orWhereHas('tags', fn ($tags) => $tags->where('name', 'ilike', '%' . $q . '%'));
+                $pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($q, 'UTF-8')) . '%';
+
+                $query->where(function ($search) use ($pattern) {
+                    $search->whereRaw("LOWER(title) LIKE ? ESCAPE '!' ", [$pattern])
+                        ->orWhereRaw("LOWER(content) LIKE ? ESCAPE '!' ", [$pattern])
+                        ->orWhereHas('tags', fn ($tags) => $tags->whereRaw("LOWER(name) LIKE ? ESCAPE '!' ", [$pattern]));
                 });
             })
             ->when($sort === 'updated_desc', fn ($query) => $query->orderByDesc('updated_at'))
