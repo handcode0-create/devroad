@@ -33,7 +33,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $destination = $request->user()->learningProfile?->completed_at\n            ? route('dashboard', absolute: false)\n            : route('onboarding.create', absolute: false);\n\n        return redirect()->intended($destination);
+        $destination = $request->user()->learningProfile?->completed_at
+            ? route('dashboard', absolute: false)
+            : route('onboarding.create', absolute: false);
+
+        return redirect()->intended($destination);
     }
 
     /**
