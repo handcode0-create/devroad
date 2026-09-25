@@ -111,6 +111,7 @@ class MemoController extends Controller
 
         $memo = DB::transaction(function () use ($request) {
             $this->assertFolderBelongsToUser($request);
+            $this->assertAttachmentLimit($request);
             $memo = $request->user()->memos()->create($request->safe()->except(['tags', 'attachments']));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
             $this->storeAttachments($request, $memo);
@@ -127,6 +128,7 @@ class MemoController extends Controller
 
         $memo = DB::transaction(function () use ($request) {
             $this->assertFolderBelongsToUser($request);
+            $this->assertAttachmentLimit($request);
             $memo = $request->user()->memos()->create($request->safe()->except(['tags', 'attachments']));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
 
@@ -178,6 +180,7 @@ class MemoController extends Controller
 
         DB::transaction(function () use ($request, $memo) {
             $this->assertFolderBelongsToUser($request, $memo);
+            $this->assertAttachmentLimit($request, $memo);
 
             $memo->update($request->safe()->except(['tags', 'attachments']));
 
@@ -330,6 +333,15 @@ class MemoController extends Controller
         $memo->update(['folder_id' => $data['folder_id']]);
 
         return back()->with('success', 'Fiche déplacée.');
+    }
+
+    private function assertAttachmentLimit(Request $request, ?Memo $memo = null): void
+    {
+        $incoming = count($request->file('attachments', []));
+        if ($incoming === 0) return;
+
+        $existing = $memo?->attachments()->count() ?? 0;
+        abort_if($existing + $incoming > 8, 422, 'Une fiche ne peut pas contenir plus de 8 pièces jointes.');
     }
 
     private function assertFolderBelongsToUser(Request $request, ?Memo $memo = null): void
