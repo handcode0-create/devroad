@@ -241,6 +241,29 @@ class DevLabProjectTest extends TestCase
 
         $this->assertDatabaseHas('devlab_files', ['path' => 'style.css', 'content' => '', 'size' => 0]);
     }
+    public function test_un_chemin_avec_separateurs_windows_est_normalise_avant_le_controle_d_unicite(): void
+    {
+        $user = User::factory()->create();
+        $project = $user->devLabProjects()->create([
+            'name' => 'Normalisation',
+            'template' => 'html',
+            'runtime' => 'browser',
+        ]);
+
+        $project->files()->create([
+            'path' => 'pages/home.html',
+            'content' => '<h1>Accueil</h1>',
+            'size' => 16,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('devlab.projects.files.store', $project), [
+                'path' => 'pages\\home.html',
+                'content' => '<h1>Copie</h1>',
+            ])
+            ->assertStatus(422);
+    }
+
     public function test_un_fichier_peut_etre_renomme_duplique_et_supprime(): void
     {
         $user = User::factory()->create();
