@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $destination = $request->user()->learningProfile?->completed_at
-            ? route('dashboard', absolute: false)
+            ? route('app.splash', absolute: false)
             : route('onboarding.level', absolute: false);
 
         return redirect()->intended($destination);
