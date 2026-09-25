@@ -36,7 +36,7 @@ export default function AppLayout({ children }) {
         ].join(' ')} data-theme={user?.light_mode ? 'light' : 'dark'}>
             {navigating && (
                 <div className="fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-transparent" role="status" aria-label="Chargement de la page">
-                    <div className="h-full w-1/3 animate-[loading-slide_1.1s_ease-in-out_infinite] rounded-full bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)] motion-reduce:animate-none" />
+                    <div className="h-full w-1/3 animate-pulse rounded-full bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)] motion-reduce:animate-none" />
                     <span className="sr-only"><LoadingSpinner size={1} label="Chargement..." /></span>
                 </div>
             )}
