@@ -143,7 +143,8 @@ class MemoController extends Controller
     public function show(Memo $memo): Response
     {
         Gate::authorize('view', $memo);
-        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'folder.parent', 'attachments:id,memo_id,name,mime_type,size,created_at']);
+        $memo->load(['tags:id,name,slug', 'folder:id,name,parent_id', 'attachments:id,memo_id,name,mime_type,size,created_at']);
+        $folders = $memo->user->memoFolders()->get(['id', 'name', 'parent_id']);
 
         return Inertia::render('Memos/Show', [
             'memo' => [
@@ -155,7 +156,7 @@ class MemoController extends Controller
                 'is_full_width' => $memo->is_full_width,
                 'attachments' => $this->formatAttachments($memo),
                 'cover' => $this->formatCover($memo),
-                'breadcrumbs' => $this->folderBreadcrumbs($memo->folder),
+                'breadcrumbs' => $this->folderBreadcrumbs($memo->folder, $folders),
             ],
         ]);
     }
@@ -421,14 +422,15 @@ class MemoController extends Controller
             : null;
     }
 
-    private function folderBreadcrumbs(?MemoFolder $folder): array
+    private function folderBreadcrumbs(?MemoFolder $folder, $folders = null): array
     {
         $items = [];
         $current = $folder;
+        $byId = collect($folders ?? [])->keyBy('id');
         $guard = 0;
         while ($current && $guard++ < 30) {
             array_unshift($items, $current->only('id', 'name', 'parent_id'));
-            $current = $current->parent;
+            $current = $current->parent_id !== null ? $byId->get($current->parent_id) : null;
         }
         return $items;
     }
