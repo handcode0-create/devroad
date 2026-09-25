@@ -19,7 +19,7 @@ return [
                             ['id' => 'c', 'label' => 'Remplacer le système d’exploitation', 'score' => 0],
                         ]],
                         ['id' => 'beginner_fundamentals_3', 'question' => 'Que permet principalement une condition if ?', 'options' => [
-                            ['id' => 'a', 'label' => Exécuter une partie du code selon une condition', 'score' => 2],
+                            ['id' => 'a', 'label' => 'Exécuter une partie du code selon une condition', 'score' => 2],
                             ['id' => 'b', 'label' => 'Installer une dépendance', 'score' => 0],
                             ['id' => 'c', 'label' => 'Compresser automatiquement les fichiers', 'score' => 0],
                         ]],
@@ -301,7 +301,7 @@ return [
                     'label' => 'Architecture & production',
                     'questions' => [
                         ['id' => 'professional_tools_1', 'question' => 'Quel est l’objectif d’un déploiement canary ?', 'options' => [
-                            ['id' => 'a', 'label' => Exposer progressivement une nouvelle version à une partie du trafic', 'score' => 2],
+                            ['id' => 'a', 'label' => 'Exposer progressivement une nouvelle version à une partie du trafic', 'score' => 2],
                             ['id' => 'b', 'label' => 'Désactiver définitivement la CI', 'score' => 0],
                             ['id' => 'c', 'label' => 'Remplacer les sauvegardes', 'score' => 0],
                         ]],
