@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
             ? route('app.splash', absolute: false)
             : route('onboarding.level', absolute: false);
 
-        return redirect()->intended($destination);
+        return redirect()->to($destination);
     }
 
     /**
