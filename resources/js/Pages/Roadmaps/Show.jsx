@@ -29,11 +29,11 @@ const TABS = [
 
 export default function Show({ roadmap }) {
     const [activeTab, setActiveTab] = useState('steps');
-    const animationRef = useRef(null);
-    useGsapScrollReveal(animationRef, [activeTab, steps.length, resources.length]);
     const progress = clampProgress(roadmap?.progress);
     const steps = Array.isArray(roadmap?.steps) ? roadmap.steps : [];
     const resources = Array.isArray(roadmap?.resources) ? roadmap.resources : [];
+    const animationRef = useRef(null);
+    useGsapScrollReveal(animationRef, [activeTab, steps.length, resources.length]);
     const logo = getTechnologyLogo(roadmap?.technology);
 
     const currentStep =
