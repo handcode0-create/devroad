@@ -15,7 +15,8 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
         const merged = [...selectedFiles, ...incoming].filter((file, index, files) =>
             files.findIndex((candidate) => candidate.name === file.name && candidate.size === file.size && candidate.lastModified === file.lastModified) === index,
         );
-        const valid = merged.filter((file) => file.size <= 5 * 1024 * 1024).slice(0, 8);
+        const available = Math.max(0, 8 - attachments.length);
+        const valid = merged.filter((file) => file.size <= 5 * 1024 * 1024).slice(0, available);
         setData('attachments', valid);
         event.target.value = '';
     }
