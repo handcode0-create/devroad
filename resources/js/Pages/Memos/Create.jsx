@@ -17,8 +17,7 @@ export default function Create({ folders = [], defaultFolderId = null }) {
         is_full_width: false,
     });
 
-    function submit(event) {
-        event.preventDefault();
+    function submit() {
         form.post('/memos');
     }
 
