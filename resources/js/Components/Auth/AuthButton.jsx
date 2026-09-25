@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import LoadingSpinner from '@/Components/Ui/LoadingSpinner';
 import { buttonClass } from '@/Components/Ui/buttons';
 
 // Bouton d'envoi des écrans d'authentification : variante « primary » du design
@@ -13,8 +13,7 @@ export default function AuthButton({ processing, children, busyLabel, disabled =
         >
             {processing ? (
                 <>
-                    <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                    {busyLabel}
+                    <LoadingSpinner size={18} label={busyLabel} />
                 </>
             ) : (
                 children
