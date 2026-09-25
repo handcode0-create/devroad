@@ -1,4 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
+import { useRef } from 'react';
+import useGsapScrollReveal from '@/hooks/useGsapScrollReveal';
 import {
     ArrowRight,
     BookOpen,
@@ -14,13 +16,15 @@ import technologyLogos from '@/Config/technologyLogos';
 
 export default function Index({ roadmaps }) {
     const items = roadmaps?.data ?? [];
+    const animationRef = useRef(null);
+    useGsapScrollReveal(animationRef, [items.length]);
 
     return (
         <AppLayout>
             <Head title="Roadmaps" />
 
-            <div className="space-y-6">
-                <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div ref={animationRef} className="space-y-6">
+                <header data-gsap-reveal className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <div className="mb-2 flex items-center gap-2 text-[#FF8A3D]">
                             <Route size={16} />
@@ -49,7 +53,7 @@ export default function Index({ roadmaps }) {
                 </header>
 
                 {items.length > 0 ? (
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div data-gsap-reveal className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {items.map((roadmap) => (
                             <RoadmapCard
                                 key={roadmap.id}
@@ -158,7 +162,7 @@ function RoadmapCard({ roadmap }) {
 
 function EmptyState() {
     return (
-        <div className="rounded-3xl border border-dashed border-white/[0.08] bg-[#0D1725] p-10 text-center">
+        <div data-gsap-reveal className="rounded-3xl border border-dashed border-white/[0.08] bg-[#0D1725] p-10 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FF6A00]/10 text-[#FF8A3D]">
                 <Route size={25} />
             </div>
@@ -185,7 +189,7 @@ function EmptyState() {
 
 function Pagination({ links }) {
     return (
-        <nav className="flex flex-wrap justify-center gap-1" aria-label="Pagination">
+        <nav data-gsap-reveal className="flex flex-wrap justify-center gap-1" aria-label="Pagination">
             {links.map((link, index) => (
                 <Link
                     key={index}
