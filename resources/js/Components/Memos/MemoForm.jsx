@@ -3,7 +3,7 @@ import { File, Folder, ImagePlus, X } from 'lucide-react';
 import { Field, inputClass } from '@/Components/Ui/Field';
 import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
-import MemoEditor, { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
+import MemoEditor, { autoMemoTitle } from '@/Components/Memos/MemoEditor';
 
 export default function MemoForm({ form, onSubmit, saved = false, submitLabel, cancelHref, folders = [], attachments = [] }) {
     const { data, setData, errors, processing, isDirty } = form;
@@ -30,14 +30,7 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
 
     function handleSubmit(event) {
         event.preventDefault();
-
-        const normalizedContent = normalizeMemoContent(data.content);
-        const normalizedTitle = data.title.trim() || autoMemoTitle(normalizedContent) || '';
-
-        onSubmit(event, {
-            title: normalizedTitle,
-            content: normalizedContent,
-        });
+        onSubmit(event);
     }
 
     return (
