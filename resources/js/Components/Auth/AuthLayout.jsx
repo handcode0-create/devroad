@@ -2,7 +2,8 @@ import { Link, router } from '@inertiajs/react';
 import BrandPanel, { Brand } from '@/Components/Auth/BrandPanel';
 import OnboardingSwipe from '@/Components/OnboardingSwipe';
 import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
 
 // Mise en page commune des écrans d'authentification.
 // Desktop : panneau de marque (5/11) + formulaire (6/11).
@@ -13,6 +14,34 @@ import { useEffect, useState } from 'react';
 // (OnboardingSwipe) et les trois points d'étape sur mobile.
 export default function AuthLayout({ title, subtitle, footer, swipeStep, children }) {
     const [navigating, setNavigating] = useState(false);
+    const contentRef = useRef(null);
+
+    useLayoutEffect(() => {
+        const root = contentRef.current;
+
+        if (!root || typeof window === 'undefined') return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const targets = Array.from(root.querySelectorAll('[data-auth-animate]'));
+        if (!targets.length) return;
+
+        const context = gsap.context(() => {
+            gsap.fromTo(
+                targets,
+                { autoAlpha: 0, y: 12 },
+                {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration: 0.48,
+                    stagger: 0.045,
+                    ease: 'power3.out',
+                    clearProps: 'transform,opacity,visibility',
+                },
+            );
+        }, root);
+
+        return () => context.revert();
+    }, []);
 
     useEffect(() => {
         const removeStartListener = router.on('start', () => setNavigating(true));
@@ -57,16 +86,16 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
                     </Link>
                 </header>
 
-                <main className="mx-auto flex w-full max-w-[27rem] flex-1 flex-col justify-center py-8 lg:py-14">
-                    <h1 className="font-display text-[2rem] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[2.5rem]">
+                <main ref={contentRef} className="mx-auto flex w-full max-w-[27rem] flex-1 flex-col justify-center py-8 lg:py-14">
+                    <h1 data-auth-animate className="font-display text-[2rem] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[2.5rem]">
                         {title}
                     </h1>
 
-                    {subtitle && <p className="mt-3 text-base leading-7 text-slate-400">{subtitle}</p>}
+                    {subtitle && <p data-auth-animate className="mt-3 text-base leading-7 text-slate-400">{subtitle}</p>}
 
-                    <div className="mt-9">{children}</div>
+                    <div data-auth-animate className="mt-9">{children}</div>
 
-                    {footer && <p className="mt-8 text-sm text-slate-400">{footer}</p>}
+                    {footer && <p data-auth-animate className="mt-8 text-sm text-slate-400">{footer}</p>}
                 </main>
             </div>
         </div>
