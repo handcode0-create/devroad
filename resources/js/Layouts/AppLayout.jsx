@@ -2,13 +2,14 @@ import { Link, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
 import ToastViewport from '@/Components/Ui/ToastViewport';
-import LoadingSpinner from '@/Components/Ui/LoadingSpinner';
+import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
 import { Box, Code2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function AppLayout({ children }) {
     const { auth } = usePage().props;
     const [navigating, setNavigating] = useState(false);
+    const [loadingLabel, setLoadingLabel] = useState('Chargement...');
     const user = auth?.user;
 
     useEffect(() => {
@@ -20,7 +21,11 @@ export default function AppLayout({ children }) {
     }, [user?.light_mode]);
 
     useEffect(() => {
-        const removeStartListener = router.on('start', () => setNavigating(true));
+        const removeStartListener = router.on('start', (event) => {
+            const method = event.detail?.visit?.method?.toUpperCase?.() ?? 'GET';
+            setLoadingLabel(method === 'GET' ? 'Chargement...' : 'Enregistrement...');
+            setNavigating(true);
+        });
         const removeFinishListener = router.on('finish', () => setNavigating(false));
 
         return () => {
@@ -34,12 +39,7 @@ export default function AppLayout({ children }) {
             'min-h-[100dvh] overflow-x-clip bg-[#08111F] text-white',
             user?.light_mode ? 'theme-light' : '',
         ].join(' ')} data-theme={user?.light_mode ? 'light' : 'dark'}>
-            {navigating && (
-                <div className="fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-transparent" role="status" aria-label="Chargement de la page">
-                    <div className="h-full w-1/3 animate-pulse rounded-full bg-[#FF6A00] shadow-[0_0_18px_rgba(255,106,0,0.8)] motion-reduce:animate-none" />
-                    <span className="sr-only"><LoadingSpinner size={1} label="Chargement..." /></span>
-                </div>
-            )}
+            <LoadingOverlay visible={navigating} label={loadingLabel} />
 
             <Sidebar user={user} />
 
