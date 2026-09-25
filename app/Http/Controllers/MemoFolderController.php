@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MemoFolder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MemoFolderController extends Controller
 {
@@ -20,12 +21,16 @@ class MemoFolderController extends Controller
             abort_unless($request->user()->memoFolders()->whereKey($parentId)->exists(), 404);
         }
 
-        $request->user()->memoFolders()->create([
-            'name' => trim($data['name']),
-            'parent_id' => $parentId,
-            'icon' => 'folder',
-            'position' => $this->endOfGroup($request, $parentId),
-        ]);
+        DB::transaction(function () use ($request, $data, $parentId) {
+            $request->user()->newQuery()->lockForUpdate()->findOrFail($request->user()->id);
+
+            $request->user()->memoFolders()->create([
+                'name' => trim($data['name']),
+                'parent_id' => $parentId,
+                'icon' => 'folder',
+                'position' => $this->endOfGroup($request, $parentId),
+            ]);
+        });
 
         return back()->with('success', 'Dossier créé.');
     }
@@ -67,7 +72,16 @@ class MemoFolderController extends Controller
             $attributes['parent_id'] = $parentId;
         }
 
-        $folder->update($attributes);
+        DB::transaction(function () use ($request, $folder, $attributes) {
+            $request->user()->newQuery()->lockForUpdate()->findOrFail($request->user()->id);
+            $folder->refresh();
+
+            if (array_key_exists('parent_id', $attributes) && (int) ($folder->parent_id ?? 0) !== (int) ($attributes['parent_id'] ?? 0)) {
+                $attributes['position'] = $this->endOfGroup($request, $attributes['parent_id'], $folder->id);
+            }
+
+            $folder->update($attributes);
+        });
 
         return back()->with('success', 'Dossier mis à jour.');
     }
@@ -100,9 +114,18 @@ class MemoFolderController extends Controller
             'La liste ne correspond pas aux dossiers de ce niveau.'
         );
 
-        foreach ($submitted as $position => $id) {
-            $request->user()->memoFolders()->whereKey($id)->update(['position' => $position]);
-        }
+        DB::transaction(function () use ($request, $submitted) {
+            $request->user()->newQuery()->lockForUpdate()->findOrFail($request->user()->id);
+
+            $offset = count($submitted) + 1;
+            foreach ($submitted as $position => $id) {
+                $request->user()->memoFolders()->whereKey($id)->update(['position' => $offset + $position]);
+            }
+
+            foreach ($submitted as $position => $id) {
+                $request->user()->memoFolders()->whereKey($id)->update(['position' => $position]);
+            }
+        });
 
         return back()->with('success', 'Dossiers réorganisés.');
     }
@@ -111,9 +134,39 @@ class MemoFolderController extends Controller
     {
         abort_unless($folder->user_id === $request->user()->id, 404);
 
-        $request->user()->memos()->where('folder_id', $folder->id)->update(['folder_id' => null]);
-        $folder->children()->update(['parent_id' => $folder->parent_id]);
-        $folder->delete();
+        DB::transaction(function () use ($request, $folder) {
+            $request->user()->newQuery()->lockForUpdate()->findOrFail($request->user()->id);
+
+            $parentId = $folder->parent_id;
+
+            // La suppression conserve le comportement métier actuel : les fiches
+            // quittent le dossier et reviennent à la racine.
+            $request->user()->memos()->where('folder_id', $folder->id)->update(['folder_id' => null]);
+
+            $children = $folder->children()->orderBy('position')->orderBy('id')->get();
+            $siblings = $request->user()->memoFolders()
+                ->where('parent_id', $parentId)
+                ->whereKeyNot($folder->id)
+                ->orderBy('position')
+                ->orderBy('id')
+                ->get();
+
+            $ordered = $siblings->concat($children);
+            $offset = $ordered->count() + 1;
+
+            foreach ($ordered as $position => $child) {
+                $child->update([
+                    'parent_id' => $parentId,
+                    'position' => $offset + $position,
+                ]);
+            }
+
+            foreach ($ordered as $position => $child) {
+                $child->update(['position' => $position]);
+            }
+
+            $folder->delete();
+        });
 
         return back()->with('success', 'Dossier supprimé.');
     }
