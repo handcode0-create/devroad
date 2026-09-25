@@ -103,7 +103,7 @@ class MemoTest extends TestCase
             ])
             ->assertForbidden();
 
-        $this->assertDatabaseCount('memos', 1);
+        $this->assertDatabaseCount('memos', 0);
     }
 
     public function test_le_proprietaire_peut_modifier_son_memo(): void
