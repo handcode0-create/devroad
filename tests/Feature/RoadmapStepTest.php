@@ -533,19 +533,23 @@ class RoadmapStepTest extends TestCase
         $this->assertSame('todo', $step->fresh()->status);
     }
 
-    public function test_une_etape_future_ne_peut_pas_etre_terminee_directement(): void
+    public function test_une_etape_future_peut_etre_consultee_et_terminee_directement(): void
     {
         $user = User::factory()->create();
         $roadmap = $this->roadmapAvecEtapes($user, 3);
         $deuxieme = $roadmap->steps()->where('position', 2)->first();
 
         $this->actingAs($user)
+            ->get(route('steps.show', $deuxieme))
+            ->assertOk();
+
+        $this->actingAs($user)
             ->patch(route('steps.status', $deuxieme), ['status' => 'completed'])
-            ->assertSessionHasErrors('status');
+            ->assertRedirect();
 
         $this->assertDatabaseHas('roadmap_steps', [
             'id' => $deuxieme->id,
-            'status' => 'todo',
+            'status' => 'completed',
         ]);
     }
 
