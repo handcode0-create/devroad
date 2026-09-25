@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Models\UserLearningProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +18,33 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_with_completed_learning_profile_can_authenticate_using_the_login_screen(): void
+    {
+        $user = User::factory()->create();
+
+        UserLearningProfile::create([
+            'user_id' => $user->id,
+            'academic_level' => 'licence',
+            'level' => 'intermediate',
+            'level_source' => 'assessment',
+            'experience_years' => 2,
+            'technologies' => ['php'],
+            'goals' => ['backend'],
+            'assessment_scores' => [],
+            'assessment_answers' => [],
+            'completed_at' => now(),
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_users_without_learning_profile_are_sent_to_onboarding(): void
     {
         $user = User::factory()->create();
 
@@ -27,7 +54,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('onboarding.create', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
