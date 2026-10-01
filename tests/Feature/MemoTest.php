@@ -152,6 +152,31 @@ class MemoTest extends TestCase
         $this->assertSame('laravel', $memo->tags->first()->slug);
     }
 
+    public function test_un_memo_cree_depuis_un_cours_conserve_les_pieces_jointes(): void
+    {
+        $user = User::factory()->create();
+        $roadmap = $user->roadmaps()->create(['title' => 'Laravel']);
+        $step = $roadmap->steps()->create([
+            'title' => 'Routing',
+            'position' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('steps.memo', $step), [
+                'title' => 'Notes avec fichier',
+                'content' => 'Contenu',
+                'attachments' => [
+                    \Illuminate\Http\UploadedFile::fake()->create('notes.txt', 10, 'text/plain'),
+                ],
+            ])
+            ->assertRedirect(route('steps.show', $step));
+
+        $memo = $user->memos()->latest('id')->firstOrFail();
+        $this->assertCount(1, $memo->attachments);
+        $this->assertSame('notes.txt', $memo->attachments->first()->name);
+        $this->assertSame($user->id, $memo->attachments->first()->user_id);
+    }
+
     public function test_un_utilisateur_ne_peut_pas_creer_un_memo_depuis_le_cours_d_un_autre(): void
     {
         $proprietaire = User::factory()->create();
