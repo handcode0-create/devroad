@@ -3,7 +3,7 @@ import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import MemoForm from '@/Components/Memos/MemoForm';
-import { autoMemoTitle, normalizeMemoContent } from '@/Components/Memos/MemoEditor';
+import { normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function Edit({ memo, folders = [] }) {
     const [saved, setSaved] = useState(false);
@@ -41,7 +41,7 @@ export default function Edit({ memo, folders = [] }) {
 
         form.transform((data) => {
             const content = normalized?.content ?? normalizeMemoContent(data.content);
-            const title = normalized?.title ?? (data.title.trim() || autoMemoTitle(content) || '');
+            const title = normalized?.title ?? data.title.trim();
 
             return {
                 ...data,
