@@ -133,6 +133,7 @@ class MemoController extends Controller
             $this->assertAttachmentLimit($request);
             $memo = $request->user()->memos()->create($request->safe()->except(['tags', 'attachments']));
             $memo->syncTagNames($request->validated('tags', []) ?? []);
+            $this->storeAttachments($request, $memo);
 
             return $memo;
         });
