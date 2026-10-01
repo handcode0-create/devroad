@@ -3,7 +3,7 @@ import { Download, File, Folder, ImagePlus, Trash2, X } from 'lucide-react';
 import { Field, inputClass } from '@/Components/Ui/Field';
 import { buttonClass } from '@/Components/Ui/buttons';
 import TagInput from '@/Components/Memos/TagInput';
-import MemoEditor, { autoMemoTitle } from '@/Components/Memos/MemoEditor';
+import MemoEditor from '@/Components/Memos/MemoEditor';
 
 export default function MemoForm({ form, onSubmit, saved = false, submitLabel, cancelHref, folders = [], attachments = [], onDeleteAttachment = null, attachmentProcessingId = null }) {
     const { data, setData, errors, processing, isDirty } = form;
@@ -25,10 +25,6 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
         setData('attachments', selectedFiles.filter((_, fileIndex) => fileIndex !== index));
     }
 
-    function applyAutoTitle(title) {
-        if (title) setData('title', title);
-    }
-
     function handleSubmit(event) {
         event.preventDefault();
         if (!processing) onSubmit();
@@ -41,12 +37,12 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
 
     return (
         <form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-6">
-            <Field label="Titre" htmlFor="title" error={errors.title} hint="Laisse vide pour générer automatiquement le titre depuis la première ligne.">
+            <Field label="Titre" htmlFor="title" error={errors.title} hint="Le titre est obligatoire (3 à 255 caractères).">
                 <input id="title" type="text" value={data.title} onChange={(e) => setData('title', e.target.value)} placeholder="Titre de la fiche" maxLength={255} autoFocus aria-invalid={errors.title ? 'true' : undefined} className={inputClass} />
             </Field>
 
             <Field label="Contenu" htmlFor="content" error={errors.content} hint="Les blocs de code entre triples accents restent affichés en monospace.">
-                <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} onAutoTitle={applyAutoTitle} attachments={attachments} />
+                <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} attachments={attachments} />
             </Field>
 
             <Field label="Page" htmlFor="memo-icon" hint="Icône, couverture et largeur de page comme dans Notion.">
