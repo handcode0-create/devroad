@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, Check, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bookmark, Check, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
 import Pagination from '@/Components/Ui/Pagination';
@@ -351,6 +351,22 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
         router.patch('/memo-folders/reorder', { parent_id: parentId, ordered_ids: ids }, { preserveScroll: true, preserveState: true, onSuccess: endDrag, onError: endDrag });
     }
 
+    // Repli clavier/tactile du glisser-déposer ci-dessus : monte ou descend
+    // un dossier d'un rang parmi ses frères (même parent).
+    function moveFolderByOffset(folder, offset) {
+        const parentId = folder.parent_id ?? null;
+        const siblings = folders.filter((f) => (f.parent_id ?? null) === parentId).sort((a, b) => a.position - b.position);
+        const ids = siblings.map((f) => f.id);
+        const currentIndex = ids.indexOf(folder.id);
+        const targetIndex = currentIndex + offset;
+        if (targetIndex < 0 || targetIndex >= ids.length) return;
+
+        ids.splice(currentIndex, 1);
+        ids.splice(targetIndex, 0, folder.id);
+
+        router.patch('/memo-folders/reorder', { parent_id: parentId, ordered_ids: ids }, { preserveScroll: true, preserveState: true });
+    }
+
     function clearSearch() {
         setQuery('');
         router.get('/memos', {
@@ -434,7 +450,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                     <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
-                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onMove={openMoveFolder} onDelete={deleteFolder} activeMenu={activeFolderMenu} onMenu={(id) => setActiveFolderMenu((current) => current === id ? null : id)} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
+                                    {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onMove={openMoveFolder} onDelete={deleteFolder} onMoveUp={() => moveFolderByOffset(folder, -1)} onMoveDown={() => moveFolderByOffset(folder, 1)} activeMenu={activeFolderMenu} onMenu={(id) => setActiveFolderMenu((current) => current === id ? null : id)} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
                                     {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
@@ -552,7 +568,7 @@ function buildFolderTree(folders) {
     return walk(0);
 }
 
-function FolderNavItem({ folder, active, onCreateChild, onRename, onMove, onDelete, activeMenu, onMenu, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
+function FolderNavItem({ folder, active, onCreateChild, onRename, onMove, onDelete, onMoveUp, onMoveDown, activeMenu, onMenu, isDragging, isDropTarget, onDragStartFolder, onDragEnd, onDragOverTarget, onDropReorder, onDropNest, canDrop }) {
     // Survol dans la moitié basse de la ligne = « insérer après » (réordonner) ;
     // reste de la ligne = « déposer dedans » (imbriquer comme sous-dossier).
     const [nestHover, setNestHover] = useState(false);
@@ -610,6 +626,10 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onMove, onDele
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onCreateChild(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Nouveau sous-dossier</button>
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onRename(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Renommer</button>
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMove(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Déplacer</button>
+                <div className="flex gap-1 px-1 py-1">
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMoveUp(); }} className="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-slate-300 hover:bg-white/[0.05]" title="Monter d'un rang"><ArrowUp size={12} /> Monter</button>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMoveDown(); }} className="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-slate-300 hover:bg-white/[0.05]" title="Descendre d'un rang"><ArrowDown size={12} /> Descendre</button>
+                </div>
                 <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onDelete(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer</button>
             </div>}
         </div>

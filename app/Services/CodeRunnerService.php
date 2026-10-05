@@ -13,6 +13,17 @@ class CodeRunnerService
 
     public function run(string $language, string $code): array
     {
+        // Ce service lance `docker run` directement sur l'hôte : il n'est
+        // actuellement appelé par aucune route, mais on applique le même
+        // garde-fou que DevLabRuntimeService au cas où il serait branché
+        // plus tard sans qu'on y pense (exécution de code non isolée en prod).
+        if (! app()->isLocal() || ! config('devroad.devlab.allow_host_runtime', true)) {
+            return $this->result(
+                'unavailable',
+                'Le runtime sandbox est disponible uniquement en environnement de développement.'
+            );
+        }
+
         $profile = match ($language) {
             'php' => [
                 'image' => 'php:8.2-cli-alpine',
@@ -68,6 +79,13 @@ class CodeRunnerService
         ?string $filePath = null,
         ?string $fileContents = null
     ): array {
+        if (! app()->isLocal() || ! config('devroad.devlab.allow_host_runtime', true)) {
+            return $this->result(
+                'unavailable',
+                'Le runtime sandbox est disponible uniquement en environnement de développement.'
+            );
+        }
+
         $tokens = $this->parseLaravelCommand($command);
 
         if ($tokens === null) {

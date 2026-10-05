@@ -33,18 +33,21 @@ class SearchController extends Controller
         $like = $this->likePattern($term);
 
         // Requêtes de base, toutes limitées aux données de l'utilisateur.
+        // LOWER() des deux côtés : LIKE est insensible à la casse sur SQLite
+        // (local/tests) mais sensible à la casse sur PostgreSQL (production),
+        // sans ça une recherche "laravel" ne trouverait pas "Laravel" en prod.
         $roadmaps = $user->roadmaps()
-            ->whereRaw("title LIKE ? ESCAPE '!'", [$like]);
+            ->whereRaw("LOWER(title) LIKE ? ESCAPE '!'", [$like]);
 
         $memos = $user->memos()
             ->where(fn ($q) => $q
-                ->whereRaw("title LIKE ? ESCAPE '!'", [$like])
-                ->orWhereRaw("content LIKE ? ESCAPE '!'", [$like]));
+                ->whereRaw("LOWER(title) LIKE ? ESCAPE '!'", [$like])
+                ->orWhereRaw("LOWER(content) LIKE ? ESCAPE '!'", [$like]));
 
         // Une étape n'a pas de user_id : on passe par sa roadmap.
         $steps = RoadmapStep::query()
             ->whereHas('roadmap', fn ($q) => $q->where('user_id', $user->id))
-            ->whereRaw("title LIKE ? ESCAPE '!'", [$like]);
+            ->whereRaw("LOWER(title) LIKE ? ESCAPE '!'", [$like]);
 
         $counts = [
             'roadmaps' => (clone $roadmaps)->count(),
@@ -113,6 +116,6 @@ class SearchController extends Controller
      */
     private function likePattern(string $term): string
     {
-        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], Str::lower($term)).'%';
     }
 }
