@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { Flip } from 'gsap/Flip';
+import { reducedMotionPreferred } from '@/theme';
 
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(Flip);
@@ -9,8 +10,7 @@ if (typeof window !== 'undefined') {
 export const CARD_SELECTOR = '[data-memo-card]';
 
 export function prefersReducedMotion() {
-    return typeof window === 'undefined'
-        || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return reducedMotionPreferred();
 }
 
 /**

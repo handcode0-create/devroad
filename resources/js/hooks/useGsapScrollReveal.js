@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { reducedMotionPreferred } from '@/theme';
 
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(ScrollTrigger);
@@ -11,7 +12,7 @@ export default function useGsapScrollReveal(ref, dependencies = [], options = {}
         const root = ref.current;
         if (!root || typeof window === 'undefined') return;
 
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const reduceMotion = reducedMotionPreferred();
         if (reduceMotion) return;
 
         const selector = options.selector ?? '[data-gsap-reveal]';

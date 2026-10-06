@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Bookmark, Check, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
@@ -29,6 +29,9 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const items = memos?.data ?? [];
     const [query, setQuery] = useState(filters.q ?? '');
     const [mobileLibraryOpen, setMobileLibraryOpen] = useState(false);
+    const isDesktop = useIsDesktop();
+    const authUser = usePage().props.auth?.user;
+    const [actionsMemo, setActionsMemo] = useState(null);
     const [view, setView] = useState(() => { try { return localStorage.getItem('devroad:memos:view') || 'list'; } catch { return 'list'; } });
     const [folderModal, setFolderModal] = useState({ open: false, mode: 'create', folder: null, parentId: null });
     const [folderName, setFolderName] = useState('');
@@ -416,28 +419,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
 
     const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q || filters.folder || filters.trash);
 
-    return (
-        <AppLayout>
-            <Head title="Fiches mémo" />
-            <div ref={animationRef} className="space-y-5">
-                <PageHeader title="Fiches mémo" subtitle="Un espace de rangement façon Notion pour organiser tes connaissances, commandes et astuces." actions={
-                    <Link href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className={buttonClass('primary')}>
-                        <Plus size={16} aria-hidden="true" />
-                        <span className="hidden sm:inline">Nouvelle fiche</span>
-                        <span className="sm:hidden">Nouvelle</span>
-                    </Link>
-                } />
-
-                <div data-gsap-reveal className="flex items-center gap-2 lg:hidden">
-                    <button type="button" onClick={() => setMobileLibraryOpen((open) => !open)} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0D1725] px-3 py-2 text-xs font-semibold text-slate-300">
-                        <Folder size={15} className="text-[#FF8A3D]" /> Rangement
-                        <ChevronDown size={14} className={mobileLibraryOpen ? 'rotate-180 transition' : 'transition'} />
-                    </button>
-                    <span className="truncate text-xs text-slate-500">{activeFolder}</span>
-                </div>
-
-                <div data-gsap-reveal className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
-                    <aside data-gsap-reveal className={(mobileLibraryOpen ? 'block' : 'hidden') + ' lg:block'}>
+    const libraryPanel = (
                         <div className="sticky top-5 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-3">
                             <div className="mb-3 flex items-center gap-2 px-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF6A00]/10 text-[#FF8A3D]"><Folder size={16} /></div>
@@ -471,6 +453,66 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                 </div>
                             </div>}
                         </div>
+    );
+
+    return (
+        <AppLayout mobileHeader={isDesktop}>
+            <Head title="Fiches mémo" />
+            {!isDesktop && <MobileMemos
+                user={authUser}
+                items={items}
+                memos={memos}
+                counts={counts}
+                folders={folders}
+                tags={tags}
+                filters={filters}
+                hasFilter={hasFilter}
+                query={query}
+                setQuery={setQuery}
+                onSearch={submitSearch}
+                onClearSearch={clearSearch}
+                getFolderPath={getFolderPath}
+                loading={loading}
+                onOpenLibrary={() => setMobileLibraryOpen(true)}
+                onActions={setActionsMemo}
+            />}
+            {!isDesktop && mobileLibraryOpen && <BottomSheet title="Dossiers" onClose={() => setMobileLibraryOpen(false)}>
+                <div onClick={(event) => { if (event.target.closest('a')) setMobileLibraryOpen(false); }}>{libraryPanel}</div>
+            </BottomSheet>}
+            {!isDesktop && actionsMemo && <BottomSheet title={actionsMemo.title} onClose={() => setActionsMemo(null)}>
+                <div className="flex flex-col gap-2">
+                    {filters.trash ? <>
+                        <SheetAction onClick={() => { setActionsMemo(null); router.post('/memos/' + actionsMemo.id + '/restore'); }}>Restaurer</SheetAction>
+                        <SheetAction danger onClick={() => { const memo = actionsMemo; setActionsMemo(null); forceDeleteMemo(memo); }}>Supprimer définitivement</SheetAction>
+                    </> : <>
+                        <SheetAction href={'/memos/' + actionsMemo.id}>Ouvrir</SheetAction>
+                        <SheetAction href={'/memos/' + actionsMemo.id + '/edit'}>Modifier</SheetAction>
+                        <SheetAction onClick={() => { const memo = actionsMemo; setActionsMemo(null); openMoveMemo(memo); }}>Déplacer</SheetAction>
+                        <SheetAction onClick={() => { const memo = actionsMemo; setActionsMemo(null); duplicateMemo(memo); }}>Dupliquer</SheetAction>
+                        <SheetAction danger onClick={() => { const memo = actionsMemo; setActionsMemo(null); deleteMemo(memo); }}>Mettre à la corbeille</SheetAction>
+                    </>}
+                </div>
+            </BottomSheet>}
+            {isDesktop && <div ref={animationRef} className="space-y-5">
+                <PageHeader title="Fiches mémo" subtitle="Un espace de rangement façon Notion pour organiser tes connaissances, commandes et astuces." actions={
+                    <Link href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className={buttonClass('primary')}>
+                        <Plus size={16} aria-hidden="true" />
+                        <span className="hidden sm:inline">Nouvelle fiche</span>
+                        <span className="sm:hidden">Nouvelle</span>
+                    </Link>
+                } />
+
+                <div data-gsap-reveal className="flex items-center gap-2 lg:hidden">
+                    <button type="button" onClick={() => setMobileLibraryOpen((open) => !open)} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0D1725] px-3 py-2 text-xs font-semibold text-slate-300">
+                        <Folder size={15} className="text-[#FF8A3D]" /> Rangement
+                        <ChevronDown size={14} className={mobileLibraryOpen ? 'rotate-180 transition' : 'transition'} />
+                    </button>
+                    <span className="truncate text-xs text-slate-500">{activeFolder}</span>
+                </div>
+
+                <div data-gsap-reveal className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
+                    <aside data-gsap-reveal className={(mobileLibraryOpen ? 'block' : 'hidden') + ' lg:block'}>
+                        {libraryPanel}
                     </aside>
 
                     <section data-gsap-reveal className="min-w-0">
@@ -517,7 +559,7 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                         </> : <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />}
                     </section>
                 </div>
-            </div>
+            </div>}
             <Modal show={folderModal.open} onClose={() => !folderProcessing && setFolderModal((current) => ({ ...current, open: false }))} title={folderModal.mode === 'rename' ? 'Renommer le dossier' : (folderModal.parentId ? 'Créer un sous-dossier' : 'Créer un dossier')} description={folderModal.mode === 'rename' ? 'Modifie le nom sans toucher aux fiches.' : 'Organise tes fiches dans une arborescence claire.'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setFolderModal((current) => ({ ...current, open: false }))} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitFolder} disabled={!folderName.trim() || folderProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{folderProcessing ? 'Enregistrement...' : (folderModal.mode === 'rename' ? 'Renommer' : 'Créer le dossier')}</button></div>}>
                 <label className="block"><span className="mb-2 block text-xs font-semibold text-slate-400">Nom du dossier</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submitFolder()} maxLength={120} placeholder="Ex. Laravel, React, DevOps..." className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40" /></label>
             </Modal>
@@ -767,6 +809,166 @@ function MemoMenu({ memo, trash, onMove, onDuplicate, onDelete, onForceDelete })
             <button role="menuitem" type="button" onClick={() => onForceDelete(memo)} className={item + ' text-red-300 hover:bg-red-400/[0.08]'}>Supprimer définitivement</button>
         </>}
     </div>;
+}
+
+// ─── Vue mobile : artboard « Mobile — Fiches » (Claude Design), reproduit à l'identique ───
+function useIsDesktop() {
+    const query = '(min-width: 1024px)';
+    const [desktop, setDesktop] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+    useEffect(() => {
+        const media = window.matchMedia(query);
+        const onChange = () => setDesktop(media.matches);
+        media.addEventListener?.('change', onChange);
+        return () => media.removeEventListener?.('change', onChange);
+    }, []);
+    return desktop;
+}
+
+function plural(count, one, many) {
+    return count + ' ' + (count > 1 ? many : one);
+}
+
+function monogram(title) {
+    const match = String(title ?? '').match(/[\p{L}\p{N}]/u);
+    return match ? match[0].toUpperCase() : '#';
+}
+
+function initials(name) {
+    return String(name ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'DR';
+}
+
+function MobileMemos({ user, items, memos, counts, folders, tags, filters, hasFilter, query, setQuery, onSearch, onClearSearch, getFolderPath, loading, onOpenLibrary, onActions }) {
+    const listRef = useRef(null);
+    const contentKey = items.map((memo) => memo.id).join(',') + '|' + (filters.folder ?? '') + '|' + (filters.q ?? '') + '|' + (filters.tag ?? '') + '|' + (filters.favorites ? 'f' : '') + (filters.trash ? 't' : '');
+    useMemoListMotion(listRef, 'mobile', contentKey);
+
+    const chips = [
+        ...(filters.trash ? [{ key: 'trash', label: 'Corbeille', href: listUrl({ trash: true }), active: true }] : []),
+        ...(filters.recent ? [{ key: 'recent', label: 'Récents', href: listUrl({ recent: true }), active: true }] : []),
+        { key: 'all', label: 'Toutes', href: '/memos', active: !hasFilter || (Boolean(filters.q) && !filters.tag && !filters.folder && !filters.favorites && !filters.trash && !filters.recent) },
+        { key: 'fav', label: 'Favoris', href: listUrl({ favorites: true }), active: Boolean(filters.favorites) },
+        ...folders.map((folder) => ({ key: 'folder-' + folder.id, label: folder.name, href: listUrl({ folder: folder.id }), active: Number(filters.folder) === folder.id })),
+        ...tags.map((tag) => ({ key: 'tag-' + tag.id, label: tag.name, href: listUrl({ tag: tag.slug }), active: filters.tag === tag.slug })),
+    ];
+
+    return <div className="-mx-4 -mt-5 flex flex-col font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] sm:-mx-6 sm:-mt-6">
+        <header className="flex flex-col gap-3.5 px-5 pt-[18px]">
+            <div className="flex items-center gap-2.5">
+                <div className="flex flex-1 flex-col gap-0.5">
+                    <h1 className="m-0 font-['Manrope',sans-serif] text-[30px] font-extrabold leading-[1.1] tracking-[-0.03em]">Fiches mémo</h1>
+                    <span className="text-sm text-[var(--dr-text-2)]">{plural(counts.total ?? 0, 'fiche', 'fiches')} · {plural(counts.favorites ?? 0, 'favori', 'favoris')}</span>
+                </div>
+                <button type="button" onClick={onOpenLibrary} aria-label="Dossiers" aria-haspopup="dialog" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)]">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                </button>
+                <button type="button" onClick={() => window.dispatchEvent(new Event('devroad:appearance'))} aria-label="Profil et apparence" aria-haspopup="dialog" className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--dr-accent)] text-sm font-bold text-[var(--dr-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dr-accent)]">
+                    {initials(user?.name)}
+                </button>
+            </div>
+
+            <form onSubmit={onSearch} role="search" className="m-0">
+                <label className="flex h-[46px] items-center gap-2.5 rounded-[14px] border border-[var(--dr-border)] bg-[var(--dr-field)] px-3.5 text-[var(--dr-text-3)]">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                    <input data-memo-search data-dr-native type="search" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Rechercher dans les fiches" placeholder="Rechercher une commande, une notion…" className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-base text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] focus:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden" />
+                    {query && <button type="button" onClick={onClearSearch} aria-label="Effacer la recherche" className="-mr-1.5 flex h-8 w-8 items-center justify-center rounded-lg text-[var(--dr-text-3)]"><X size={15} /></button>}
+                </label>
+            </form>
+
+            <nav aria-label="Filtrer" className="dr-scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5">
+                {chips.map((chip) => <Link
+                    key={chip.key}
+                    href={chip.href}
+                    preserveScroll
+                    aria-current={chip.active ? 'page' : undefined}
+                    className={'flex h-9 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-sm ' + (chip.active
+                        ? 'bg-[var(--dr-text)] font-semibold text-[var(--dr-bg)]'
+                        : 'border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)]')}
+                >{chip.label}</Link>)}
+            </nav>
+        </header>
+
+        <section aria-label="Fiches" className="flex flex-col gap-3 px-5 pt-4">
+            {loading ? <MemoSkeletons grid={false} /> : items.length === 0
+                ? <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />
+                : <ul ref={listRef} className="m-0 flex list-none flex-col gap-3 p-0">
+                    {items.map((memo) => <li key={memo.id}><MobileMemoCard memo={memo} trash={Boolean(filters.trash)} folderPath={getFolderPath(memo.folder_id)} onActions={onActions} /></li>)}
+                </ul>}
+            {!loading && items.length > 0 && <Pagination links={memos.links} />}
+        </section>
+    </div>;
+}
+
+function MobileMemoCard({ memo, trash, folderPath, onActions }) {
+    const pressTimer = useRef(null);
+    const longPressed = useRef(false);
+    const tags = memo.tags ?? [];
+    const visibleTags = tags.slice(0, 2);
+    const date = formatMemoDate(memo.updated_at);
+
+    // Appui long (ou clic droit) : actions de la fiche, sans rien ajouter de visible à la carte.
+    function startPress() {
+        longPressed.current = false;
+        clearTimeout(pressTimer.current);
+        pressTimer.current = setTimeout(() => {
+            longPressed.current = true;
+            navigator.vibrate?.(12);
+            onActions(memo);
+        }, 480);
+    }
+    function cancelPress() { clearTimeout(pressTimer.current); }
+
+    return <article
+        data-memo-card
+        onPointerDown={startPress}
+        onPointerUp={cancelPress}
+        onPointerLeave={cancelPress}
+        onPointerCancel={cancelPress}
+        onContextMenu={(event) => { event.preventDefault(); cancelPress(); onActions(memo); }}
+        onClickCapture={(event) => { if (longPressed.current) { event.preventDefault(); event.stopPropagation(); longPressed.current = false; } }}
+        className="relative flex select-none flex-col gap-2.5 rounded-[18px] border border-[var(--dr-border)] bg-[var(--dr-surface)] p-4 shadow-[var(--dr-shadow)] [-webkit-touch-callout:none] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[var(--dr-accent)]"
+    >
+        <div className="flex items-start gap-3">
+            <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--dr-field)] font-['JetBrains_Mono',ui-monospace,monospace] text-[15px] text-[var(--dr-accent-text)]">{monogram(memo.title)}</span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <Link href={'/memos/' + memo.id} draggable={false} className="text-base font-semibold leading-[1.35] text-[var(--dr-text)] outline-none after:absolute after:inset-0 after:rounded-[18px] after:content-['']">{memo.title}</Link>
+                {folderPath.length > 0 && <span className="text-xs font-semibold text-[var(--dr-accent-text)]">{folderPath.map((folder) => folder.name).join(' / ')}</span>}
+            </div>
+            {trash
+                ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="relative z-10 -mr-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--dr-accent-text)]">Restaurer</button>
+                : <FavoriteButton memo={memo} variant="design" />}
+        </div>
+        {memo.excerpt && <p className="m-0 line-clamp-3 text-sm leading-[1.5] text-[var(--dr-text-2)]">{memo.excerpt}</p>}
+        <div className="flex items-center gap-1.5">
+            {visibleTags.map((tag) => <span key={tag.id} className="rounded-full bg-[var(--dr-field)] px-2.5 py-1 text-xs text-[var(--dr-text-2)]">{tag.name}</span>)}
+            {tags.length > visibleTags.length && <span className="px-1 text-xs text-[var(--dr-text-3)]">+{tags.length - visibleTags.length}</span>}
+            {date && <time dateTime={memo.updated_at} className="ml-auto text-xs text-[var(--dr-text-3)]">{date}</time>}
+        </div>
+    </article>;
+}
+
+function BottomSheet({ title, onClose, children }) {
+    const panelRef = useRef(null);
+    useEffect(() => {
+        panelRef.current?.querySelector('button, a')?.focus();
+        const onKey = (event) => { if (event.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+    return <div className="fixed inset-0 z-[80] flex items-end justify-center" role="presentation">
+        <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-[var(--dr-scrim)]" />
+        <section ref={panelRef} role="dialog" aria-modal="true" aria-label={title} className="relative flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[28px] border-t border-[var(--dr-border-2)] bg-[var(--dr-surface)] px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-[10px] font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)]">
+            <span aria-hidden="true" className="h-[5px] w-10 shrink-0 self-center rounded-full bg-[var(--dr-border-2)]" />
+            <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">{title}</h2>
+            {children}
+        </section>
+    </div>;
+}
+
+function SheetAction({ onClick, href, danger = false, children }) {
+    const className = 'flex min-h-[48px] w-full items-center rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-4 text-left text-[15px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (danger ? 'text-[var(--dr-danger)]' : 'text-[var(--dr-text)]');
+    return href
+        ? <Link href={href} className={className}>{children}</Link>
+        : <button type="button" onClick={onClick} className={className}>{children}</button>;
 }
 
 function MemoSkeletons({ grid }) {

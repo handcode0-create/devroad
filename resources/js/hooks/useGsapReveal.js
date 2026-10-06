@@ -1,12 +1,13 @@
 import { useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
+import { reducedMotionPreferred } from '@/theme';
 
 export default function useGsapReveal(ref, dependencies = [], options = {}) {
     useLayoutEffect(() => {
         const root = ref.current;
         if (!root || typeof window === 'undefined') return;
 
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const reduceMotion = reducedMotionPreferred();
         if (reduceMotion) return;
 
         const selector = options.selector ?? ':scope > *';
