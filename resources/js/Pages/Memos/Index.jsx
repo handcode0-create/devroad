@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Bookmark, Check, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
@@ -10,7 +10,9 @@ import { buttonClass } from '@/Components/Ui/buttons';
 import Modal from '@/Components/Ui/Modal';
 import ConfirmModal from '@/Components/Ui/ConfirmModal';
 import useGsapScrollReveal from '@/hooks/useGsapScrollReveal';
-import { useMemoListMotion, useMenuPop } from '@/Components/Memos/memoMotion';
+import { useMemoListMotion, useMenuPop, prefersReducedMotion } from '@/Components/Memos/memoMotion';
+import { Sheet, m, softSpring } from '@/Components/Ui/Motion';
+import { gsap } from 'gsap';
 
 function listUrl({ tag, favorites, recent, q, folder, trash, sort }) {
     const params = new URLSearchParams();
@@ -32,6 +34,9 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
     const isDesktop = useIsDesktop();
     const authUser = usePage().props.auth?.user;
     const [actionsMemo, setActionsMemo] = useState(null);
+    // Fiche gardée affichée pendant l'animation de fermeture du panneau d'actions.
+    const [shownActionsMemo, setShownActionsMemo] = useState(null);
+    useEffect(() => { if (actionsMemo) setShownActionsMemo(actionsMemo); }, [actionsMemo]);
     const [view, setView] = useState(() => { try { return localStorage.getItem('devroad:memos:view') || 'list'; } catch { return 'list'; } });
     const [folderModal, setFolderModal] = useState({ open: false, mode: 'create', folder: null, parentId: null });
     const [folderName, setFolderName] = useState('');
@@ -476,23 +481,27 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                 onOpenLibrary={() => setMobileLibraryOpen(true)}
                 onActions={setActionsMemo}
             />}
-            {!isDesktop && mobileLibraryOpen && <BottomSheet title="Dossiers" onClose={() => setMobileLibraryOpen(false)}>
+            <Sheet open={!isDesktop && mobileLibraryOpen} onClose={() => setMobileLibraryOpen(false)} label="Dossiers" className="max-h-[85dvh] gap-3 overflow-y-auto pb-[calc(24px+env(safe-area-inset-bottom))]">
+                <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">Dossiers</h2>
                 <div onClick={(event) => { if (event.target.closest('a')) setMobileLibraryOpen(false); }}>{libraryPanel}</div>
-            </BottomSheet>}
-            {!isDesktop && actionsMemo && <BottomSheet title={actionsMemo.title} onClose={() => setActionsMemo(null)}>
+            </Sheet>
+            <Sheet open={!isDesktop && Boolean(actionsMemo)} onClose={() => setActionsMemo(null)} label={shownActionsMemo?.title} className="gap-3 pb-[calc(24px+env(safe-area-inset-bottom))]">
+                {shownActionsMemo && <>
+                <h2 className="m-0 line-clamp-2 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">{shownActionsMemo.title}</h2>
                 <div className="flex flex-col gap-2">
                     {filters.trash ? <>
-                        <SheetAction onClick={() => { setActionsMemo(null); router.post('/memos/' + actionsMemo.id + '/restore'); }}>Restaurer</SheetAction>
-                        <SheetAction danger onClick={() => { const memo = actionsMemo; setActionsMemo(null); forceDeleteMemo(memo); }}>Supprimer définitivement</SheetAction>
+                        <SheetAction onClick={() => { setActionsMemo(null); router.post('/memos/' + shownActionsMemo.id + '/restore'); }}>Restaurer</SheetAction>
+                        <SheetAction danger onClick={() => { const memo = shownActionsMemo; setActionsMemo(null); forceDeleteMemo(memo); }}>Supprimer définitivement</SheetAction>
                     </> : <>
-                        <SheetAction href={'/memos/' + actionsMemo.id}>Ouvrir</SheetAction>
-                        <SheetAction href={'/memos/' + actionsMemo.id + '/edit'}>Modifier</SheetAction>
-                        <SheetAction onClick={() => { const memo = actionsMemo; setActionsMemo(null); openMoveMemo(memo); }}>Déplacer</SheetAction>
-                        <SheetAction onClick={() => { const memo = actionsMemo; setActionsMemo(null); duplicateMemo(memo); }}>Dupliquer</SheetAction>
-                        <SheetAction danger onClick={() => { const memo = actionsMemo; setActionsMemo(null); deleteMemo(memo); }}>Mettre à la corbeille</SheetAction>
+                        <SheetAction href={'/memos/' + shownActionsMemo.id}>Ouvrir</SheetAction>
+                        <SheetAction href={'/memos/' + shownActionsMemo.id + '/edit'}>Modifier</SheetAction>
+                        <SheetAction onClick={() => { const memo = shownActionsMemo; setActionsMemo(null); openMoveMemo(memo); }}>Déplacer</SheetAction>
+                        <SheetAction onClick={() => { const memo = shownActionsMemo; setActionsMemo(null); duplicateMemo(memo); }}>Dupliquer</SheetAction>
+                        <SheetAction danger onClick={() => { const memo = shownActionsMemo; setActionsMemo(null); deleteMemo(memo); }}>Mettre à la corbeille</SheetAction>
                     </>}
                 </div>
-            </BottomSheet>}
+                </>}
+            </Sheet>
             {isDesktop && <div ref={animationRef} className="space-y-5">
                 <PageHeader title="Fiches mémo" subtitle="Un espace de rangement façon Notion pour organiser tes connaissances, commandes et astuces." actions={
                     <Link href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className={buttonClass('primary')}>
@@ -841,6 +850,19 @@ function MobileMemos({ user, items, memos, counts, folders, tags, filters, hasFi
     const listRef = useRef(null);
     const contentKey = items.map((memo) => memo.id).join(',') + '|' + (filters.folder ?? '') + '|' + (filters.q ?? '') + '|' + (filters.tag ?? '') + '|' + (filters.favorites ? 'f' : '') + (filters.trash ? 't' : '');
     useMemoListMotion(listRef, 'mobile', contentKey);
+    const headerRef = useRef(null);
+
+    // GSAP : l'en-tête se pose en douceur, puis les pastilles arrivent en cascade.
+    useLayoutEffect(() => {
+        const header = headerRef.current;
+        if (!header || prefersReducedMotion()) return undefined;
+        const context = gsap.context(() => {
+            gsap.timeline({ defaults: { ease: 'power3.out' } })
+                .fromTo('[data-anim="head"]', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.06, clearProps: 'opacity,visibility,transform' })
+                .fromTo('[data-anim="chip"]', { autoAlpha: 0, x: 18 }, { autoAlpha: 1, x: 0, duration: 0.38, stagger: 0.035, clearProps: 'opacity,visibility,transform' }, '-=0.25');
+        }, header);
+        return () => context.revert();
+    }, []);
 
     const chips = [
         ...(filters.trash ? [{ key: 'trash', label: 'Corbeille', href: listUrl({ trash: true }), active: true }] : []),
@@ -852,8 +874,8 @@ function MobileMemos({ user, items, memos, counts, folders, tags, filters, hasFi
     ];
 
     return <div className="-mx-4 -mt-5 flex flex-col font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] sm:-mx-6 sm:-mt-6">
-        <header className="flex flex-col gap-3.5 px-5 pt-[18px]">
-            <div className="flex items-center gap-2.5">
+        <header ref={headerRef} className="flex flex-col gap-3.5 px-5 pt-[18px]">
+            <div data-anim="head" className="flex items-center gap-2.5">
                 <div className="flex flex-1 flex-col gap-0.5">
                     <h1 className="m-0 font-['Manrope',sans-serif] text-[30px] font-extrabold leading-[1.1] tracking-[-0.03em]">Fiches mémo</h1>
                     <span className="text-sm text-[var(--dr-text-2)]">{plural(counts.total ?? 0, 'fiche', 'fiches')} · {plural(counts.favorites ?? 0, 'favori', 'favoris')}</span>
@@ -866,7 +888,7 @@ function MobileMemos({ user, items, memos, counts, folders, tags, filters, hasFi
                 </button>
             </div>
 
-            <form onSubmit={onSearch} role="search" className="m-0">
+            <form data-anim="head" onSubmit={onSearch} role="search" className="m-0">
                 <label className="flex h-[46px] items-center gap-2.5 rounded-[14px] border border-[var(--dr-border)] bg-[var(--dr-field)] px-3.5 text-[var(--dr-text-3)]">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
                     <input data-memo-search data-dr-native type="search" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Rechercher dans les fiches" placeholder="Rechercher une commande, une notion…" className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-base text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] focus:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden" />
@@ -875,15 +897,20 @@ function MobileMemos({ user, items, memos, counts, folders, tags, filters, hasFi
             </form>
 
             <nav aria-label="Filtrer" className="dr-scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5">
-                {chips.map((chip) => <Link
+                {chips.map((chip) => <MotionLink
                     key={chip.key}
+                    data-anim="chip"
                     href={chip.href}
                     preserveScroll
+                    whileTap={{ scale: 0.94 }}
                     aria-current={chip.active ? 'page' : undefined}
-                    className={'flex h-9 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-sm ' + (chip.active
-                        ? 'bg-[var(--dr-text)] font-semibold text-[var(--dr-bg)]'
+                    className={'relative flex h-9 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-sm ' + (chip.active
+                        ? 'font-semibold text-[var(--dr-bg)]'
                         : 'border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)]')}
-                >{chip.label}</Link>)}
+                >
+                    {chip.active && <m.span layoutId="memo-chip-active" transition={softSpring} aria-hidden="true" className="absolute inset-0 rounded-full bg-[var(--dr-text)]" />}
+                    <span className="relative">{chip.label}</span>
+                </MotionLink>)}
             </nav>
         </header>
 
@@ -917,8 +944,9 @@ function MobileMemoCard({ memo, trash, folderPath, onActions }) {
     }
     function cancelPress() { clearTimeout(pressTimer.current); }
 
-    return <article
+    return <m.article
         data-memo-card
+        whileTap={{ scale: 0.985 }}
         onPointerDown={startPress}
         onPointerUp={cancelPress}
         onPointerLeave={cancelPress}
@@ -943,32 +971,16 @@ function MobileMemoCard({ memo, trash, folderPath, onActions }) {
             {tags.length > visibleTags.length && <span className="px-1 text-xs text-[var(--dr-text-3)]">+{tags.length - visibleTags.length}</span>}
             {date && <time dateTime={memo.updated_at} className="ml-auto text-xs text-[var(--dr-text-3)]">{date}</time>}
         </div>
-    </article>;
+    </m.article>;
 }
 
-function BottomSheet({ title, onClose, children }) {
-    const panelRef = useRef(null);
-    useEffect(() => {
-        panelRef.current?.querySelector('button, a')?.focus();
-        const onKey = (event) => { if (event.key === 'Escape') onClose(); };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    }, []);
-    return <div className="fixed inset-0 z-[80] flex items-end justify-center" role="presentation">
-        <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-[var(--dr-scrim)]" />
-        <section ref={panelRef} role="dialog" aria-modal="true" aria-label={title} className="relative flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[28px] border-t border-[var(--dr-border-2)] bg-[var(--dr-surface)] px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-[10px] font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)]">
-            <span aria-hidden="true" className="h-[5px] w-10 shrink-0 self-center rounded-full bg-[var(--dr-border-2)]" />
-            <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">{title}</h2>
-            {children}
-        </section>
-    </div>;
-}
+const MotionLink = m.create(Link);
 
 function SheetAction({ onClick, href, danger = false, children }) {
     const className = 'flex min-h-[48px] w-full items-center rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-4 text-left text-[15px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (danger ? 'text-[var(--dr-danger)]' : 'text-[var(--dr-text)]');
     return href
-        ? <Link href={href} className={className}>{children}</Link>
-        : <button type="button" onClick={onClick} className={className}>{children}</button>;
+        ? <MotionLink href={href} whileTap={{ scale: 0.98 }} className={className}>{children}</MotionLink>
+        : <m.button type="button" whileTap={{ scale: 0.98 }} onClick={onClick} className={className}>{children}</m.button>;
 }
 
 function MemoSkeletons({ grid }) {

@@ -30,6 +30,19 @@ export function applyTheme(preference) {
     if (typeof document === 'undefined') return;
 
     const root = document.documentElement;
+    const changes = resolveTheme(preference) !== root.dataset.uiTheme;
+
+    // Fondu entre l'ancien et le nouveau thème (View Transitions, natif du navigateur).
+    if (changes && document.startViewTransition && !reducedMotionPreferred()) {
+        document.startViewTransition(() => writeTheme(preference));
+        return;
+    }
+
+    writeTheme(preference);
+}
+
+function writeTheme(preference) {
+    const root = document.documentElement;
     const resolved = resolveTheme(preference);
     root.dataset.uiThemePref = preference;
     root.dataset.uiTheme = resolved;

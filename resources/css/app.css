@@ -113,6 +113,13 @@ html[data-ui-theme='sable'] {
     color-scheme: light;
 }
 
+/* Fondu du changement de thème (View Transitions). */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* « Réduire les animations » choisi dans le panneau Apparence. */
 html[data-motion='reduce'] *,
 html[data-motion='reduce'] *::before,

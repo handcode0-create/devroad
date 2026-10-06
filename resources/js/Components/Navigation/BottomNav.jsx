@@ -1,5 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Sheet, m, softSpring } from '@/Components/Ui/Motion';
+
+const MotionLink = m.create(Link);
 
 // Barre de navigation mobile — maquette « Refonte & thèmes » (Claude Design).
 const ICONS = {
@@ -44,8 +47,15 @@ const SHEETS = {
 export default function BottomNav() {
     const { url } = usePage();
     const [sheet, setSheet] = useState(null);
+    // Garde le contenu affiché pendant l'animation de fermeture du panneau.
+    const [shown, setShown] = useState(null);
 
     useEffect(() => setSheet(null), [url]);
+
+    function openSheet(key) {
+        setShown(SHEETS[key]);
+        setSheet(key);
+    }
 
     const starts = (...prefixes) => prefixes.some((prefix) => url === prefix || url.startsWith(prefix + '/') || url.startsWith(prefix + '?'));
 
@@ -57,8 +67,17 @@ export default function BottomNav() {
         { key: 'tools', label: 'Outils', icon: ICONS.tools, sheet: 'tools', active: starts('/devlab', '/sandbox', '/search', '/profile') },
     ];
 
-    const tabClass = (active) => 'flex h-[52px] w-[58px] flex-col items-center justify-center gap-[3px] rounded-[14px] text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] '
-        + (active ? 'bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]' : 'bg-transparent text-[var(--dr-text-3)]');
+    const tabClass = (active) => 'relative flex h-[52px] w-[58px] flex-col items-center justify-center gap-[3px] rounded-[14px] text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] '
+        + (active ? 'text-[var(--dr-accent-text)]' : 'text-[var(--dr-text-3)]');
+
+    // Pastille de l'onglet actif : glisse d'un onglet à l'autre (layout partagé).
+    const content = (tab) => <>
+        {tab.active && <m.span layoutId="bottom-nav-active" transition={softSpring} aria-hidden="true" className="absolute inset-0 rounded-[14px] bg-[var(--dr-accent-soft)]" />}
+        <span className="relative flex flex-col items-center gap-[3px]">
+            <Icon path={tab.icon} />
+            <span>{tab.label}</span>
+        </span>
+    </>;
 
     return (
         <>
@@ -70,65 +89,55 @@ export default function BottomNav() {
                 {tabs.map((tab) => {
                     if (tab.create) {
                         return (
-                            <button key={tab.key} type="button" onClick={() => setSheet('create')} aria-label="Créer" aria-haspopup="dialog" className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[var(--dr-accent)] text-[var(--dr-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dr-accent)]">
-                                <Icon path={tab.icon} stroke={2.6} />
-                            </button>
+                            <m.button key={tab.key} whileTap={{ scale: 0.88 }} whileHover={{ scale: 1.04 }} type="button" onClick={() => openSheet('create')} aria-label="Créer" aria-haspopup="dialog" className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[var(--dr-accent)] text-[var(--dr-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dr-accent)]">
+                                <m.span className="flex" animate={{ rotate: sheet === 'create' ? 45 : 0 }} transition={softSpring}>
+                                    <Icon path={tab.icon} stroke={2.6} />
+                                </m.span>
+                            </m.button>
                         );
                     }
 
                     if (tab.sheet) {
                         return (
-                            <button key={tab.key} type="button" onClick={() => setSheet(tab.sheet)} aria-label={tab.label} aria-haspopup="dialog" className={tabClass(tab.active)}>
-                                <Icon path={tab.icon} />
-                                <span>{tab.label}</span>
-                            </button>
+                            <m.button key={tab.key} whileTap={{ scale: 0.92 }} type="button" onClick={() => openSheet(tab.sheet)} aria-label={tab.label} aria-haspopup="dialog" className={tabClass(tab.active)}>
+                                {content(tab)}
+                            </m.button>
                         );
                     }
 
                     return (
-                        <Link key={tab.key} href={tab.href} aria-label={tab.label} aria-current={tab.active ? 'page' : undefined} className={tabClass(tab.active)}>
-                            <Icon path={tab.icon} />
-                            <span>{tab.label}</span>
-                        </Link>
+                        <MotionLink key={tab.key} whileTap={{ scale: 0.92 }} href={tab.href} aria-label={tab.label} aria-current={tab.active ? 'page' : undefined} className={tabClass(tab.active)}>
+                            {content(tab)}
+                        </MotionLink>
                     );
                 })}
             </nav>
 
-            {sheet && <ActionSheet sheet={SHEETS[sheet]} onClose={() => setSheet(null)} />}
+            <Sheet open={Boolean(sheet)} onClose={() => setSheet(null)} label={shown?.title} className="gap-3 pb-[calc(24px+env(safe-area-inset-bottom))]">
+                {shown && <>
+                    <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">{shown.title}</h2>
+                    <div className="flex flex-col gap-2">
+                        {shown.items.map((item, index) => (
+                            <MotionLink
+                                key={item.href}
+                                href={item.href}
+                                initial={{ opacity: 0, y: 14 }}
+                                animate={{ opacity: 1, y: 0, transition: { ...softSpring, delay: 0.05 + index * 0.04 } }}
+                                whileTap={{ scale: 0.98 }}
+                                className="flex items-center gap-3 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-field)] p-3.5 text-[var(--dr-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)]"
+                            >
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]">
+                                    <Icon path={item.icon} size={18} stroke={2} />
+                                </span>
+                                <span className="flex flex-1 flex-col gap-0.5">
+                                    <span className="text-[15px] font-semibold">{item.label}</span>
+                                    <span className="text-[13px] text-[var(--dr-text-3)]">{item.hint}</span>
+                                </span>
+                            </MotionLink>
+                        ))}
+                    </div>
+                </>}
+            </Sheet>
         </>
-    );
-}
-
-function ActionSheet({ sheet, onClose }) {
-    const firstRef = useRef(null);
-
-    useEffect(() => {
-        firstRef.current?.focus();
-        const onKey = (event) => { if (event.key === 'Escape') onClose(); };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    }, []);
-
-    return (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center lg:hidden" role="presentation">
-            <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-[var(--dr-scrim)]" />
-            <section role="dialog" aria-modal="true" aria-label={sheet.title} className="relative flex w-full max-w-[430px] flex-col gap-3 rounded-t-[28px] border-t border-[var(--dr-border-2)] bg-[var(--dr-surface)] px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-[10px] font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)]">
-                <span aria-hidden="true" className="h-[5px] w-10 self-center rounded-full bg-[var(--dr-border-2)]" />
-                <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">{sheet.title}</h2>
-                <div className="flex flex-col gap-2">
-                    {sheet.items.map((item, index) => (
-                        <Link key={item.href} ref={index === 0 ? firstRef : undefined} href={item.href} className="flex items-center gap-3 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-field)] p-3.5 text-[var(--dr-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)]">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]">
-                                <Icon path={item.icon} size={18} stroke={2} />
-                            </span>
-                            <span className="flex flex-1 flex-col gap-0.5">
-                                <span className="text-[15px] font-semibold">{item.label}</span>
-                                <span className="text-[13px] text-[var(--dr-text-3)]">{item.hint}</span>
-                            </span>
-                        </Link>
-                    ))}
-                </div>
-            </section>
-        </div>
     );
 }
