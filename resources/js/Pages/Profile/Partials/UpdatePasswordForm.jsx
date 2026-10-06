@@ -59,13 +59,13 @@ export default function UpdatePasswordForm({ className = '' }) {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:opacity-50"
+                        className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[var(--dr-ink)] transition hover:bg-[#ff781a] disabled:opacity-50"
                     >
                         {processing ? 'Mise à jour...' : 'Changer le mot de passe'}
                     </button>
 
                     {recentlySuccessful && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--dr-success)]">
                             <CheckCircle2 size={15} />
                             Mot de passe mis à jour
                         </span>

@@ -18,14 +18,14 @@ export default function Create({ technologies = [] }) {
 
     return (
         <AppLayout>
-            <Head title="Nouvelle roadmap" />
+            <Head title="Nouveau parcours" />
 
             <div className="mx-auto max-w-2xl">
                 <PageHeader
                     title="Nouveau parcours"
                     subtitle="Choisis une technologie : DevRoad générera automatiquement les cours de ton parcours."
                     backHref="/roadmaps"
-                    backLabel="Mes roadmaps"
+                    backLabel="Parcours"
                 />
 
                 <RoadmapForm

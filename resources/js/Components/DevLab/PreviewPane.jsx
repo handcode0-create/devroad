@@ -14,11 +14,11 @@ import { Eye, Play, X } from "lucide-react";
 
 export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose }) {
     return (
-        <div className="bg-[#050B12] p-2">
+        <div className="bg-[var(--dr-bg)] p-2">
             <div className="mb-2 flex items-center justify-between px-2">
                 <div className="flex items-center gap-2">
-                    <Eye size={13} className="text-[#FF8A3D]" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                    <Eye size={13} className="text-[var(--dr-accent-text)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--dr-text-3)]">
                         Aperçu
                     </span>
                 </div>
@@ -27,7 +27,7 @@ export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose
                     <button
                         type="button"
                         onClick={onRefresh}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-2.5 py-2 text-[10px] font-bold text-[#08111F]"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-2.5 py-2 text-[10px] font-bold text-[var(--dr-ink)]"
                     >
                         <Play size={11} fill="currentColor" />
                         Actualiser
@@ -36,7 +36,7 @@ export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose
                         <button
                             type="button"
                             onClick={onClose}
-                            className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.08] hover:text-white"
+                            className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg border border-[var(--dr-border)] bg-[var(--dr-hover)] text-[var(--dr-text-2)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                             aria-label="Fermer l'aperçu"
                             title="Retour à l'éditeur"
                         >
@@ -51,7 +51,7 @@ export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose
                 title="Prévisualisation DevRoad"
                 sandbox="allow-scripts"
                 srcDoc={secureSrcDoc(srcDoc)}
-                className="h-[420px] w-full rounded-2xl border border-white/[0.06] bg-white"
+                className="h-[420px] w-full rounded-2xl border border-[var(--dr-border)] bg-white"
             />
         </div>
     );

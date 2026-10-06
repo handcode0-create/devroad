@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Roadmap;
+use App\Models\RoadmapStep;
 use App\Services\RoadmapGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,15 @@ class RoadmapController extends Controller
         $roadmaps = $request->user()
             ->roadmaps()
             ->withProgress()
+            // Prochaine étape à faire (en cours d'abord, puis à faire par position).
+            ->with([
+                'steps' => fn ($query) => $query
+                    ->reorder()
+                    ->select(['id', 'roadmap_id', 'title', 'position', 'status'])
+                    ->whereIn('status', [RoadmapStep::IN_PROGRESS, RoadmapStep::TODO])
+                    ->orderByRaw('case when status = ? then 0 else 1 end', [RoadmapStep::IN_PROGRESS])
+                    ->orderBy('position'),
+            ])
             ->latest('updated_at')
             ->paginate(10)
             ->withQueryString()
@@ -31,6 +41,10 @@ class RoadmapController extends Controller
                 'steps_count' => $roadmap->steps_count,
                 'completed_steps_count' => $roadmap->completed_steps_count,
                 'progress' => $roadmap->progress,
+                'updated_at' => $roadmap->updated_at,
+                'next_step' => ($next = $roadmap->steps->first())
+                    ? ['id' => $next->id, 'title' => $next->title, 'position' => $next->position]
+                    : null,
             ]);
 
         return Inertia::render('Roadmaps/Index', [

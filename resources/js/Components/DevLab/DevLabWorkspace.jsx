@@ -363,7 +363,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
 
     const editorView = (
         <div className="flex min-h-0 flex-1 flex-col">
-            <div className="border-b border-white/[0.06] bg-[#0D1725] p-2">
+            <div className="border-b border-[var(--dr-border)] bg-[var(--dr-surface)] p-2">
                 <EditorTabs
                     files={files}
                     activeFile={active}
@@ -395,15 +395,15 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
 
             <MobileSymbolBar onInsert={insertSymbol} />
 
-            <div className="flex h-12 shrink-0 items-center justify-between border-t border-white/[0.06] bg-[#0D1725] px-3">
-                <span className="text-[10px] text-slate-600">
+            <div className="flex h-12 shrink-0 items-center justify-between border-t border-[var(--dr-border)] bg-[var(--dr-surface)] px-3">
+                <span className="text-[10px] text-[var(--dr-text-3)]">
                     {saved ? "Enregistré" : "Sauvegarde automatique…"}
                 </span>
                 <button
                     type="button"
                     onClick={save}
                     disabled={saved}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-3 py-2 text-[10px] font-bold text-[#08111F] disabled:opacity-30"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-3 py-2 text-[10px] font-bold text-[var(--dr-ink)] disabled:opacity-30"
                 >
                     Enregistrer
                 </button>
@@ -414,10 +414,10 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
     const previewView = runtime === "browser" ? (
         <PreviewPane previewVersion={previewVersion} srcDoc={srcDoc} onRefresh={refreshPreview} onClose={closePreview} />
     ) : (
-        <div className="m-3 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 text-center">
-            <Monitor className="mx-auto text-slate-600" size={22} />
-            <p className="mt-3 text-xs font-bold text-slate-300">Runtime serveur</p>
-            <p className="mt-2 text-[11px] leading-5 text-slate-600">
+        <div className="m-3 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 text-center">
+            <Monitor className="mx-auto text-[var(--dr-text-3)]" size={22} />
+            <p className="mt-3 text-xs font-bold text-[var(--dr-text-2)]">Runtime serveur</p>
+            <p className="mt-2 text-[11px] leading-5 text-[var(--dr-text-3)]">
                 L’exécution serveur sécurisée sera activée séparément. Aucun code utilisateur n’est exécuté sur Railway.
             </p>
         </div>
@@ -444,12 +444,12 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
             />
 
             <div className="flex h-full min-h-0 flex-col">
-                <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.06] bg-[#0D1725] px-2 py-2">
+                <div className="flex shrink-0 items-center gap-2 border-b border-[var(--dr-border)] bg-[var(--dr-surface)] px-2 py-2">
                     <RuntimeSelector runtime={runtime} template={project.template} />
                     <button
                         type="button"
                         onClick={() => panel === "preview" ? closePreview() : refreshPreview()}
-                        className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 text-[10px] font-bold text-[#08111F]"
+                        className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 text-[10px] font-bold text-[var(--dr-ink)]"
                     >
                         <Play size={13} fill="currentColor" />
                         {panel === "preview" ? "Fermer" : "Aperçu"}
@@ -468,27 +468,27 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                         onDelete={removeFile}
                     />
 
-                    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#06101A]">
+                    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--dr-bg)]">
                         {editorView}
                         <div className="hidden h-48 shrink-0 lg:block">
                             {terminalView}
                         </div>
                     </section>
 
-                    <aside className="min-w-0 border-l border-white/[0.06] bg-[#050B12]">
+                    <aside className="min-w-0 border-l border-[var(--dr-border)] bg-[var(--dr-bg)]">
                         {previewView}
                     </aside>
                 </div>
 
                 <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden lg:hidden">
-                    <div className="min-h-0 flex-1 overflow-hidden bg-[#06101A] pb-[68px]">
+                    <div className="min-h-0 flex-1 overflow-hidden bg-[var(--dr-bg)] pb-[68px]">
                         {editorView}
                     </div>
 
                     <div
                         ref={mobileSheetRef}
                         className={
-                            "absolute inset-x-0 bottom-0 z-[70] flex flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-white/[0.08] bg-[#07111D]/[0.98] shadow-[0_-16px_50px_rgba(0,0,0,0.38)] backdrop-blur-xl " +
+                            "absolute inset-x-0 bottom-0 z-[70] flex flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-[var(--dr-border)] bg-[#07111D]/[0.98] shadow-[0_-16px_50px_rgba(0,0,0,0.38)] backdrop-blur-xl " +
                             (mobileSheetDragging ? "" : "transition-[height] duration-200 ease-out")
                         }
                         style={{
@@ -507,11 +507,11 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                             aria-orientation="horizontal"
                         >
                             <div className="flex h-6 w-full items-center justify-center rounded-xl">
-                                <GripHorizontal size={22} className="text-slate-600" />
+                                <GripHorizontal size={22} className="text-[var(--dr-text-3)]" />
                             </div>
                         </div>
 
-                        <div className="flex shrink-0 border-b border-white/[0.06] bg-[#0D1725]/90 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+                        <div className="flex shrink-0 border-b border-[var(--dr-border)] bg-[#0D1725]/90 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
                             {[
                                 ["editor", "Éditeur"],
                                 ["preview", "Aperçu"],
@@ -523,7 +523,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                                     onClick={() => selectMobilePanel(key)}
                                     className={
                                         "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold " +
-                                        (panel === key ? "bg-[#FF6A00] text-[#08111F]" : "text-slate-500")
+                                        (panel === key ? "bg-[#FF6A00] text-[var(--dr-ink)]" : "text-[var(--dr-text-3)]")
                                     }
                                 >
                                     {key === "terminal" && <TerminalIcon size={13} />}
@@ -532,7 +532,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                             ))}
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-hidden bg-[#050B12]">
+                        <div className="min-h-0 flex-1 overflow-hidden bg-[var(--dr-bg)]">
                             {panel === "preview" && (
                                 <div className="h-full overflow-auto">
                                     {previewView}
@@ -546,8 +546,8 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                             {panel === "editor" && (
                                 <div className="flex h-full items-center justify-center px-8 text-center">
                                     <div>
-                                        <ChevronDown size={18} className="mx-auto rotate-180 text-slate-700" />
-                                        <p className="mt-2 text-[11px] text-slate-600">
+                                        <ChevronDown size={18} className="mx-auto rotate-180 text-[var(--dr-text-3)]" />
+                                        <p className="mt-2 text-[11px] text-[var(--dr-text-3)]">
                                             Faites glisser vers le haut pour ouvrir le panneau.
                                         </p>
                                     </div>

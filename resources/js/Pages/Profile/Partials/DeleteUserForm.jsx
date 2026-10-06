@@ -26,15 +26,15 @@ export default function DeleteUserForm({ className = '' }) {
         <section className={className}>
             <div className="rounded-2xl border border-red-500/15 bg-red-500/[0.04] p-5">
                 <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-[var(--dr-danger)]">
                         <Trash2 size={18} />
                     </div>
 
                     <div className="min-w-0">
-                        <h2 className="text-base font-bold text-white">
+                        <h2 className="text-base font-bold text-[var(--dr-text)]">
                             Supprimer le compte
                         </h2>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">
                             Cette action supprime définitivement ton compte et ses données.
                         </p>
                     </div>
@@ -43,7 +43,7 @@ export default function DeleteUserForm({ className = '' }) {
                 <button
                     type="button"
                     onClick={() => setConfirming(true)}
-                    className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-bold text-red-300 transition hover:bg-red-500/15"
+                    className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-bold text-[var(--dr-danger)] transition hover:bg-red-500/15"
                 >
                     Supprimer mon compte
                 </button>

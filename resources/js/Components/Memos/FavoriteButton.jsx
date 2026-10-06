@@ -35,7 +35,7 @@ export default function FavoriteButton({ memo, className = '', variant = 'defaul
             className={variant === 'design'
                 // Maquette « Mobile — Fiches » : 40×40, rayon 12, accent si favori, sinon texte tertiaire.
                 ? 'relative z-10 -mr-2 -mt-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (favorite ? 'text-[var(--dr-accent)]' : 'text-[var(--dr-text-3)]') + ' ' + className
-                : 'relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60 ' + (favorite ? 'text-[#FF6A00]' : 'text-slate-500 hover:text-white') + ' ' + className}
+                : 'relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--dr-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60 ' + (favorite ? 'text-[var(--dr-accent-text)]' : 'text-[var(--dr-text-3)] hover:text-[var(--dr-text)]') + ' ' + className}
         >
             <span ref={iconRef} className="flex">
                 {variant === 'design'

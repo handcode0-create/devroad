@@ -205,12 +205,19 @@ class MemoController extends Controller
         return back();
     }
 
-    public function destroy(Memo $memo): RedirectResponse
+    public function destroy(Request $request, Memo $memo): RedirectResponse
     {
         Gate::authorize('delete', $memo);
         $memo->delete();
 
-        return redirect()->route('memos.index');
+        // Depuis la liste, on reste sur la même vue (dossier, filtre) ; depuis la fiche, retour à la liste.
+        return ($request->boolean('stay') ? back() : redirect()->route('memos.index'))
+            ->with('success', 'Fiche mise à la corbeille.')
+            ->with('undo', [
+                'label' => 'Annuler',
+                'method' => 'post',
+                'url' => route('memos.restore', $memo->id),
+            ]);
     }
 
     public function duplicate(Memo $memo): RedirectResponse
@@ -298,7 +305,24 @@ class MemoController extends Controller
             }
         });
 
-        return back()->with('success', count($memos) . ' fiche(s) mise(s) à jour.');
+        $redirect = back()->with('success', match ($data['action']) {
+            'delete' => count($memos) . ' fiche(s) mise(s) à la corbeille.',
+            'restore' => count($memos) . ' fiche(s) restaurée(s).',
+            'force_delete' => count($memos) . ' fiche(s) supprimée(s) définitivement.',
+            default => count($memos) . ' fiche(s) mise(s) à jour.',
+        });
+
+        // Une mise à la corbeille groupée peut être annulée depuis la notification.
+        if ($data['action'] === 'delete' && $memos->isNotEmpty()) {
+            $redirect->with('undo', [
+                'label' => 'Annuler',
+                'method' => 'post',
+                'url' => route('memos.bulk'),
+                'data' => ['ids' => $memos->pluck('id')->all(), 'action' => 'restore'],
+            ]);
+        }
+
+        return $redirect;
     }
 
     public function forceDestroy(Request $request, int $memo): RedirectResponse
@@ -354,9 +378,22 @@ class MemoController extends Controller
             );
         }
 
+        $previousFolder = $memo->folder_id;
         $memo->update(['folder_id' => $data['folder_id']]);
 
-        return back()->with('success', 'Fiche déplacée.');
+        $redirect = back()->with('success', 'Fiche déplacée.');
+
+        // Rangement par erreur (glisser-déposer raté…) : retour au dossier d'origine.
+        if ($previousFolder !== $memo->folder_id) {
+            $redirect->with('undo', [
+                'label' => 'Annuler',
+                'method' => 'patch',
+                'url' => route('memos.move', $memo),
+                'data' => ['folder_id' => $previousFolder],
+            ]);
+        }
+
+        return $redirect;
     }
 
     private function assertAttachmentLimit(Request $request, ?Memo $memo = null): void

@@ -1,18 +1,7 @@
 import { Head, Link, router, useForm } from "@inertiajs/react";
-import {
-    ArrowLeft,
-    ArrowRight,
-    Check,
-    CheckCircle2,
-    Circle,
-    Clock3,
-    Code2,
-    Lock,
-    Loader2,
-    BookOpen,
-} from "lucide-react";
-
-import technologyLogos from "@/Config/technologyLogos";
+import { Loader2 } from "lucide-react";
+import { AnimatePresence, m, softSpring } from "@/Components/Ui/Motion";
+import { ICON, MotionLink, ProgressBar, Svg, TechTile, ui } from "@/Components/Ui/Design";
 
 import AppLayout from "@/Layouts/AppLayout";
 import CodeWorkspace from "@/Components/Learning/CodeWorkspace";
@@ -178,468 +167,184 @@ export default function Show({
         });
     }
 
+    const total = Number(roadmap.steps_count ?? 0);
+    const canComplete = !(hasExercise && !exerciseCompleted && !completed);
+
     return (
         <AppLayout>
             <Head title={step.title} />
 
-            <div
-                className="fixed inset-x-0 top-0 z-50 h-1 bg-white/[0.04]"
-                aria-label="Progression de lecture"
-            >
-                <div
-                    className="h-full bg-[#FF6A00] transition-[width] duration-150"
-                    style={{ width: `${readingProgress}%` }}
-                />
+            {/* Progression de lecture */}
+            <div className="fixed inset-x-0 top-0 z-50 h-[3px]" role="progressbar" aria-label="Progression de lecture" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(readingProgress)}>
+                <div className="h-full bg-[var(--dr-accent)] transition-[width] duration-150" style={{ width: `${readingProgress}%` }} />
             </div>
 
-            <div className="mx-auto w-full min-w-0 max-w-5xl space-y-6">
-                <div className="flex min-w-0 items-center justify-between gap-4">
-                    <Link
-                        href={`/roadmaps/${roadmap.id}`}
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
-                    >
-                        <ArrowLeft size={16} />
-                        {roadmap.title}
+            <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] lg:gap-7">
+                {/* En-tête de l'étape */}
+                <header className="flex flex-col gap-4">
+                    <Link href={`/roadmaps/${roadmap.id}`} className={"-ml-1 inline-flex min-h-9 w-fit max-w-full items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-[var(--dr-text-2)] hover:text-[var(--dr-text)] " + ui.focus}>
+                        <Svg d="M19 12H5M11 6l-6 6 6 6" size={16} />
+                        <TechTile technology={roadmap.technology} title={roadmap.title} size={22} />
+                        <span className="truncate">{roadmap.title}</span>
                     </Link>
-
-                    {roadmap.technology && technologyLogos[roadmap.technology] && (
-                        <img
-                            src={technologyLogos[roadmap.technology]}
-                            alt=""
-                            className="h-9 w-9 object-contain"
-                        />
-                    )}
-                </div>
-
-                <section className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725] p-5 sm:p-8">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-full bg-[#FF6A00]/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
-                            Étape {step.position}
-                        </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex h-7 items-center rounded-full bg-[var(--dr-accent-soft)] px-3 text-xs font-bold text-[var(--dr-accent-text)]">Étape {step.position}{total ? ` sur ${total}` : ""}</span>
                         <StatusBadge status={displayStatus} />
                         {step.estimated_minutes && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold text-slate-500">
-                                <Clock3 size={13} />
-                                {step.estimated_minutes} min
+                            <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-[var(--dr-field)] px-3 text-xs font-semibold text-[var(--dr-text-2)]">
+                                <Svg d={ICON.clock} size={13} />{step.estimated_minutes} min
                             </span>
                         )}
                     </div>
-
-                    <h1 className="mt-5 break-words text-2xl font-bold tracking-tight text-white sm:text-4xl">
-                        {step.title}
-                    </h1>
-
-                    {step.description && (
-                        <p className="mt-3 max-w-3xl break-words text-sm leading-7 text-slate-500 [overflow-wrap:anywhere]">
-                            {step.description}
-                        </p>
-                    )}
-
-                    {Number(roadmap.steps_count ?? 0) > 0 && (
-                        <div className="mt-6 max-w-xl">
-                            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em]">
-                                <span className="text-slate-600">
-                                    Progression du parcours
-                                </span>
-                                <span className="text-[#FF8A3D]">
-                                    {roadmapCompletedSteps} / {roadmap.steps_count}
-                                </span>
-                            </div>
-
-                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                                <div
-                                    className="h-full rounded-full bg-[#FF6A00] transition-all duration-500"
-                                    style={{
-                                        width: `${progressFromCount(
-                                            roadmapCompletedSteps,
-                                            roadmap.steps_count,
-                                        )}%`,
-                                    }}
-                                />
-                            </div>
+                    <h1 className="m-0 font-['Manrope',sans-serif] text-[30px] font-extrabold leading-[1.1] tracking-[-0.03em] [overflow-wrap:anywhere] lg:text-[40px]">{step.title}</h1>
+                    {step.description && <p className="m-0 max-w-3xl text-[15px] leading-[1.6] text-[var(--dr-text-2)] [overflow-wrap:anywhere]">{step.description}</p>}
+                    {total > 0 && (
+                        <div className="flex max-w-xl items-center gap-3">
+                            <ProgressBar value={progressFromCount(roadmapCompletedSteps, total)} className="h-1.5 flex-1" />
+                            <span className="text-xs font-semibold tabular-nums text-[var(--dr-text-2)]">{roadmapCompletedSteps} / {total} étapes</span>
                         </div>
                     )}
-                </section>
+                </header>
 
-                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-                    <main className="min-w-0 space-y-6">
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+                    <main className="flex min-w-0 flex-col gap-5">
                         {step.objective && (
-                            <section className="min-w-0 overflow-hidden rounded-3xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.04] p-5 sm:p-7">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF8A3D]">
-                                    Objectif
-                                </p>
-                                <p className="mt-3 break-words text-sm leading-7 text-slate-300 [overflow-wrap:anywhere]">
-                                    {step.objective}
-                                </p>
+                            <section className="flex gap-3.5 rounded-[18px] border border-[color-mix(in_srgb,var(--dr-accent)_30%,transparent)] bg-[var(--dr-accent-soft)] p-5">
+                                <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--dr-accent)] text-[var(--dr-ink)]"><Svg d={["M12 3a9 9 0 100 18 9 9 0 000-18z", "M12 8a4 4 0 100 8 4 4 0 000-8z", "M12 12h.01"]} size={17} stroke={2.2} /></span>
+                                <div className="min-w-0">
+                                    <h2 className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[var(--dr-accent-text)]">Objectif</h2>
+                                    <p className="m-0 mt-1.5 text-[15px] leading-[1.6] text-[var(--dr-text)] [overflow-wrap:anywhere]">{step.objective}</p>
+                                </div>
                             </section>
                         )}
 
-                        <article className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-8">
-                            <div className="mb-6 flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-[#FF8A3D]">
-                                    <Code2 size={18} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                                        Cours
-                                    </p>
-                                    <h2 className="mt-0.5 text-lg font-bold text-white">
-                                        Comprendre la notion
-                                    </h2>
-                                </div>
-                            </div>
-
+                        <article className={ui.card + " min-w-0 overflow-hidden p-5 sm:p-8"}>
+                            <h2 className={ui.sectionTitle + " m-0 mb-5"}>Le cours</h2>
                             {step.content ? (
                                 <CourseContent content={step.content} />
                             ) : (
-                                <div className="space-y-4 text-sm leading-7 text-slate-400">
-                                    <p>
-                                        Le contenu pédagogique de cette étape
-                                        n&apos;a pas encore été renseigné.
-                                    </p>
-                                    <p>
-                                        Cette zone accueillera le cours,
-                                        les explications et les exemples
-                                        nécessaires pour progresser.
-                                    </p>
-                                </div>
+                                <p className="m-0 text-[15px] leading-7 text-[var(--dr-text-2)]">Le contenu de cette étape n’a pas encore été rédigé. Tu peux l’ajouter depuis « Modifier l’étape ».</p>
                             )}
                         </article>
 
                         {step.code_example && (
-                            <section className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-[#08111F]">
-                                <div className="flex items-center gap-2 border-b border-white/[0.06] px-5 py-4">
-                                    <Code2 size={16} className="text-[#FF8A3D]" />
-                                    <span className="text-xs font-semibold text-white">
-                                        Exemple de code
-                                    </span>
+                            <section className="min-w-0 overflow-hidden rounded-[18px] border border-[var(--dr-border)] bg-[var(--dr-field)]">
+                                <div className="flex items-center gap-2 border-b border-[var(--dr-border)] px-5 py-3">
+                                    <Svg d={ICON.code} size={16} className="text-[var(--dr-accent-text)]" />
+                                    <span className="text-sm font-semibold">Exemple de code</span>
+                                    <CopyButton text={step.code_example} />
                                 </div>
-
-                                <pre className="overflow-x-auto p-5 text-xs leading-6 text-slate-300">
-                                    <code>{step.code_example}</code>
-                                </pre>
+                                <pre className="m-0 overflow-x-auto p-5 font-['JetBrains_Mono',ui-monospace,monospace] text-[13px] leading-6 text-[var(--dr-text)]"><code>{step.code_example}</code></pre>
                             </section>
                         )}
 
                         {step.workspace?.enabled && (
-                            <section className="min-w-0 overflow-hidden rounded-3xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.035] p-5 sm:p-6">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF8A3D]">
-                                            DevLab
-                                        </p>
-                                        <h2 className="mt-1 text-base font-bold text-white">
-                                            Pratique directement dans ton workspace
-                                        </h2>
-                                        <p className="mt-1 text-xs leading-6 text-slate-500">
-                                            {step.devlab_project
-                                                ? `Projet lié : ${step.devlab_project.name}`
-                                                : "Crée automatiquement un projet DevLab lié à cette étape."}
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={openInDevLab}
-                                        disabled={devlabOpening}
-                                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] shadow-[0_8px_22px_rgba(255,106,0,0.18)] transition hover:bg-[#ff781a] disabled:cursor-wait disabled:opacity-60"
-                                    >
-                                        <Code2 size={16} />
-                                        {devlabOpening
-                                            ? "Ouverture..."
-                                            : step.devlab_project
-                                              ? "Continuer dans DevLab"
-                                              : "Ouvrir dans DevLab"}
-                                    </button>
+                            <section className={ui.card + " flex flex-col gap-4 p-5 sm:flex-row sm:items-center"}>
+                                <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]"><Svg d={ICON.code} size={20} /></span>
+                                <div className="min-w-0 flex-1">
+                                    <h2 className="m-0 text-base font-semibold">Pratique dans DevLab</h2>
+                                    <p className="m-0 mt-1 text-sm text-[var(--dr-text-2)]">{step.devlab_project ? `Projet lié : ${step.devlab_project.name}` : "Un projet DevLab lié à cette étape sera créé pour toi."}</p>
                                 </div>
+                                <button type="button" onClick={openInDevLab} disabled={devlabOpening} aria-busy={devlabOpening} className={ui.primary + " shrink-0"}>
+                                    {devlabOpening ? <Loader2 size={16} className="animate-spin" /> : <Svg d={ICON.code} size={16} stroke={2.2} />}
+                                    {devlabOpening ? "Ouverture…" : step.devlab_project ? "Continuer dans DevLab" : "Ouvrir dans DevLab"}
+                                </button>
                             </section>
                         )}
 
-                        {step.workspace?.enabled && (
-                            <CodeWorkspace
-                                workspace={step.workspace}
-                                stepId={step.id}
-                            />
-                        )}
+                        {step.workspace?.enabled && <CodeWorkspace workspace={step.workspace} stepId={step.id} />}
 
                         {hasExercise && (
-                            <section className="min-w-0 overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
-                                        <CheckCircle2 size={18} />
-                                    </div>
-
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300">
-                                                Exercice pratique
-                                            </p>
-
-                                            {exerciseCompleted && (
-                                                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-400">
-                                                    Validé
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <h2 className="mt-1 text-lg font-bold text-white">
-                                            {step.exercise.title}
-                                        </h2>
-
-                                        <p className="mt-3 text-sm leading-7 text-slate-400">
-                                            {step.exercise.description}
-                                        </p>
-
-                                        <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                                                Indice
-                                            </p>
-                                            <p className="mt-2 text-xs leading-5 text-slate-500">
-                                                {step.exercise.hint}
-                                            </p>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => changeExercise(!exerciseCompleted)}
-                                            className={[
-                                                "mt-5 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition",
-                                                exerciseCompleted
-                                                    ? "border border-white/[0.08] bg-white/[0.04] text-slate-300 hover:bg-white/[0.07]"
-                                                    : "bg-violet-500/15 text-violet-200 hover:bg-violet-500/20",
-                                            ].join(" ")}
-                                        >
-                                            <Check size={16} />
-                                            {exerciseCompleted
-                                                ? "Réouvrir l'exercice"
-                                                : "J'ai réalisé l'exercice"}
-                                        </button>
-
-                                        {exerciseCompleted && step.exercise.solution && (
-                                            <details className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                                                <summary className="cursor-pointer text-xs font-bold text-slate-300">
-                                                    Voir une solution possible
-                                                </summary>
-
-                                                <pre className="mt-4 overflow-x-auto whitespace-pre-wrap text-xs leading-6 text-slate-400">
-                                                    {step.exercise.solution}
-                                                </pre>
-                                            </details>
-                                        )}
-                                    </div>
+                            <section className={ui.card + " min-w-0 p-5 sm:p-7"} aria-labelledby="exercice-titre">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--dr-accent-text)]">Exercice pratique</span>
+                                    <AnimatePresence>{exerciseCompleted && <m.span initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={softSpring} className="inline-flex h-6 items-center gap-1 rounded-full bg-[var(--dr-accent)] px-2.5 text-xs font-bold text-[var(--dr-ink)]"><Svg d={ICON.check} size={12} stroke={3} />Validé</m.span>}</AnimatePresence>
                                 </div>
+                                <h2 id="exercice-titre" className="m-0 mt-2 text-lg font-semibold">{step.exercise.title}</h2>
+                                <p className="m-0 mt-2 text-[15px] leading-[1.6] text-[var(--dr-text-2)]">{step.exercise.description}</p>
+                                {step.exercise.hint && (
+                                    <details className="group mt-4 rounded-xl bg-[var(--dr-field)] px-4 py-3">
+                                        <summary className="cursor-pointer list-none text-sm font-semibold text-[var(--dr-text)] [&::-webkit-details-marker]:hidden">
+                                            <span className="inline-flex items-center gap-2"><Svg d={ICON.chevronRight} size={15} className="transition-transform group-open:rotate-90" />Afficher l’indice</span>
+                                        </summary>
+                                        <p className="m-0 mt-2 text-sm leading-6 text-[var(--dr-text-2)]">{step.exercise.hint}</p>
+                                    </details>
+                                )}
+                                <button type="button" onClick={() => changeExercise(!exerciseCompleted)} aria-pressed={exerciseCompleted} className={(exerciseCompleted ? ui.secondary : ui.primary) + " mt-5"}>
+                                    <Svg d={ICON.check} size={16} stroke={2.6} />
+                                    {exerciseCompleted ? "Rouvrir l’exercice" : "J’ai réalisé l’exercice"}
+                                </button>
+                                {exerciseCompleted && step.exercise.solution && (
+                                    <details className="group mt-4 rounded-xl bg-[var(--dr-field)] px-4 py-3">
+                                        <summary className="cursor-pointer list-none text-sm font-semibold [&::-webkit-details-marker]:hidden"><span className="inline-flex items-center gap-2"><Svg d={ICON.chevronRight} size={15} className="transition-transform group-open:rotate-90" />Voir une solution possible</span></summary>
+                                        <pre className="m-0 mt-3 overflow-x-auto whitespace-pre-wrap font-['JetBrains_Mono',ui-monospace,monospace] text-[13px] leading-6 text-[var(--dr-text)]">{step.exercise.solution}</pre>
+                                    </details>
+                                )}
                             </section>
                         )}
 
-                        <section className="rounded-3xl border border-[#FF6A00]/10 bg-[#FF6A00]/[0.035] p-5 sm:p-6">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                                        <BookOpen size={18} />
-                                    </div>
-
-                                    <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#FF8A3D]">
-                                            Tes notes
-                                        </p>
-                                        <p className="mt-1 text-sm font-bold text-white">
-                                            Garde une trace de ce que tu viens d'apprendre.
-                                        </p>
-                                    </div>
+                        {/* Terminer l'étape */}
+                        {!blocked && (
+                            <section aria-label="Avancement" className={"flex flex-col gap-4 rounded-[18px] border p-5 sm:flex-row sm:items-center " + (completed ? "border-[color-mix(in_srgb,var(--dr-accent)_45%,transparent)] bg-[var(--dr-accent-soft)]" : "border-[var(--dr-border)] bg-[var(--dr-surface)] shadow-[var(--dr-shadow)]")}>
+                                <div className="min-w-0 flex-1">
+                                    <h2 className="m-0 text-base font-semibold">{completed ? "Étape terminée" : "Tu maîtrises cette étape ?"}</h2>
+                                    <p className="m-0 mt-1 text-sm text-[var(--dr-text-2)]">
+                                        {completed ? "Bravo ! Passe à la suite ou reviens dessus quand tu veux." : canComplete ? "Marque-la comme terminée pour avancer dans le parcours." : "Valide d’abord l’exercice pratique ci-dessus."}
+                                    </p>
                                 </div>
+                                <button type="button" disabled={statusLoading || !canComplete} onClick={() => changeStatus(completed ? "in_progress" : "completed")} aria-busy={statusLoading} className={(completed ? ui.secondary : ui.primary) + " shrink-0"}>
+                                    {statusLoading ? <Loader2 size={16} className="animate-spin" /> : <Svg d={completed ? "M3 12a9 9 0 109-9M3 4v5h5" : ICON.check} size={16} stroke={2.4} />}
+                                    {statusLoading ? "Enregistrement…" : completed ? "Remettre en cours" : "Marquer comme terminée"}
+                                </button>
+                            </section>
+                        )}
 
-                                <button
-                                    type="button"
-                                    onClick={() => setShowMemoForm((value) => !value)}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-4 py-2.5 text-sm font-bold text-[#FF8A3D] transition hover:bg-[#FF6A00]/15"
-                                >
-                                    <BookOpen size={16} />
-                                    {showMemoForm ? "Fermer" : "Créer un mémo"}
+                        <StepPager previous={previous_step} next={next_step} unlocked={completed} />
+
+                        {/* Notes */}
+                        <section className={ui.card + " p-5"} aria-labelledby="notes-titre">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                <div className="min-w-0 flex-1">
+                                    <h2 id="notes-titre" className="m-0 text-base font-semibold">Garder une fiche mémo</h2>
+                                    <p className="m-0 mt-1 text-sm text-[var(--dr-text-2)]">Le cours et l’exemple sont pré-remplis : ajuste puis enregistre.</p>
+                                </div>
+                                <button type="button" onClick={() => setShowMemoForm((value) => !value)} aria-expanded={showMemoForm} className={ui.secondary + " shrink-0"}>
+                                    <Svg d={showMemoForm ? "M6 6l12 12M18 6L6 18" : ICON.plus} size={16} stroke={2.2} />
+                                    {showMemoForm ? "Fermer" : "Créer une fiche"}
                                 </button>
                             </div>
-
-                            {showMemoForm && (
-                                <form onSubmit={createMemo} className="mt-5 space-y-4">
-                                    <div>
-                                        <label className="mb-2 block text-xs font-semibold text-slate-300" htmlFor="lesson-memo-title">
-                                            Titre
-                                        </label>
-                                        <input
-                                            id="lesson-memo-title"
-                                            value={memoForm.data.title}
-                                            onChange={(event) => memoForm.setData("title", event.target.value)}
-                                            className="w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-3 py-2.5 text-sm text-white outline-none focus:border-[#FF6A00]/50"
-                                        />
-                                        {memoForm.errors.title && (
-                                            <p className="mt-1.5 text-xs text-red-400">{memoForm.errors.title}</p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-2 block text-xs font-semibold text-slate-300" htmlFor="lesson-memo-content">
-                                            Contenu
-                                        </label>
-                                        <textarea
-                                            id="lesson-memo-content"
-                                            rows={10}
-                                            value={memoForm.data.content}
-                                            onChange={(event) => memoForm.setData("content", event.target.value)}
-                                            className="w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-3 py-3 font-mono text-xs leading-6 text-white outline-none focus:border-[#FF6A00]/50"
-                                        />
-                                        {memoForm.errors.content && (
-                                            <p className="mt-1.5 text-xs text-red-400">{memoForm.errors.content}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <button
-                                            type="submit"
-                                            disabled={memoForm.processing}
-                                            className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:opacity-50"
-                                        >
-                                            {memoForm.processing ? "Création..." : "Enregistrer le mémo"}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowMemoForm(false)}
-                                            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
-                                        >
-                                            Annuler
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </section>
-
-                        {!blocked && (
-                            <>
-                                <section className="rounded-2xl border border-white/[0.06] bg-[#111D2D] p-4 sm:p-5">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <p className="text-sm font-semibold text-white">
-                                            Ton avancement
-                                        </p>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            Termine cette leçon quand tu maîtrises
-                                            son contenu.
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        disabled={
-                                            statusLoading ||
-                                            (hasExercise && !exerciseCompleted && !completed)
-                                        }
-                                        onClick={() =>
-                                            changeStatus(
-                                                completed
-                                                    ? "in_progress"
-                                                    : "completed",
-                                            )
-                                        }
-                                        className={[
-                                            "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
-                                            completed
-                                                ? "border border-white/[0.08] bg-white/[0.04] text-slate-300 hover:bg-white/[0.07]"
-                                                : "bg-[#FF6A00] text-white shadow-[0_8px_22px_rgba(255,106,0,0.24)] hover:bg-[#ff781a]",
-                                        ].join(" ")}
-                                    >
-                                        {statusLoading ? (
-                                            <>
-                                                <Loader2 size={17} className="animate-spin" />
-                                                Enregistrement...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Check size={17} />
-                                                {completed
-                                                    ? "Remettre en cours"
-                                                    : hasExercise && !exerciseCompleted
-                                                      ? "Valide l'exercice pour terminer"
-                                                      : "Marquer comme terminée"}
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                                </section>
-
-                                {completed && next_step && (
-                                    <Link
-                                        href={`/steps/${next_step.id}`}
-                                        className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] p-4 transition hover:border-[#FF6A00]/35 hover:bg-[#FF6A00]/[0.1]"
-                                    >
-                                        <div className="min-w-0">
-                                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#FF8A3D]">
-                                                Cours suivant
-                                            </p>
-                                            <p className="mt-1 truncate text-sm font-bold text-white">
-                                                {next_step.title}
-                                            </p>
-                                        </div>
-                                        <ArrowRight size={18} className="shrink-0 text-[#FF8A3D]" />
-                                    </Link>
-                                )}
-                            </>
-                        )}
-                    </main>
-
-                    <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-                        <section className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-4">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                                Navigation
-                            </p>
-
-                            <div className="mt-4 space-y-2">
-                                {previous_step ? (
-                                    <Link
-                                        href={`/steps/${previous_step.id}`}
-                                        className="flex items-center gap-3 rounded-xl border border-white/[0.05] p-3 transition hover:bg-white/[0.03]"
-                                    >
-                                        <ArrowLeft size={15} className="text-slate-600" />
-                                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-300">
-                                            {previous_step.title}
-                                        </span>
-                                    </Link>
-                                ) : null}
-
-                                {next_step ? (
-                                    completed ? (
-                                        <Link
-                                            href={`/steps/${next_step.id}`}
-                                            className="flex items-center gap-3 rounded-xl border border-[#FF6A00]/10 bg-[#FF6A00]/[0.035] p-3 transition hover:bg-[#FF6A00]/[0.07]"
-                                        >
-                                            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white">
-                                                {next_step.title}
-                                            </span>
-                                            <ArrowRight size={15} className="text-[#FF8A3D]" />
-                                        </Link>
-                                    ) : (
-                                        <div className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.015] p-3 opacity-70">
-                                            <Lock size={15} className="shrink-0 text-slate-600" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-xs font-semibold text-slate-500">
-                                                    {next_step.title}
-                                                </p>
-                                                <p className="mt-1 text-[10px] text-slate-700">
-                                                    Termine cette leçon pour débloquer la suivante.
-                                                </p>
+                            <AnimatePresence initial={false}>
+                                {showMemoForm && (
+                                    <m.form onSubmit={createMemo} initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={softSpring} className="overflow-hidden">
+                                        <div className="flex flex-col gap-4 pt-5">
+                                            <label className="flex flex-col gap-2">
+                                                <span className="text-sm font-semibold">Titre</span>
+                                                <input data-dr-native value={memoForm.data.title} onChange={(event) => memoForm.setData("title", event.target.value)} className={ui.field} />
+                                                {memoForm.errors.title && <span className="text-sm text-[var(--dr-danger)]">{memoForm.errors.title}</span>}
+                                            </label>
+                                            <label className="flex flex-col gap-2">
+                                                <span className="text-sm font-semibold">Contenu</span>
+                                                <textarea data-dr-native rows={10} value={memoForm.data.content} onChange={(event) => memoForm.setData("content", event.target.value)} className={ui.field + " h-auto py-3 font-['JetBrains_Mono',ui-monospace,monospace] text-[13px] leading-6"} />
+                                                {memoForm.errors.content && <span className="text-sm text-[var(--dr-danger)]">{memoForm.errors.content}</span>}
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button type="submit" disabled={memoForm.processing} className={ui.primary}>{memoForm.processing ? "Création…" : "Enregistrer la fiche"}</button>
+                                                <button type="button" onClick={() => setShowMemoForm(false)} className={ui.ghost}>Annuler</button>
                                             </div>
                                         </div>
-                                    )
-                                ) : null}
-                            </div>
+                                    </m.form>
+                                )}
+                            </AnimatePresence>
                         </section>
+                    </main>
 
-                        <section className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-4">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                                État
-                            </p>
-
-                            <div className="mt-4 flex items-center gap-3">
-                                <StatusBadge status={displayStatus} />
-                            </div>
+                    {/* Colonne desktop : sommaire de la navigation */}
+                    <aside className="hidden flex-col gap-4 lg:sticky lg:top-24 lg:flex">
+                        <section className={ui.card + " flex flex-col gap-3 p-5"}>
+                            <h2 className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[var(--dr-text-3)]">Dans ce parcours</h2>
+                            <ProgressBar value={progressFromCount(roadmapCompletedSteps, total)} className="h-1.5" />
+                            <span className="text-sm text-[var(--dr-text-2)]">{roadmapCompletedSteps} étapes terminées sur {total}</span>
+                            <Link href={`/roadmaps/${roadmap.id}`} className={ui.secondary + " h-10 text-[13px]"}>Voir toutes les étapes</Link>
                         </section>
                     </aside>
                 </div>
@@ -648,11 +353,53 @@ export default function Show({
     );
 }
 
+function StepPager({ previous, next, unlocked }) {
+    if (!previous && !next) return null;
+    const base = "flex min-w-0 flex-1 items-center gap-3 rounded-2xl border px-4 py-3.5 transition-colors " + ui.focus;
+    return (
+        <nav aria-label="Étapes voisines" className="flex flex-col gap-2.5 sm:flex-row">
+            {previous && (
+                <Link href={`/steps/${previous.id}`} className={base + " border-[var(--dr-border)] bg-[var(--dr-surface)] hover:border-[var(--dr-border-2)]"}>
+                    <Svg d="M19 12H5M11 6l-6 6 6 6" size={17} className="shrink-0 text-[var(--dr-text-3)]" />
+                    <span className="flex min-w-0 flex-col"><span className="text-xs text-[var(--dr-text-3)]">Précédente</span><span className="truncate text-sm font-semibold">{previous.title}</span></span>
+                </Link>
+            )}
+            {next && (unlocked ? (
+                <MotionLink whileTap={{ scale: 0.98 }} href={`/steps/${next.id}`} className={base + " justify-end border-[var(--dr-accent)] bg-[var(--dr-accent-soft)] text-right"}>
+                    <span className="flex min-w-0 flex-col items-end"><span className="text-xs font-semibold text-[var(--dr-accent-text)]">Étape suivante</span><span className="max-w-full truncate text-sm font-semibold">{next.title}</span></span>
+                    <Svg d={ICON.arrow} size={17} className="shrink-0 text-[var(--dr-accent-text)]" />
+                </MotionLink>
+            ) : (
+                <div className={base + " justify-end border-dashed border-[var(--dr-border-2)] text-right opacity-75"} title="Termine cette étape pour débloquer la suivante">
+                    <span className="flex min-w-0 flex-col items-end"><span className="text-xs text-[var(--dr-text-3)]">Suivante · se débloque une fois terminée</span><span className="max-w-full truncate text-sm font-semibold text-[var(--dr-text-2)]">{next.title}</span></span>
+                    <Svg d="M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z" size={16} className="shrink-0 text-[var(--dr-text-3)]" />
+                </div>
+            ))}
+        </nav>
+    );
+}
+
+function CopyButton({ text }) {
+    const [copied, setCopied] = useState(false);
+    async function copy() {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1600);
+        } catch {}
+    }
+    return (
+        <button type="button" onClick={copy} className={"ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-[var(--dr-text-2)] hover:bg-[var(--dr-surface)] hover:text-[var(--dr-text)] " + ui.focus} aria-live="polite">
+            <Svg d={copied ? ICON.check : ICON.copy} size={14} stroke={copied ? 2.8 : 2} />{copied ? "Copié" : "Copier"}
+        </button>
+    );
+}
+
 function CourseContent({ content }) {
     const blocks = content.split(/\n\s*\n/);
 
     return (
-        <div className="min-w-0 space-y-5 break-words text-sm leading-7 text-slate-400 [overflow-wrap:anywhere]">
+        <div className="min-w-0 space-y-4 break-words text-[15px] leading-[1.75] text-[var(--dr-text-2)] [overflow-wrap:anywhere]">
             {blocks.map((block, index) => {
                 const text = block.trim();
 
@@ -662,7 +409,7 @@ function CourseContent({ content }) {
                     return (
                         <h3
                             key={index}
-                            className="pt-2 text-base font-bold text-white"
+                            className="m-0 pt-3 font-['Manrope',sans-serif] text-lg font-extrabold tracking-[-0.01em] text-[var(--dr-text)]"
                         >
                             {text.slice(3)}
                         </h3>
@@ -673,7 +420,7 @@ function CourseContent({ content }) {
                     return (
                         <h4
                             key={index}
-                            className="pt-1 text-sm font-bold text-white"
+                            className="m-0 pt-1 text-base font-semibold text-[var(--dr-text)]"
                         >
                             {text.slice(4)}
                         </h4>
@@ -684,7 +431,7 @@ function CourseContent({ content }) {
                     return (
                         <ul
                             key={index}
-                            className="list-disc space-y-2 pl-5 text-slate-400"
+                            className="m-0 list-disc space-y-2 pl-5 marker:text-[var(--dr-accent)]"
                         >
                             {text.split("\n").map((item, itemIndex) => (
                                 <li key={itemIndex}>
@@ -695,7 +442,7 @@ function CourseContent({ content }) {
                     );
                 }
 
-                return <p key={index}>{text}</p>;
+                return <p key={index} className="m-0">{text}</p>;
             })}
         </div>
     );
@@ -703,23 +450,15 @@ function CourseContent({ content }) {
 
 function StatusBadge({ status }) {
     const config = {
-        completed: ["Terminée", "bg-emerald-500/10 text-emerald-400", CheckCircle2],
-        in_progress: ["En cours", "bg-[#FF6A00]/10 text-[#FF8A3D]", Clock3],
-        blocked: ["Bloquée", "bg-red-500/10 text-red-400", Lock],
-        todo: ["À faire", "bg-white/[0.05] text-slate-500", Circle],
+        completed: ["Terminée", "bg-[var(--dr-accent)] text-[var(--dr-ink)]", ICON.check],
+        in_progress: ["En cours", "bg-[var(--dr-surface)] text-[var(--dr-accent-text)] ring-1 ring-inset ring-[var(--dr-accent)]", "M8 5v14l11-7z"],
+        blocked: ["Bloquée", "bg-[var(--dr-field)] text-[var(--dr-danger)]", "M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z"],
+        todo: ["À faire", "bg-[var(--dr-field)] text-[var(--dr-text-2)]", "M12 3a9 9 0 100 18 9 9 0 000-18z"],
     };
-
-    const [label, className, Icon] = config[status] ?? config.todo;
-
+    const [label, className, icon] = config[status] ?? config.todo;
     return (
-        <span
-            className={[
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold",
-                className,
-            ].join(" ")}
-        >
-            <Icon size={13} />
-            {label}
+        <span className={"inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-bold " + className}>
+            <Svg d={icon} size={12} stroke={2.6} />{label}
         </span>
     );
 }

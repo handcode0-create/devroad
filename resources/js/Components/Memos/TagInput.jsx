@@ -35,11 +35,11 @@ export default function TagInput({ id, value, onChange, max = 10 }) {
 
     return (
         <div>
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.07] bg-[#101A2A] px-3 py-2.5 transition focus-within:border-[#FF6A00]/40 focus-within:ring-2 focus-within:ring-[#FF6A00]/10">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-3 py-2.5 transition focus-within:border-[#FF6A00]/40 focus-within:ring-2 focus-within:ring-[#FF6A00]/10">
                 {value.map((tag) => (
                     <span
                         key={tag}
-                        className="inline-flex items-center gap-1 rounded-full bg-[#FF6A00]/10 py-1 pl-2.5 pr-1.5 text-xs font-medium text-[#FF8A3D]"
+                        className="inline-flex items-center gap-1 rounded-full bg-[var(--dr-accent-soft)] py-1 pl-2.5 pr-1.5 text-xs font-medium text-[var(--dr-accent-text)]"
                     >
                         {tag}
                         <button
@@ -63,11 +63,11 @@ export default function TagInput({ id, value, onChange, max = 10 }) {
                     disabled={full}
                     maxLength={50}
                     placeholder={value.length === 0 ? 'Laravel, Git, React...' : ''}
-                    className="min-w-[8rem] flex-1 border-0 bg-transparent p-0 text-sm text-white outline-none placeholder:text-slate-600 focus:ring-0"
+                    className="min-w-[8rem] flex-1 border-0 bg-transparent p-0 text-sm text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] focus:ring-0"
                 />
             </div>
 
-            <p className="mt-1.5 text-xs text-slate-500">
+            <p className="mt-1.5 text-xs text-[var(--dr-text-3)]">
                 Entrée ou virgule pour ajouter · {value.length}/{max} tags
             </p>
         </div>

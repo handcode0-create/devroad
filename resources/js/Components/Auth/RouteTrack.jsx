@@ -12,11 +12,11 @@ export function RouteTrack({ progress = 0, children }) {
         <div className="relative" style={{ '--p': p }}>
             <span
                 aria-hidden="true"
-                className="road-line absolute bottom-6 left-[13px] top-[50px] text-white/[0.22]"
+                className="road-line absolute bottom-6 left-[13px] top-[50px] text-[var(--dr-text-2)]"
             />
             <span
                 aria-hidden="true"
-                className="road-line road-fill absolute bottom-6 left-[13px] top-[50px] text-[#FF6A00]"
+                className="road-line road-fill absolute bottom-6 left-[13px] top-[50px] text-[var(--dr-accent-text)]"
             />
 
             <div className="space-y-5">{children}</div>
@@ -25,9 +25,9 @@ export function RouteTrack({ progress = 0, children }) {
 }
 
 const MARKER = {
-    idle: 'border-white/25 bg-[#08111F]',
-    done: 'border-[#FF6A00] bg-[#FF6A00] text-[#08111F]',
-    error: 'border-red-300 bg-[#08111F]',
+    idle: 'border-[var(--dr-border-2)] bg-[var(--dr-bg)]',
+    done: 'border-[#FF6A00] bg-[#FF6A00] text-[var(--dr-ink)]',
+    error: 'border-red-300 bg-[var(--dr-bg)]',
 };
 
 // Une étape de la route : le repère est aligné sur le centre du champ
@@ -61,8 +61,8 @@ export function RouteArrival({ reached = false, children }) {
                 aria-hidden="true"
                 className={`absolute left-0 top-[10px] flex h-7 w-7 items-center justify-center rounded-full border-2 transition-colors duration-300 ${
                     reached
-                        ? 'border-[#FF6A00] bg-[#FF6A00] text-[#08111F]'
-                        : 'border-white/25 bg-[#08111F] text-white/45'
+                        ? 'border-[#FF6A00] bg-[#FF6A00] text-[var(--dr-ink)]'
+                        : 'border-[var(--dr-border-2)] bg-[var(--dr-bg)] text-[var(--dr-text-2)]'
                 }`}
             >
                 <Flag size={13} />

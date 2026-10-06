@@ -1,513 +1,211 @@
 import { Head, Link } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    ArrowRight,
-    BookOpen,
-    Check,
-    CheckCircle2,
-    ChevronRight,
-    Circle,
-    Clock3,
-    ExternalLink,
-    Info,
-    Lock,
-    Pencil,
-    Play,
-    BookMarked,
-} from 'lucide-react';
-import { useRef, useState } from 'react';
-import useGsapScrollReveal from '@/hooks/useGsapScrollReveal';
-
+import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
-import technologyLogos from '@/Config/technologyLogos';
+import { AnimatePresence, m, softSpring } from '@/Components/Ui/Motion';
+import { ICON, MotionLink, PageHead, ProgressRing, Segmented, StatePill, Svg, TechTile, clamp, roadmapState, ui } from '@/Components/Ui/Design';
 
-const TABS = [
-    { id: 'steps', label: 'Étapes', icon: BookOpen },
-    { id: 'resources', label: 'Ressources', icon: BookMarked },
-    { id: 'about', label: 'À propos', icon: Info },
-];
+const TECH_LABELS = {
+    laravel: 'Laravel', nextjs: 'Next.js', react: 'React', javascript: 'JavaScript', typescript: 'TypeScript', php: 'PHP',
+    html: 'HTML', css: 'CSS', tailwind: 'Tailwind CSS', node: 'Node.js', git: 'Git', github: 'GitHub', docker: 'Docker',
+    mysql: 'MySQL', postgresql: 'PostgreSQL',
+};
+const LEVELS = { beginner: 'Débutant', intermediate: 'Intermédiaire', professional: 'Professionnel', licence: 'Licence', engineering: 'Cycle ingénieur' };
 
+// Détail d'un parcours : en-tête avec anneau de progression et action « Continuer »,
+// puis la frise des étapes. Sur desktop, ressources et infos passent en colonne latérale.
 export default function Show({ roadmap }) {
-    const [activeTab, setActiveTab] = useState('steps');
-    const progress = clampProgress(roadmap?.progress);
+    const [tab, setTab] = useState('steps');
     const steps = Array.isArray(roadmap?.steps) ? roadmap.steps : [];
     const resources = Array.isArray(roadmap?.resources) ? roadmap.resources : [];
-    const animationRef = useRef(null);
-    useGsapScrollReveal(animationRef, [activeTab, steps.length, resources.length]);
-    const logo = getTechnologyLogo(roadmap?.technology);
+    const progress = clamp(roadmap?.progress);
+    const current = steps.find((step) => step.status === 'in_progress') ?? steps.find((step) => step.status !== 'completed' && step.status !== 'blocked') ?? null;
+    const done = steps.length > 0 && !steps.some((step) => step.status !== 'completed');
+    const technology = TECH_LABELS[roadmap?.technology] ?? roadmap?.technology;
 
-    const currentStep =
-        steps.find((step) => step.status !== 'completed') ??
-        null;
+    const tabs = [
+        { key: 'steps', label: 'Étapes', count: steps.length },
+        { key: 'resources', label: 'Ressources', count: resources.length },
+        { key: 'about', label: 'À propos' },
+    ];
 
     return (
         <AppLayout>
-            <Head title={roadmap?.title ?? 'Feuille de route'} />
+            <Head title={roadmap?.title ?? 'Parcours'} />
 
-            <div ref={animationRef} className="space-y-6">
-                <div data-gsap-reveal className="flex items-center justify-between gap-4">
-                    <Link
-                        href="/roadmaps"
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-white"
-                    >
-                        <ArrowLeft size={16} />
-                        Toutes les feuilles de route
-                    </Link>
+            <div className="flex flex-col gap-6 font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] lg:gap-7">
+                <PageHead
+                    back={{ href: '/roadmaps', label: 'Parcours' }}
+                    title={roadmap?.title ?? 'Sans titre'}
+                    subtitle={roadmap?.description}
+                    actions={<Link href={`/roadmaps/${roadmap?.id}/edit`} className={ui.secondary}><Svg d={ICON.edit} size={16} />Modifier</Link>}
+                />
 
-                    <Link
-                        href={`/roadmaps/${roadmap?.id}/edit`}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-white"
-                    >
-                        <Pencil size={14} />
-                        Modifier
-                    </Link>
-                </div>
-
-                <section data-gsap-reveal className="overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725]">
-                    <div className="p-5 sm:p-7">
-                        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                            <div className="flex min-w-0 items-start gap-4">
-                                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] p-3">
-                                    {logo ? (
-                                        <img
-                                            src={logo}
-                                            alt={`${roadmap?.technology ?? roadmap?.title ?? 'Technologie'} logo`}
-                                            className="h-full w-full object-contain"
-                                        />
-                                    ) : (
-                                        <span className="text-2xl font-bold text-[#FF8A3D]">
-                                            {getInitial(roadmap?.technology ?? roadmap?.title)}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="min-w-0">
-                                    <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#FF8A3D]">
-                                        Feuille de route
-                                    </span>
-
-                                    <h1 className="mt-1 truncate text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                                        {roadmap?.title ?? 'Sans titre'}
-                                    </h1>
-
-                                    {roadmap?.technology && (
-                                        <p className="mt-1 text-xs font-semibold text-slate-600">
-                                            {formatTechnology(roadmap.technology)}
-                                        </p>
-                                    )}
-
-                                    {roadmap?.description && (
-                                        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                                            {roadmap.description}
-                                        </p>
-                                    )}
-                                </div>
+                {/* Progression + reprise */}
+                <section aria-label="Progression" className={ui.card + ' flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6'}>
+                    <div className="flex items-center gap-4 sm:flex-1">
+                        <ProgressRing value={progress} size={76} stroke={7} />
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <TechTile technology={roadmap?.technology} title={roadmap?.title} size={26} />
+                                <span className="text-sm font-semibold text-[var(--dr-text-2)]">{technology}</span>
+                                <StatePill state={roadmapState(roadmap)} />
                             </div>
-
-                            <span className="inline-flex w-fit shrink-0 rounded-full bg-[#FF6A00]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A3D]">
-                                {formatStatus(roadmap?.status)}
-                            </span>
-                        </div>
-
-                        <div className="mt-7">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-slate-500">
-                                    Progression
-                                </span>
-                                <span className="text-sm font-bold text-white">
-                                    {progress}%
-                                </span>
-                            </div>
-
-                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                                <div
-                                    className="h-full rounded-full bg-[#FF6A00] transition-all duration-500"
-                                    style={{ width: `${progress}%` }}
-                                />
-                            </div>
-
-                            <div className="mt-2 text-[11px] text-slate-600">
-                                {roadmap?.completed_steps_count ?? 0} / {roadmap?.steps_count ?? 0} étapes terminées
-                            </div>
+                            <span className="text-[15px] font-semibold">{roadmap?.completed_steps_count ?? 0} étapes sur {roadmap?.steps_count ?? steps.length} terminées</span>
                         </div>
                     </div>
+                    {current ? (
+                        <MotionLink whileTap={{ scale: 0.98 }} href={`/steps/${current.id}`} className={ui.primary + ' h-[52px] w-full justify-between rounded-2xl px-5 sm:w-auto sm:min-w-[300px]'}>
+                            <span className="flex min-w-0 flex-col items-start leading-tight">
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">{current.status === 'in_progress' ? 'Reprendre' : 'Commencer'}</span>
+                                <span className="max-w-[240px] truncate">{current.title}</span>
+                            </span>
+                            <Svg d={ICON.arrow} size={18} stroke={2.4} />
+                        </MotionLink>
+                    ) : done ? (
+                        <span className="flex h-[52px] items-center gap-2 rounded-2xl bg-[var(--dr-accent-soft)] px-5 text-sm font-bold text-[var(--dr-accent-text)]">
+                            <Svg d={ICON.check} size={18} stroke={2.6} />Parcours terminé — bravo !
+                        </span>
+                    ) : null}
                 </section>
 
-                <nav data-gsap-reveal className="grid grid-cols-3 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-1.5" aria-label="Navigation de la roadmap">
-                    {TABS.map((tab) => {
-                        const Icon = tab.icon;
-                        const active = activeTab === tab.id;
+                <Segmented label="Sections du parcours" items={tabs} value={tab} onChange={setTab} className="w-fit max-w-full lg:hidden" />
 
-                        return (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => setActiveTab(tab.id)}
-                                className={[
-                                    'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-xs font-bold transition sm:text-sm',
-                                    active
-                                        ? 'bg-[#FF6A00] text-[#08111F] shadow-[0_8px_20px_rgba(255,106,0,0.16)]'
-                                        : 'text-slate-500 hover:bg-white/[0.03] hover:text-white',
-                                ].join(' ')}
-                            >
-                                <Icon size={16} />
-                                {tab.label}
-                            </button>
-                        );
-                    })}
-                </nav>
-
-                {activeTab === 'steps' && (
-                    <StepsTab
-                        steps={steps}
-                        currentStep={currentStep}
-                        roadmapId={roadmap?.id}
-                    />
-                )}
-
-                {activeTab === 'resources' && (
-                    <ResourcesTab resources={resources} />
-                )}
-
-                {activeTab === 'about' && (
-                    <AboutTab roadmap={roadmap} />
-                )}
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+                    <div className={(tab === 'steps' ? 'block' : 'hidden') + ' lg:block'}>
+                        <StepsSection steps={steps} roadmapId={roadmap?.id} currentId={current?.id} />
+                    </div>
+                    <aside className={(tab === 'steps' ? 'hidden' : 'flex') + ' flex-col gap-6 lg:sticky lg:top-24 lg:flex'}>
+                        <div className={(tab === 'resources' ? 'block' : 'hidden') + ' lg:block'}><ResourcesCard resources={resources} /></div>
+                        <div className={(tab === 'about' ? 'block' : 'hidden') + ' lg:block'}><AboutCard roadmap={roadmap} technology={technology} stepsCount={steps.length} /></div>
+                    </aside>
+                </div>
             </div>
         </AppLayout>
     );
 }
 
-function StepsTab({ steps, currentStep, roadmapId }) {
+function StepsSection({ steps, roadmapId, currentId }) {
     return (
-        <>
-            <section data-gsap-reveal>
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <h2 className="text-lg font-bold text-white">Tes cours</h2>
-                        <p className="mt-1 text-xs text-slate-500">
-                            Crée, modifie ou supprime les cours de ce parcours. Chaque cours est une étape pédagogique indépendante.
-                        </p>
-                    </div>
-                    <Link
-                        href={`/roadmaps/${roadmapId}/steps/create`}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] transition hover:bg-[#ff781a]"
-                    >
-                        <Pencil size={15} />
-                        Ajouter un cours
-                    </Link>
-                </div>
+        <section aria-labelledby="etapes-titre" className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+                <h2 id="etapes-titre" className={ui.sectionTitle + ' m-0'}>Étapes</h2>
+                <Link href={`/roadmaps/${roadmapId}/steps/create`} className={ui.ghost + ' h-10 text-[var(--dr-accent-text)]'}>
+                    <Svg d={ICON.plus} size={16} stroke={2.4} />Ajouter une étape
+                </Link>
+            </div>
 
-                {steps.length > 0 ? (
-                    <div className="space-y-2">
+            {steps.length === 0 ? (
+                <div className="rounded-[18px] border border-dashed border-[var(--dr-border-2)] px-5 py-10 text-center">
+                    <p className="m-0 text-sm text-[var(--dr-text-2)]">Ce parcours n’a pas encore d’étapes.</p>
+                    <Link href={`/roadmaps/${roadmapId}/steps/create`} className={ui.primary + ' mt-4'}><Svg d={ICON.plus} size={16} stroke={2.4} />Ajouter la première étape</Link>
+                </div>
+            ) : (
+                <ol className="m-0 flex list-none flex-col p-0">
+                    <AnimatePresence initial>
                         {steps.map((step, index) => (
-                            <StepCard
-                            key={step.id}
-                            step={step}
-                            index={index}
-                        />
+                            <m.li
+                                key={step.id}
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0, transition: { ...softSpring, delay: Math.min(index, 12) * 0.03 } }}
+                                className="relative flex gap-3.5"
+                            >
+                                <StepNode step={step} index={index} last={index === steps.length - 1} current={step.id === currentId} />
+                                <StepRow step={step} index={index} current={step.id === currentId} />
+                            </m.li>
                         ))}
-                    </div>
-                ) : (
-                    <div className="rounded-2xl border border-dashed border-white/[0.08] bg-[#0D1725] p-8 text-center">
-                        <p className="text-sm text-slate-500">
-                            Cette feuille de route ne contient pas encore d'étapes.
-                        </p>
-
-                        <Link
-                            href={`/roadmaps/${roadmapId}/edit`}
-                            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-semibold text-[#08111F] transition hover:bg-[#ff781a]"
-                        >
-                            <Pencil size={16} />
-                            Configurer le parcours
-                        </Link>
-                    </div>
-                )}
-            </section>
-
-            {currentStep ? (
-                <section className="sticky bottom-4 z-20">
-                    <Link
-                        href={`/steps/${currentStep.id}`}
-                        className="flex items-center justify-between rounded-2xl border border-[#FF6A00]/20 bg-[#111D2D]/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl"
-                    >
-                        <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00] text-[#0B3A82]">
-                                <Play size={17} fill="currentColor" />
-                            </div>
-
-                            <div className="min-w-0">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                                    Continuer
-                                </p>
-                                <p className="mt-1 truncate text-sm font-bold text-white">
-                                    {currentStep.title}
-                                </p>
-                            </div>
-                        </div>
-
-                        <ArrowRight size={19} className="shrink-0 text-[#FF8A3D]" />
-                    </Link>
-                </section>
-            ) : (
-                <section className="rounded-2xl border border-emerald-500/10 bg-emerald-500/[0.035] p-5 sm:p-6">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-400">
-                                Parcours terminé
-                            </p>
-                            <h2 className="mt-1 text-lg font-bold text-white">
-                                Tu as terminé toutes les étapes.
-                            </h2>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">
-                                Tu peux revoir un cours terminé depuis la liste ci-dessus.
-                            </p>
-                        </div>
-
-                        <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-400">
-                            <CheckCircle2 size={17} />
-                            100% complété
-                        </span>
-                    </div>
-                </section>
-            )}
-        </>
-    );
-}
-
-function ResourcesTab({ resources }) {
-    return (
-        <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
-            <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                    <BookMarked size={18} />
-                </div>
-                <div>
-                    <h2 className="text-lg font-bold text-white">Ressources</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Documentation et ressources utiles pour approfondir cette technologie.
-                    </p>
-                </div>
-            </div>
-
-            {resources.length > 0 ? (
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {resources.map((resource) => (
-                        <a
-                            key={resource.url}
-                            href={resource.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition hover:border-[#FF6A00]/20 hover:bg-white/[0.035]"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-white">
-                                    {resource.label}
-                                </p>
-                                <p className="mt-1 truncate text-[11px] text-slate-600">
-                                    {resource.url}
-                                </p>
-                            </div>
-                            <ExternalLink size={16} className="shrink-0 text-slate-600 group-hover:text-[#FF8A3D]" />
-                        </a>
-                    ))}
-                </div>
-            ) : (
-                <p className="mt-6 text-sm text-slate-500">
-                    Aucune ressource n'est encore configurée pour cette technologie.
-                </p>
+                    </AnimatePresence>
+                </ol>
             )}
         </section>
     );
 }
 
-function AboutTab({ roadmap }) {
-    return (
-        <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
-            <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                    <Info size={18} />
-                </div>
-                <div>
-                    <h2 className="text-lg font-bold text-white">À propos</h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                        Informations sur ce parcours.
-                    </p>
-                </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <InfoCard label="Technologie" value={formatTechnology(roadmap?.technology)} />
-                <InfoCard label="Statut" value={formatStatus(roadmap?.status)} />
-                <InfoCard label="Étapes" value={String(roadmap?.steps_count ?? 0)} />
-                <InfoCard label="Progression" value={`${clampProgress(roadmap?.progress)}%`} />
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                    Présentation de la technologie
-                </p>
-                <p className="mt-3 text-sm leading-7 text-slate-400">
-                    {roadmap?.about?.description ?? roadmap?.description ?? 'Aucune présentation disponible.'}
-                </p>
-            </div>
-        </section>
-    );
-}
-
-function InfoCard({ label, value }) {
-    return (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                {label}
-            </p>
-            <p className="mt-2 text-sm font-bold text-white">{value}</p>
-        </div>
-    );
-}
-
-function StepCard({ step, index }) {
+/** Pastille de la frise : coche (terminée), lecture (en cours), numéro, cadenas (bloquée). */
+function StepNode({ step, index, last, current }) {
     const completed = step.status === 'completed';
-    const inProgress = step.status === 'in_progress';
     const blocked = step.status === 'blocked';
-
-    const cardClass = completed
-        ? 'border-emerald-500/10 bg-emerald-500/[0.035]'
-        : inProgress
-          ? 'border-[#FF6A00]/20 bg-[#FF6A00]/[0.045]'
-          : blocked
-            ? 'border-white/[0.04] bg-white/[0.015] opacity-70'
-            : 'border-white/[0.06] bg-[#0D1725] hover:border-white/[0.10] hover:bg-[#101B2C]';
-
-    const iconClass = completed
-        ? 'bg-emerald-500/10 text-emerald-400'
-        : inProgress
-          ? 'bg-[#FF6A00] text-[#0B3A82]'
-          : blocked
-            ? 'bg-white/[0.04] text-slate-600'
-            : 'bg-white/[0.04] text-slate-500';
-
-    const content = (
-        <div className={`flex items-center gap-4 rounded-2xl border p-4 transition-all ${cardClass}`}>
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
-                {completed ? (
-                    <Check size={18} />
-                ) : inProgress ? (
-                    <Play size={17} fill="currentColor" />
-                ) : blocked ? (
-                    <Lock size={16} />
-                ) : (
-                    <span className="text-xs font-bold">{index + 1}</span>
-                )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-600">
-                            Étape {index + 1}
-                        </p>
-                        <h3 className="mt-1 truncate text-sm font-semibold text-white">
-                            {step.title}
-                        </h3>
-                    </div>
-                    <StatusIcon status={step.status} />
-                </div>
-
-                {step.description && (
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
-                        {step.description}
-                    </p>
-                )}
-
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <LevelBadge level={step.difficulty_level} />
-                    <AcademicBadge level={step.academic_level} />
-                </div>
-            </div>
-
-            {!blocked && (
-                <div className="flex shrink-0 items-center gap-1">
-                    <Link
-                        href={`/steps/${step.id}/edit`}
-                        onClick={(event) => event.stopPropagation()}
-                        className="rounded-lg p-2 text-slate-600 transition hover:bg-white/[0.05] hover:text-white"
-                        aria-label={`Modifier ${step.title}`}
-                    >
-                        <Pencil size={14} />
-                    </Link>
-                    <ChevronRight size={17} className="text-slate-700" />
-                </div>
-            )}
+    return (
+        <div className="relative flex w-9 shrink-0 flex-col items-center pt-4" aria-hidden="true">
+            <span className={'relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-bold tabular-nums ' + (completed ? 'bg-[var(--dr-accent)] text-[var(--dr-ink)]' : current ? 'bg-[var(--dr-surface)] text-[var(--dr-accent-text)] ring-2 ring-[var(--dr-accent)] ring-offset-2 ring-offset-[var(--dr-bg)]' : 'bg-[var(--dr-field)] text-[var(--dr-text-2)]')}>
+                {completed ? <Svg d={ICON.check} size={16} stroke={3} />
+                    : blocked ? <Svg d="M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z" size={15} />
+                        : index + 1}
+            </span>
+            {!last && <span className={'w-0.5 flex-1 ' + (completed ? 'bg-[var(--dr-accent)]' : 'bg-[var(--dr-border-2)]')} />}
         </div>
     );
+}
 
-    return blocked ? (
-        <div>{content}</div>
-    ) : (
-        <Link href={`/steps/${step.id}`}>{content}</Link>
+function StepRow({ step, index, current }) {
+    const blocked = step.status === 'blocked';
+    const statusLabel = { completed: 'Terminée', in_progress: 'En cours', blocked: 'Bloquée' }[step.status] ?? 'À faire';
+    const levels = [step.difficulty_level, step.academic_level].map((level) => LEVELS[level]).filter(Boolean);
+
+    return (
+        <div className={'group relative mb-2.5 flex min-w-0 flex-1 items-center gap-3 rounded-2xl border px-4 py-3.5 transition-colors has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[var(--dr-accent)] ' + (current ? 'border-[var(--dr-accent)] bg-[var(--dr-surface)] shadow-[var(--dr-shadow)]' : 'border-[var(--dr-border)] bg-[var(--dr-surface)] hover:border-[var(--dr-border-2)]') + (blocked ? ' opacity-60' : '')}>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-xs font-semibold text-[var(--dr-text-3)]">Étape {index + 1} · <span className={current ? 'text-[var(--dr-accent-text)]' : ''}>{statusLabel}</span></span>
+                {blocked
+                    ? <span className="text-[15px] font-semibold leading-[1.35]">{step.title}</span>
+                    : <Link href={`/steps/${step.id}`} className="text-[15px] font-semibold leading-[1.35] text-[var(--dr-text)] outline-none after:absolute after:inset-0 after:rounded-2xl after:content-['']">{step.title}</Link>}
+                {step.description && <p className="m-0 line-clamp-2 text-[13px] leading-5 text-[var(--dr-text-2)]">{step.description}</p>}
+                {levels.length > 0 && <div className="mt-1 flex flex-wrap gap-1.5">{levels.map((level) => <span key={level} className="rounded-full bg-[var(--dr-field)] px-2.5 py-0.5 text-xs text-[var(--dr-text-2)]">{level}</span>)}</div>}
+            </div>
+            {!blocked && <>
+                <Link href={`/steps/${step.id}/edit`} aria-label={`Modifier « ${step.title} »`} className={'relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-[var(--dr-text-3)] opacity-100 transition hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)] lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100 ' + ui.focus}>
+                    <Svg d={ICON.edit} size={15} />
+                </Link>
+                <Svg d={ICON.chevronRight} size={17} className="shrink-0 text-[var(--dr-text-3)] transition-transform group-hover:translate-x-0.5" />
+            </>}
+        </div>
     );
 }
 
-function LevelBadge({ level }) {
-    const labels = { beginner: 'Débutant', intermediate: 'Intermédiaire', professional: 'Professionnel' };
-    if (!level) return null;
-    return <span className="rounded-full bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-slate-500">{labels[level] ?? level}</span>;
+function ResourcesCard({ resources }) {
+    return (
+        <section aria-labelledby="ressources-titre" className={ui.card + ' flex flex-col gap-3 p-5'}>
+            <h2 id="ressources-titre" className={ui.sectionTitle + ' m-0'}>Ressources</h2>
+            {resources.length === 0 ? (
+                <p className="m-0 text-sm text-[var(--dr-text-2)]">Aucune ressource configurée pour cette technologie.</p>
+            ) : (
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {resources.map((resource) => (
+                        <li key={resource.url}>
+                            <a href={resource.url} target="_blank" rel="noreferrer" className={'group flex items-center gap-3 rounded-xl bg-[var(--dr-field)] px-3.5 py-3 transition-colors hover:bg-[var(--dr-accent-soft)] ' + ui.focus}>
+                                <span className="flex min-w-0 flex-1 flex-col">
+                                    <span className="text-sm font-semibold text-[var(--dr-text)]">{resource.label}</span>
+                                    <span className="truncate text-xs text-[var(--dr-text-3)]">{resource.url.replace(/^https?:\/\//, '')}</span>
+                                </span>
+                                <Svg d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" size={15} className="shrink-0 text-[var(--dr-text-3)] group-hover:text-[var(--dr-accent-text)]" />
+                                <span className="sr-only">(nouvel onglet)</span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
 }
 
-function AcademicBadge({ level }) {
-    const labels = { licence: 'Licence', engineering: 'Cycle Ingénieur' };
-    if (!level) return null;
-    return <span className="rounded-full bg-white/[0.04] px-2 py-1 text-[10px] font-semibold text-slate-500">{labels[level] ?? level}</span>;
-}
-
-function StatusIcon({ status }) {
-    if (status === 'completed') return <CheckCircle2 size={17} className="text-emerald-400" />;
-    if (status === 'in_progress') return <Clock3 size={17} className="text-[#FF8A3D]" />;
-    if (status === 'blocked') return <Lock size={16} className="text-slate-600" />;
-    return <Circle size={17} className="text-slate-700" />;
-}
-
-function getTechnologyLogo(technology) {
-    return technology ? technologyLogos[technology] ?? null : null;
-}
-
-function formatTechnology(technology) {
-    const labels = {
-        laravel: 'Laravel',
-        nextjs: 'Next.js',
-        react: 'React',
-        javascript: 'JavaScript',
-        typescript: 'TypeScript',
-        php: 'PHP',
-        html: 'HTML',
-        css: 'CSS',
-        tailwind: 'Tailwind CSS',
-        node: 'Node.js',
-        git: 'Git',
-        github: 'GitHub',
-        docker: 'Docker',
-        mysql: 'MySQL',
-        postgresql: 'PostgreSQL',
-    };
-
-    return labels[technology] ?? technology ?? 'Technologie';
-}
-
-function getInitial(title) {
-    return title?.trim()?.charAt(0)?.toUpperCase() ?? 'D';
-}
-
-function clampProgress(value) {
-    return Math.min(Math.max(Number(value ?? 0), 0), 100);
-}
-
-function formatStatus(status) {
-    const labels = {
-        draft: 'Brouillon',
-        active: 'En cours',
-        completed: 'Terminée',
-        archived: 'Archivée',
-    };
-
-    return labels[status] ?? status ?? 'Brouillon';
+function AboutCard({ roadmap, technology, stepsCount }) {
+    const rows = [
+        ['Technologie', technology],
+        ['Étapes', String(roadmap?.steps_count ?? stepsCount)],
+        ['Progression', clamp(roadmap?.progress) + ' %'],
+    ];
+    const about = roadmap?.about?.description;
+    return (
+        <section aria-labelledby="apropos-titre" className={ui.card + ' flex flex-col gap-4 p-5'}>
+            <h2 id="apropos-titre" className={ui.sectionTitle + ' m-0'}>À propos</h2>
+            <dl className="m-0 grid grid-cols-3 gap-2">
+                {rows.map(([label, value]) => (
+                    <div key={label} className="flex flex-col gap-0.5 rounded-[14px] bg-[var(--dr-field)] px-3 py-2.5">
+                        <dt className="text-xs text-[var(--dr-text-3)]">{label}</dt>
+                        <dd className="m-0 truncate text-sm font-bold">{value}</dd>
+                    </div>
+                ))}
+            </dl>
+            {about && <p className="m-0 text-sm leading-[1.6] text-[var(--dr-text-2)]">{about}</p>}
+        </section>
+    );
 }

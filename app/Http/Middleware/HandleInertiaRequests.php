@@ -53,6 +53,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                // Action « Annuler » proposée dans la notification (corbeille, déplacement…).
+                'undo' => fn () => $request->session()->get('undo'),
             ],
         ];
     }

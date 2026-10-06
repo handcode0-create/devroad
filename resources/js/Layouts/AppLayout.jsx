@@ -4,7 +4,6 @@ import BottomNav from '@/Components/Navigation/BottomNav';
 import DesktopTopBar from '@/Components/Navigation/DesktopTopBar';
 import ToastViewport from '@/Components/Ui/ToastViewport';
 import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
-import { Box, Code2 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import AppearanceSheet from '@/Components/Ui/AppearanceSheet';
@@ -17,6 +16,7 @@ export default function AppLayout({ children, mobileHeader = true }) {
     const [loadingLabel, setLoadingLabel] = useState('Chargement...');
     const contentRef = useRef(null);
     const currentUrl = usePage().url;
+    const currentPath = currentUrl.split('?')[0];
     const user = auth?.user;
     const themePreference = user?.theme ?? (user?.light_mode ? 'clair' : 'nuit');
     const resolvedTheme = useResolvedTheme(themePreference);
@@ -61,17 +61,29 @@ export default function AppLayout({ children, mobileHeader = true }) {
         }, root);
 
         return () => context.revert();
-    }, [currentUrl]);
+    }, [currentPath]);
 
+    // Voile de chargement uniquement pour les vrais changements de page, et seulement
+    // s'ils durent : les filtres, la recherche instantanée ou un favori n'interrompent pas l'utilisateur.
     useEffect(() => {
+        let timer = null;
         const removeStartListener = router.on('start', (event) => {
-            const method = event.detail?.visit?.method?.toUpperCase?.() ?? 'GET';
-            setLoadingLabel(method === 'GET' ? 'Chargement...' : 'Enregistrement...');
-            setNavigating(true);
+            const visit = event.detail?.visit ?? {};
+            const method = visit.method?.toUpperCase?.() ?? 'GET';
+            if (method === 'GET' && visit.preserveState) return;
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                setLoadingLabel(method === 'GET' ? 'Chargement...' : 'Enregistrement...');
+                setNavigating(true);
+            }, 220);
         });
-        const removeFinishListener = router.on('finish', () => setNavigating(false));
+        const removeFinishListener = router.on('finish', () => {
+            clearTimeout(timer);
+            setNavigating(false);
+        });
 
         return () => {
+            clearTimeout(timer);
             removeStartListener();
             removeFinishListener();
         };
@@ -79,7 +91,7 @@ export default function AppLayout({ children, mobileHeader = true }) {
 
     return (
         <div className={[
-            'min-h-[100dvh] overflow-x-clip bg-[var(--dr-bg)] text-white',
+            'min-h-[100dvh] overflow-x-clip bg-[var(--dr-bg)] text-[var(--dr-text)]',
             light ? 'theme-light' : '',
         ].join(' ')} data-theme={light ? 'light' : 'dark'}>
             <LoadingOverlay visible={navigating} label={loadingLabel} />
@@ -89,27 +101,19 @@ export default function AppLayout({ children, mobileHeader = true }) {
             <div className="lg:pl-[260px]">
                 <DesktopTopBar preference={themePreference} resolved={resolvedTheme} />
 
-                {mobileHeader && <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#08111F]/95 backdrop-blur-xl lg:hidden supports-[backdrop-filter]:bg-[#08111F]/85">
-                    <div className="flex min-h-[64px] items-center justify-between gap-3 px-3 sm:px-5">
-                        <Link href="/dashboard" className="flex min-h-11 min-w-0 items-center gap-2.5" aria-label="DevRoad">
-                            <img src="/icondevroad.png" alt="" className="h-9 w-9 shrink-0 object-contain" />
-                            <span className="truncate text-[18px] font-extrabold tracking-tight text-white">Dev<span className="text-[#FF6A00]">Road</span></span>
+                {/* En-tête mobile — même anatomie que l'Accueil de la maquette : logo, recherche, profil. */}
+                {mobileHeader && <header className="sticky top-0 z-30 border-b border-[var(--dr-border)] backdrop-blur-xl [background-color:color-mix(in_srgb,var(--dr-bg)_88%,transparent)] lg:hidden">
+                    <div className="flex h-16 items-center gap-2.5 px-4 sm:px-6">
+                        <Link href="/dashboard" className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5" aria-label="DevRoad — Accueil">
+                            <img src="/icondevroad.png" alt="" width="36" height="36" className="h-9 w-9 shrink-0 object-contain" />
+                            <span className="truncate font-['Manrope',sans-serif] text-[19px] font-extrabold tracking-[-0.02em] text-[var(--dr-text)]">Dev<span className="text-[var(--dr-accent-text)]">Road</span></span>
                         </Link>
-
-                        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                            <Link href="/devlab" className="touch-target flex items-center justify-center rounded-xl bg-[#FF6A00] text-[#08111F] shadow-[0_8px_18px_rgba(255,106,0,0.22)]" aria-label="DevLab">
-                                <Code2 size={18} />
-                            </Link>
-                            <Link href="/sandbox" className="touch-target flex items-center justify-center rounded-xl bg-[#101A2A] text-[#FF8A3D]" aria-label="Sandbox">
-                                <Box size={18} />
-                            </Link>
-                            <Link href="/search" className="touch-target flex items-center justify-center rounded-xl bg-[#101A2A] text-slate-300" aria-label="Rechercher">
-                                <Icon name="search" size={18} />
-                            </Link>
-                            <button type="button" onClick={() => setAppearanceOpen(true)} className="touch-target flex items-center justify-center" aria-label="Apparence" aria-haspopup="dialog">
-                                <UserAvatar user={user} />
-                            </button>
-                        </div>
+                        <Link href="/search" aria-label="Rechercher" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)]">
+                            <Icon name="search" size={19} />
+                        </Link>
+                        <button type="button" onClick={() => setAppearanceOpen(true)} aria-label="Profil et apparence" aria-haspopup="dialog" className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dr-accent)]">
+                            <UserAvatar user={user} />
+                        </button>
                     </div>
                 </header>}
 
@@ -132,7 +136,7 @@ function UserAvatar({ user }) {
     const initials = name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
 
     return (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-gradient-to-br from-[#FF8A3D] to-[#FF6A00] text-xs font-bold text-white theme-avatar shadow-[0_4px_16px_rgba(255,106,0,0.25)]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--dr-accent)] text-sm font-bold text-[var(--dr-ink)]">
             {user?.avatar ? <img src={user.avatar} alt={name} className="h-full w-full object-cover" /> : initials || 'U'}
         </div>
     );

@@ -281,13 +281,13 @@ export default function CodeEditor({
 
     return (
         <>
-            <div className="flex items-center justify-between border-b border-white/[0.05] bg-[#0D1725] px-3 py-2">
-                <div className="flex min-w-0 items-center gap-2 text-[10px] text-slate-600">
+            <div className="flex items-center justify-between border-b border-[var(--dr-border)] bg-[var(--dr-surface)] px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2 text-[10px] text-[var(--dr-text-3)]">
                     <FileCode2 size={12} className="shrink-0" />
                     <span className="truncate">{activeFile}</span>
                     <span className="shrink-0">{lineCount} lignes</span>
                     {language !== "plain" && (
-                        <span className="hidden rounded-md bg-white/[0.04] px-1.5 py-0.5 font-bold uppercase tracking-wide text-slate-500 sm:inline">
+                        <span className="hidden rounded-md bg-[var(--dr-hover)] px-1.5 py-0.5 font-bold uppercase tracking-wide text-[var(--dr-text-3)] sm:inline">
                             {language === "javascript" ? "JS" : language}
                         </span>
                     )}
@@ -299,7 +299,7 @@ export default function CodeEditor({
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={onUndo}
                         disabled={!canUndo}
-                        className="flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
+                        className="flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
                         aria-label="Annuler (Ctrl+Z)"
                         title="Annuler (Ctrl+Z)"
                     >
@@ -312,7 +312,7 @@ export default function CodeEditor({
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={onRedo}
                         disabled={!canRedo}
-                        className="flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
+                        className="flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
                         aria-label="Rétablir (Ctrl+Y)"
                         title="Rétablir (Ctrl+Y)"
                     >
@@ -320,12 +320,12 @@ export default function CodeEditor({
                         <span className="hidden sm:inline">Rétablir</span>
                     </button>
 
-                    <span className="mx-1 h-5 w-px bg-white/[0.06]" aria-hidden="true" />
+                    <span className="mx-1 h-5 w-px bg-[var(--dr-hover)]" aria-hidden="true" />
 
                     <button
                         type="button"
                         onClick={onCopy}
-                        className="rounded-lg p-2 text-slate-600 hover:bg-white/[0.05] hover:text-white"
+                        className="rounded-lg p-2 text-[var(--dr-text-3)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                         aria-label="Copier"
                     >
                         {copied ? <Check size={13} /> : <Clipboard size={13} />}
@@ -334,7 +334,7 @@ export default function CodeEditor({
                     <button
                         type="button"
                         onClick={onDelete}
-                        className="rounded-lg p-2 text-slate-600 hover:bg-red-500/10 hover:text-red-400"
+                        className="rounded-lg p-2 text-[var(--dr-text-3)] hover:bg-red-500/10 hover:text-[var(--dr-danger)]"
                         aria-label="Supprimer le fichier"
                     >
                         <Trash2 size={13} />
@@ -342,8 +342,8 @@ export default function CodeEditor({
                 </div>
             </div>
 
-            <div ref={editorContainerRef} className="relative flex min-h-0 flex-1 bg-[#06101A]">
-                <div className="w-11 shrink-0 overflow-hidden border-r border-white/[0.04] bg-[#08111C] py-3 text-right font-mono text-[10px] leading-6 text-slate-700">
+            <div ref={editorContainerRef} className="relative flex min-h-0 flex-1 bg-[var(--dr-bg)]">
+                <div className="w-11 shrink-0 overflow-hidden border-r border-[var(--dr-border)] bg-[var(--dr-bg)] py-3 text-right font-mono text-[10px] leading-6 text-[var(--dr-text-3)]">
                     {Array.from({ length: lineCount }, (_, index) => (
                         <div key={index} className="pr-2">{index + 1}</div>
                     ))}
@@ -381,10 +381,10 @@ export default function CodeEditor({
 
                 {completions && (
                     <div
-                        className="absolute z-20 w-[min(280px,calc(100%-16px))] overflow-hidden rounded-xl border border-white/[0.08] bg-[#0B1523] shadow-2xl"
+                        className="absolute z-20 w-[min(280px,calc(100%-16px))] overflow-hidden rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] shadow-2xl"
                         style={{ left: completionPosition.left, top: completionPosition.top }}
                     >
-                        <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                        <div className="flex items-center justify-between border-b border-[var(--dr-border)] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--dr-text-3)]">
                             <span>Complétion {completions.label}</span>
                             <span className="flex items-center gap-1"><ChevronDown size={11} /> ↑↓ · Tab</span>
                         </div>
@@ -400,12 +400,12 @@ export default function CodeEditor({
                                     className={
                                         "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left font-mono text-[11px] " +
                                         (index === selectedCompletion
-                                            ? "bg-[#FF6A00] text-[#08111F]"
-                                            : "text-slate-300 hover:bg-white/[0.05]")
+                                            ? "bg-[#FF6A00] text-[var(--dr-ink)]"
+                                            : "text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)]")
                                     }
                                 >
                                     <span>{item}</span>
-                                    <span className={index === selectedCompletion ? "text-[#08111F]/60" : "text-slate-700"}>
+                                    <span className={index === selectedCompletion ? "text-[var(--dr-ink)]" : "text-[var(--dr-text-3)]"}>
                                         {completions.label}
                                     </span>
                                 </button>

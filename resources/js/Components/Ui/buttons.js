@@ -1,12 +1,11 @@
 const base =
-    'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60';
+    'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dr-accent)]';
 
-// Texte sombre sur orange : contraste ≈ 6:1 (le blanc n'atteint que ≈ 2,9:1).
+// Rôles de thème uniquement : chaque thème (Nuit, Minuit, Ardoise, Clair, Sable) les redéfinit.
 const variants = {
-    primary: 'bg-[#FF6A00] text-[#08111F] hover:bg-[#ff781a]',
-    secondary:
-        'border border-white/[0.08] bg-white/[0.03] text-slate-300 hover:bg-white/[0.06] hover:text-white',
-    danger: 'border border-red-500/20 bg-red-500/10 text-red-300 hover:bg-red-500/15',
+    primary: 'bg-[var(--dr-accent)] font-bold text-[var(--dr-ink)] hover:brightness-110',
+    secondary: 'border border-[var(--dr-border-2)] bg-[var(--dr-surface)] text-[var(--dr-text)] hover:bg-[var(--dr-field)]',
+    danger: 'text-[var(--dr-danger)] hover:bg-[var(--dr-field)]',
 };
 
 export function buttonClass(variant = 'primary') {

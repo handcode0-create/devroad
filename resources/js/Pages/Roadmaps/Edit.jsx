@@ -48,8 +48,8 @@ export default function Edit({ roadmap, technologies = [] }) {
                 />
 
                 <section className="mt-6 rounded-2xl border border-red-500/15 bg-red-500/[0.04] p-5">
-                    <h2 className="text-sm font-semibold text-white">Zone sensible</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <h2 className="text-sm font-semibold text-[var(--dr-text)]">Zone sensible</h2>
+                    <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">
                         Supprimer la roadmap supprime aussi toutes ses étapes.
                     </p>
 

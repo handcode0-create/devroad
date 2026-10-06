@@ -18,7 +18,7 @@ export default function RoadmapForm({ form, technologies = [], onSubmit, submitL
         <form
             onSubmit={onSubmit}
             noValidate
-            className="space-y-5 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-6"
+            className="space-y-5 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-6"
         >
             <Field label="Titre" htmlFor="title" error={errors.title}>
                 <input
@@ -66,8 +66,8 @@ export default function RoadmapForm({ form, technologies = [], onSubmit, submitL
                 </select>
 
                 {data.technology && technologyLogos[data.technology] && (
-                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.04] p-2">
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-hover)] p-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--dr-hover)] p-2">
                             <img
                                 src={technologyLogos[data.technology]}
                                 alt=""
@@ -76,10 +76,10 @@ export default function RoadmapForm({ form, technologies = [], onSubmit, submitL
                         </div>
 
                         <div>
-                            <p className="text-xs font-semibold text-white">
+                            <p className="text-xs font-semibold text-[var(--dr-text)]">
                                 Logo de la technologie
                             </p>
-                            <p className="mt-0.5 text-[11px] text-slate-500">
+                            <p className="mt-0.5 text-[11px] text-[var(--dr-text-3)]">
                                 {selectedTechnology?.label}
                             </p>
                         </div>
@@ -88,10 +88,10 @@ export default function RoadmapForm({ form, technologies = [], onSubmit, submitL
 
                 {selectedTechnology && (
                     <div className="mt-3 rounded-xl border border-[#FF6A00]/15 bg-[#FF6A00]/[0.04] p-3">
-                        <p className="text-xs font-semibold text-white">
+                        <p className="text-xs font-semibold text-[var(--dr-text)]">
                             Parcours prêt à générer
                         </p>
-                        <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                        <p className="mt-1 text-[11px] leading-5 text-[var(--dr-text-3)]">
                             {selectedTechnology.lesson_count} cours seront créés automatiquement,
                             avec objectifs, contenu, exemples de code et durée estimée.
                         </p>

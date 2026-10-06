@@ -31,7 +31,7 @@ function inline(text) {
         if (part.startsWith('[[lower]]')) return <span key={index} style={{ textTransform: 'none' }}>{part.slice(9, -10).toLowerCase()}</span>;
         if (part.startsWith('[[capitalize]]')) return <span key={index} style={{ textTransform: 'none' }}>{part.slice(14, -15).replace(/(^|\s)\S/g, (char) => char.toUpperCase())}</span>;
         if (part.startsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
-        if (part.startsWith('`')) return <code key={index} className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] text-[#FF8A3D]">{part.slice(1, -1)}</code>;
+        if (part.startsWith('`')) return <code key={index} className="rounded bg-[var(--dr-hover)] px-1.5 py-0.5 font-mono text-[0.9em] text-[var(--dr-accent-text)]">{part.slice(1, -1)}</code>;
         return part;
     });
 }
@@ -39,9 +39,9 @@ function inline(text) {
 function CodeBlock({ lang, value }) {
     const [copied, setCopied] = useState(false);
     async function copy() { try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {} }
-    return <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#060D18]">
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2"><span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{lang || 'code'}</span><button type="button" onClick={copy} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-white">{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? 'Copié' : 'Copier'}</button></div>
-        <pre className="overflow-x-auto p-4 text-[13px] leading-6 text-slate-200"><code>{value}</code></pre>
+    return <div className="overflow-hidden rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)]">
+        <div className="flex items-center justify-between border-b border-[var(--dr-border)] px-4 py-2"><span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--dr-text-3)]">{lang || 'code'}</span><button type="button" onClick={copy} className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--dr-text-2)] transition hover:text-[var(--dr-text)]">{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? 'Copié' : 'Copier'}</button></div>
+        <pre className="overflow-x-auto p-4 text-[13px] leading-6 text-[var(--dr-text)]"><code>{value}</code></pre>
     </div>;
 }
 
@@ -49,17 +49,17 @@ function renderTextBlock(text, style, key) {
     const lines = text.split('\n');
     const output = [];
     let list = null;
-    const flushList = () => { if (!list) return; output.push(<ul key={list.key} className="my-2 space-y-1.5">{list.items.map((item, i) => <li key={i} className="flex gap-2 leading-7 text-slate-300"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6A00]" /> <span>{inline(item)}</span></li>)}</ul>); list = null; };
+    const flushList = () => { if (!list) return; output.push(<ul key={list.key} className="my-2 space-y-1.5">{list.items.map((item, i) => <li key={i} className="flex gap-2 leading-7 text-[var(--dr-text-2)]"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6A00]" /> <span>{inline(item)}</span></li>)}</ul>); list = null; };
     lines.forEach((raw, index) => {
         const line = raw.trimEnd();
-        if (/^#{1,3}\s+/.test(line)) { flushList(); const level = (line.match(/^#+/) || [''])[0].length; const value = line.replace(/^#{1,3}\s+/, ''); const Tag = level === 1 ? 'h2' : level === 2 ? 'h3' : 'h4'; output.push(<Tag key={key + '-h-' + index} className={(level === 1 ? 'text-2xl' : level === 2 ? 'text-xl' : 'text-lg') + ' mb-2 mt-4 font-semibold text-white'}>{inline(value)}</Tag>); return; }
-        if (/^---+$/.test(line)) { flushList(); output.push(<hr key={key + '-hr-' + index} className="my-5 border-white/[0.08]" />); return; }
-        if (/^>\s?/.test(line)) { flushList(); output.push(<blockquote key={key + '-q-' + index} className="my-3 border-l-2 border-[#FF6A00]/50 pl-4 italic text-slate-400">{inline(line.replace(/^>\s?/, ''))}</blockquote>); return; }
-        if (/^- \[[ xX]\]\s*/.test(line)) { flushList(); const checked = /^- \[[xX]\]/.test(line); output.push(<label key={key + '-c-' + index} className="flex gap-2 py-1 leading-7 text-slate-300"><input type="checkbox" checked={checked} readOnly className="mt-2 h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00]" /><span className={checked ? 'line-through opacity-50' : ''}>{inline(line.replace(/^- \[[ xX]\]\s*/, ''))}</span></label>); return; }
+        if (/^#{1,3}\s+/.test(line)) { flushList(); const level = (line.match(/^#+/) || [''])[0].length; const value = line.replace(/^#{1,3}\s+/, ''); const Tag = level === 1 ? 'h2' : level === 2 ? 'h3' : 'h4'; output.push(<Tag key={key + '-h-' + index} className={(level === 1 ? 'text-2xl' : level === 2 ? 'text-xl' : 'text-lg') + ' mb-2 mt-4 font-semibold text-[var(--dr-text)]'}>{inline(value)}</Tag>); return; }
+        if (/^---+$/.test(line)) { flushList(); output.push(<hr key={key + '-hr-' + index} className="my-5 border-[var(--dr-border)]" />); return; }
+        if (/^>\s?/.test(line)) { flushList(); output.push(<blockquote key={key + '-q-' + index} className="my-3 border-l-2 border-[var(--dr-accent)] pl-4 italic text-[var(--dr-text-2)]">{inline(line.replace(/^>\s?/, ''))}</blockquote>); return; }
+        if (/^- \[[ xX]\]\s*/.test(line)) { flushList(); const checked = /^- \[[xX]\]/.test(line); output.push(<label key={key + '-c-' + index} className="flex gap-2 py-1 leading-7 text-[var(--dr-text-2)]"><input type="checkbox" checked={checked} readOnly className="mt-2 h-4 w-4 rounded border-[var(--dr-border-2)] bg-[var(--dr-field)] text-[var(--dr-accent-text)]" /><span className={checked ? 'line-through opacity-50' : ''}>{inline(line.replace(/^- \[[ xX]\]\s*/, ''))}</span></label>); return; }
         if (/^[-*]\s+/.test(line)) { if (!list || list.type !== 'ul') { flushList(); list = { key: key + '-ul-' + index, type: 'ul', items: [] }; } list.items.push(line.replace(/^[-*]\s+/, '')); return; }
-        if (/^\d+\.\s+/.test(line)) { flushList(); output.push(<p key={key + '-ol-' + index} className="leading-7 text-slate-300"><span className="mr-2 text-[#FF8A3D]">{line.match(/^\d+/)[0]}.</span>{inline(line.replace(/^\d+\.\s+/, ''))}</p>); return; }
+        if (/^\d+\.\s+/.test(line)) { flushList(); output.push(<p key={key + '-ol-' + index} className="leading-7 text-[var(--dr-text-2)]"><span className="mr-2 text-[var(--dr-accent-text)]">{line.match(/^\d+/)[0]}.</span>{inline(line.replace(/^\d+\.\s+/, ''))}</p>); return; }
         if (line.trim() === '') { flushList(); return; }
-        flushList(); output.push(<p key={key + '-p-' + index} className="whitespace-pre-wrap leading-7 text-slate-300">{inline(line)}</p>);
+        flushList(); output.push(<p key={key + '-p-' + index} className="whitespace-pre-wrap leading-7 text-[var(--dr-text-2)]">{inline(line)}</p>);
     });
     flushList();
     return <div key={key}>{output}</div>;
@@ -74,7 +74,7 @@ export default function MemoContent({ content, formatting }) {
     if (last < (content ?? '').length) parts.push({ type: 'text', value: content.slice(last) });
     const style = safeFormatting(formatting);
     return <div
-        className="space-y-4 prose prose-invert max-w-none [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:mb-2 [&_h4]:mt-4 [&_h4]:text-lg [&_h4]:font-semibold [&_p]:leading-7 [&_li]:leading-7 [&_blockquote]:border-l-2 [&_blockquote]:border-[#FF6A00]/50 [&_blockquote]:pl-4 [&_blockquote]:italic"
+        className="space-y-4 max-w-none break-words text-[var(--dr-text-2)] [overflow-wrap:anywhere] [&_a]:font-semibold [&_a]:text-[var(--dr-accent-text)] [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--dr-field)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.9em] [&_code]:text-[var(--dr-accent-text)] [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:bg-[var(--dr-field)] [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-[var(--dr-text)] [&_strong]:text-[var(--dr-text)] [&_h2]:text-[var(--dr-text)] [&_h3]:text-[var(--dr-text)] [&_h4]:text-[var(--dr-text)] [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:marker:text-[var(--dr-accent)] [&_hr]:border-[var(--dr-border)] [&_img]:rounded-xl [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:mb-2 [&_h4]:mt-4 [&_h4]:text-lg [&_h4]:font-semibold [&_p]:leading-7 [&_li]:leading-7 [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--dr-accent)] [&_blockquote]:pl-4 [&_blockquote]:italic"
         style={{ fontFamily: FONT_STACKS[style.fontFamily] ?? FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}
     >
         {richHtml

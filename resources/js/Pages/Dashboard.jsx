@@ -81,7 +81,7 @@ export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, re
                 {/* En-tête mobile de la maquette */}
                 <header className="-mb-2 flex items-center gap-2.5 lg:hidden">
                     <Link href="/dashboard" className="flex flex-1 items-center gap-2.5" aria-label="DevRoad — Accueil">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[var(--dr-accent)] text-[var(--dr-ink)]"><Svg d={ICONS.road} size={18} stroke={2.4} /></span>
+                        <img src="/icondevroad.png" alt="" width="40" height="40" className="h-9 w-9 shrink-0 object-contain" />
                         <span className="font-['Manrope',sans-serif] text-[19px] font-extrabold tracking-[-0.02em]">Dev<span className="text-[var(--dr-accent-text)]">Road</span></span>
                     </Link>
                     <MotionLink whileTap={{ scale: 0.92 }} href="/search" aria-label="Rechercher" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)]">

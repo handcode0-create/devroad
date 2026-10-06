@@ -26,6 +26,9 @@ html[data-ui-theme='nuit'] {
     --dr-nav-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.55);
     --dr-scrim: rgba(0, 0, 0, 0.42);
     --dr-danger: #F87171;
+    --dr-hover: rgba(255, 255, 255, 0.05);
+    --dr-success: #34D399;
+    --dr-warning: #FBBF24;
     color-scheme: dark;
 }
 
@@ -47,6 +50,9 @@ html[data-ui-theme='minuit'] {
     --dr-nav-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.55);
     --dr-scrim: rgba(0, 0, 0, 0.55);
     --dr-danger: #F87171;
+    --dr-hover: rgba(255, 255, 255, 0.06);
+    --dr-success: #34D399;
+    --dr-warning: #FBBF24;
     color-scheme: dark;
 }
 
@@ -68,6 +74,9 @@ html[data-ui-theme='ardoise'] {
     --dr-nav-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.55);
     --dr-scrim: rgba(0, 0, 0, 0.42);
     --dr-danger: #FCA5A5;
+    --dr-hover: rgba(255, 255, 255, 0.06);
+    --dr-success: #6EE7B7;
+    --dr-warning: #FCD34D;
     color-scheme: dark;
 }
 
@@ -89,6 +98,9 @@ html[data-ui-theme='clair'] {
     --dr-nav-shadow: 0 18px 44px -14px rgba(16, 24, 40, 0.35);
     --dr-scrim: rgba(0, 0, 0, 0.42);
     --dr-danger: #B91C1C;
+    --dr-hover: rgba(8, 17, 31, 0.04);
+    --dr-success: #047857;
+    --dr-warning: #B45309;
     color-scheme: light;
 }
 
@@ -110,6 +122,9 @@ html[data-ui-theme='sable'] {
     --dr-nav-shadow: 0 18px 44px -14px rgba(60, 40, 20, 0.35);
     --dr-scrim: rgba(0, 0, 0, 0.42);
     --dr-danger: #B91C1C;
+    --dr-hover: rgba(60, 40, 20, 0.05);
+    --dr-success: #166534;
+    --dr-warning: #92400E;
     color-scheme: light;
 }
 
@@ -505,22 +520,15 @@ html[data-motion='reduce'] *::after {
         background-color: #FFFFFF !important;
     }
 
-    html[data-theme='light'] .theme-light input,
-    html[data-theme='light'] .theme-light select,
-    html[data-theme='light'] .theme-light textarea {
-        background-color: #FFFFFF;
-        border-color: #CBD5E1;
-        color: #0F172A;
-    }
 
     html[data-theme='light'] .theme-light input::placeholder,
     html[data-theme='light'] .theme-light textarea::placeholder {
         color: #94A3B8;
     }
 
-    html[data-theme='light'] .theme-light select option {
-        background: #FFFFFF;
-        color: #0F172A;
+    select option {
+        background: var(--dr-surface);
+        color: var(--dr-text);
     }
 
     html[data-theme='light'] .theme-light [class*="bg-slate-700"] {

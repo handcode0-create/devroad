@@ -29,8 +29,8 @@ export default function EditorTabs({
                         className={[
                             "inline-flex items-center gap-2 rounded-lg py-2 pl-3 pr-9 text-[11px] font-semibold",
                             activeFile === file.path
-                                ? "bg-[#FF6A00] text-[#08111F]"
-                                : "bg-white/[0.03] text-slate-500 hover:text-white",
+                                ? "bg-[#FF6A00] text-[var(--dr-ink)]"
+                                : "bg-[var(--dr-hover)] text-[var(--dr-text-3)] hover:text-[var(--dr-text)]",
                         ].join(" ")}
                     >
                         <FileCode2 size={13} />
@@ -43,7 +43,7 @@ export default function EditorTabs({
                             event.stopPropagation();
                             setOpenMenu((current) => current === file.path ? null : file.path);
                         }}
-                        className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-black/10 hover:text-white"
+                        className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-[var(--dr-text-3)] hover:bg-black/10 hover:text-[var(--dr-text)]"
                         aria-label={"Actions de " + file.path}
                         title="Actions du fichier"
                     >
@@ -52,7 +52,7 @@ export default function EditorTabs({
 
                     {openMenu === file.path && (
                         <div
-                            className="absolute left-0 top-10 z-[90] w-44 rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl"
+                            className="absolute left-0 top-10 z-[90] w-44 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-1.5 shadow-2xl"
                             onMouseDown={(event) => event.stopPropagation()}
                             onClick={(event) => event.stopPropagation()}
                         >
@@ -67,7 +67,7 @@ export default function EditorTabs({
             <button
                 type="button"
                 onClick={onCreate}
-                className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[#FF8A3D]"
+                className="shrink-0 rounded-lg border border-dashed border-[var(--dr-border)] px-3 py-2 text-[var(--dr-text-3)] transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[var(--dr-accent-text)]"
                 aria-label="Nouveau fichier"
                 title="Nouveau fichier"
             >
@@ -77,7 +77,7 @@ export default function EditorTabs({
             <button
                 type="button"
                 onClick={onImport}
-                className="shrink-0 rounded-lg border border-dashed border-white/[0.08] px-3 py-2 text-slate-600 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[#FF8A3D]"
+                className="shrink-0 rounded-lg border border-dashed border-[var(--dr-border)] px-3 py-2 text-[var(--dr-text-3)] transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/[0.06] hover:text-[var(--dr-accent-text)]"
                 aria-label="Importer des fichiers"
                 title="Importer des fichiers"
             >
@@ -92,7 +92,7 @@ function Action({ icon: Icon, text, onClick, danger = false }) {
         <button
             type="button"
             onClick={onClick}
-            className={"flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs " + (danger ? "text-red-300 hover:bg-red-400/[0.08]" : "text-slate-300 hover:bg-white/[0.05]")}
+            className={"flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs " + (danger ? "text-[var(--dr-danger)] hover:bg-red-400/[0.08]" : "text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)]")}
         >
             <Icon size={13} />
             {text}

@@ -166,19 +166,19 @@ export default function Index({ projects = [], templates = {}, runtime_configure
             <div className="space-y-6">
                 <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[#FF8A3D]">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--dr-accent-text)]">
                             <Box size={15} />
                             DevRoad Sandbox
                         </div>
                         <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Environnements de développement</h1>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--dr-text-2)]">
                             Lance de vrais projets React, Next.js, Node.js, PHP et Laravel dans un environnement isolé.
                         </p>
                     </div>
 
                     <button
                         onClick={() => setCreate(true)}
-                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] px-4 text-sm font-bold text-[#08111F]"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] px-4 text-sm font-bold text-[var(--dr-ink)]"
                     >
                         <Plus size={17} />
                         Nouveau Sandbox
@@ -186,13 +186,13 @@ export default function Index({ projects = [], templates = {}, runtime_configure
                 </header>
 
                 {!runtime_configured && (
-                    <div className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.06] p-4 text-sm text-amber-200">
+                    <div className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.06] p-4 text-sm text-[var(--dr-warning)]">
                         {runtime_message || "Le runtime Sandbox n’est pas encore prêt sur cet environnement."}
                     </div>
                 )}
 
                 {message && (
-                    <div className="rounded-2xl border border-red-400/15 bg-red-500/[0.06] p-4 text-sm text-red-300">
+                    <div className="rounded-2xl border border-red-400/15 bg-red-500/[0.06] p-4 text-sm text-[var(--dr-danger)]">
                         {message}
                     </div>
                 )}
@@ -200,20 +200,20 @@ export default function Index({ projects = [], templates = {}, runtime_configure
                 {items.length === 0 ? (
                     <button
                         onClick={() => setCreate(true)}
-                        className="w-full rounded-3xl border border-dashed border-white/[0.10] bg-[#0D1725] p-12 text-center transition hover:border-[#FF6A00]/30"
+                        className="w-full rounded-3xl border border-dashed border-[var(--dr-border-2)] bg-[var(--dr-surface)] p-12 text-center transition hover:border-[#FF6A00]/30"
                     >
-                        <SquareTerminal className="mx-auto text-[#FF8A3D]" size={30} />
+                        <SquareTerminal className="mx-auto text-[var(--dr-accent-text)]" size={30} />
                         <p className="mt-4 font-semibold">Aucun Sandbox</p>
-                        <p className="mt-1 text-sm text-slate-500">Crée ton premier environnement de développement.</p>
+                        <p className="mt-1 text-sm text-[var(--dr-text-3)]">Crée ton premier environnement de développement.</p>
                     </button>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {items.map((project) => (
-                            <article key={project.id} className="min-w-0 rounded-2xl border border-white/[0.07] bg-[#0D1725] p-5">
+                            <article key={project.id} className="min-w-0 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="truncate font-semibold">{project.name}</p>
-                                        <p className="mt-1 text-xs text-slate-500">
+                                        <p className="mt-1 text-xs text-[var(--dr-text-3)]">
                                             {templates[project.template]?.label ?? project.template} · {project.runtime} {project.runtime_version}
                                         </p>
                                     </div>
@@ -222,22 +222,22 @@ export default function Index({ projects = [], templates = {}, runtime_configure
 
                                 <div className="mt-5 flex items-center gap-2">
                                     {project.status === "running" ? (
-                                        <button onClick={() => run(project, "stop")} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-white/[0.06] text-xs font-semibold text-slate-200">
+                                        <button onClick={() => run(project, "stop")} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--dr-hover)] text-xs font-semibold text-[var(--dr-text)]">
                                             <CircleStop size={15} /> Arrêter
                                         </button>
                                     ) : project.status === "starting" ? (
-                                        <div className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] text-xs font-semibold text-[#FFB078]">
+                                        <div className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] text-xs font-semibold text-[var(--dr-accent-text)]">
                                             <LoaderCircle size={15} className="animate-spin" /> Compilation…
                                         </div>
                                     ) : (
-                                        <button onClick={() => run(project, "start")} disabled={loading} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] text-xs font-bold text-[#08111F] disabled:opacity-50">
+                                        <button onClick={() => run(project, "start")} disabled={loading} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#FF6A00] text-xs font-bold text-[var(--dr-ink)] disabled:opacity-50">
                                             {loading ? <LoaderCircle size={15} className="animate-spin" /> : <Play size={15} />} Démarrer
                                         </button>
                                     )}
-                                    <button onClick={() => run(project, "restart")} disabled={loading || project.status === "starting"} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-white/[0.06] text-slate-300" aria-label="Redémarrer">
+                                    <button onClick={() => run(project, "restart")} disabled={loading || project.status === "starting"} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-[var(--dr-hover)] text-[var(--dr-text-2)]" aria-label="Redémarrer">
                                         <RotateCcw size={15} />
                                     </button>
-                                    <button onClick={() => remove(project)} disabled={loading} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-red-500/[0.06] text-red-300" aria-label="Supprimer">
+                                    <button onClick={() => remove(project)} disabled={loading} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-red-500/[0.06] text-[var(--dr-danger)]" aria-label="Supprimer">
                                         <Trash2 size={15} />
                                     </button>
                                 </div>
@@ -252,7 +252,7 @@ export default function Index({ projects = [], templates = {}, runtime_configure
                                 )}
 
                                 {project.preview_url && (
-                                    <a href={project.preview_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#FF8A3D]">
+                                    <a href={project.preview_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--dr-accent-text)]">
                                         Ouvrir le preview <ExternalLink size={13} />
                                     </a>
                                 )}
@@ -364,34 +364,34 @@ function TerminalBox({ project }) {
     }
 
     return (
-        <div className="mt-4 overflow-hidden rounded-xl border border-white/[0.07] bg-[#08111F]">
-            <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
+        <div className="mt-4 overflow-hidden rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)]">
+            <div className="flex items-center justify-between border-b border-[var(--dr-border)] px-3 py-2">
                 <div className="flex items-center gap-2">
-                    <SquareTerminal size={14} className="text-[#FF8A3D]" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Terminal PTY</span>
+                    <SquareTerminal size={14} className="text-[var(--dr-accent-text)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--dr-text-3)]">Terminal PTY</span>
                 </div>
-                <span className={"text-[10px] font-semibold " + (status === "connecté" ? "text-emerald-400" : "text-slate-600")}>
+                <span className={"text-[10px] font-semibold " + (status === "connecté" ? "text-[var(--dr-success)]" : "text-[var(--dr-text-3)]")}>
                     {status}
                 </span>
             </div>
 
             <pre
                 ref={outputRef}
-                className="h-48 overflow-auto whitespace-pre-wrap p-3 font-mono text-[11px] leading-5 text-slate-300"
+                className="h-48 overflow-auto whitespace-pre-wrap p-3 font-mono text-[11px] leading-5 text-[var(--dr-text-2)]"
                 aria-live="polite"
             >
                 {output || "Connexion au terminal…"}
             </pre>
 
-            <form onSubmit={submit} className="flex items-center gap-2 border-t border-white/[0.06] p-2">
-                <span className="font-mono text-xs text-[#FF6A00]">›</span>
+            <form onSubmit={submit} className="flex items-center gap-2 border-t border-[var(--dr-border)] p-2">
+                <span className="font-mono text-xs text-[var(--dr-accent-text)]">›</span>
                 <input
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Tape une commande…"
                     disabled={status !== "connecté"}
-                    className="min-w-0 flex-1 bg-transparent font-mono text-xs text-slate-200 outline-none placeholder:text-slate-700 disabled:opacity-50"
+                    className="min-w-0 flex-1 bg-transparent font-mono text-xs text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] disabled:opacity-50"
                     aria-label={"Entrée terminal de " + project.name}
                     autoComplete="off"
                     spellCheck="false"
@@ -399,7 +399,7 @@ function TerminalBox({ project }) {
                 <button
                     type="submit"
                     disabled={status !== "connecté" || !value.trim()}
-                    className="rounded-lg bg-white/[0.06] px-2.5 py-1.5 text-[10px] font-semibold text-slate-300 disabled:opacity-30"
+                    className="rounded-lg bg-[var(--dr-hover)] px-2.5 py-1.5 text-[10px] font-semibold text-[var(--dr-text-2)] disabled:opacity-30"
                 >
                     Entrée
                 </button>
@@ -409,10 +409,10 @@ function TerminalBox({ project }) {
 }
 
 const processStyles = {
-    running: { label: "En cours", dot: "bg-emerald-400", text: "text-emerald-300" },
-    completed: { label: "Terminé", dot: "bg-[#FF6A00]", text: "text-[#FFB078]" },
-    failed: { label: "Échec", dot: "bg-red-400", text: "text-red-300" },
-    stopped: { label: "Arrêté", dot: "bg-slate-600", text: "text-slate-500" },
+    running: { label: "En cours", dot: "bg-emerald-400", text: "text-[var(--dr-success)]" },
+    completed: { label: "Terminé", dot: "bg-[#FF6A00]", text: "text-[var(--dr-accent-text)]" },
+    failed: { label: "Échec", dot: "bg-red-400", text: "text-[var(--dr-danger)]" },
+    stopped: { label: "Arrêté", dot: "bg-[var(--dr-border-2)]", text: "text-[var(--dr-text-3)]" },
 };
 
 function formatDuration(ms) {
@@ -466,17 +466,17 @@ function ProcessHistory({ project }) {
     }, [open, project.status]);
 
     return (
-        <div className="mt-4 min-w-0 border-t border-white/[0.06] pt-3">
+        <div className="mt-4 min-w-0 border-t border-[var(--dr-border)] pt-3">
             <div className="flex items-center gap-2">
                 <button
                     type="button"
                     onClick={() => setOpen((value) => !value)}
                     aria-expanded={open}
-                    className="inline-flex min-h-10 flex-1 items-center gap-2 rounded-lg text-left text-xs font-semibold text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60"
+                    className="inline-flex min-h-10 flex-1 items-center gap-2 rounded-lg text-left text-xs font-semibold text-[var(--dr-text-2)] hover:text-[var(--dr-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60"
                 >
-                    <History size={14} className="text-[#FF8A3D]" />
+                    <History size={14} className="text-[var(--dr-accent-text)]" />
                     Historique
-                    {processes && <span className="text-slate-600">({processes.length})</span>}
+                    {processes && <span className="text-[var(--dr-text-3)]">({processes.length})</span>}
                     <ChevronDown size={14} className={"ml-auto transition " + (open ? "rotate-180" : "")} />
                 </button>
                 {open && (
@@ -485,7 +485,7 @@ function ProcessHistory({ project }) {
                         onClick={load}
                         disabled={loading}
                         aria-label="Actualiser l’historique"
-                        className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-white disabled:opacity-50"
+                        className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-[var(--dr-text-3)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)] disabled:opacity-50"
                     >
                         <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                     </button>
@@ -494,14 +494,14 @@ function ProcessHistory({ project }) {
 
             {open && (
                 <div className="mt-2 space-y-1.5">
-                    {error && <p className="text-xs text-red-300">{error}</p>}
+                    {error && <p className="text-xs text-[var(--dr-danger)]">{error}</p>}
 
                     {!error && processes === null && loading && (
-                        <p className="flex items-center gap-2 py-2 text-xs text-slate-500"><LoaderCircle size={13} className="animate-spin" /> Chargement…</p>
+                        <p className="flex items-center gap-2 py-2 text-xs text-[var(--dr-text-3)]"><LoaderCircle size={13} className="animate-spin" /> Chargement…</p>
                     )}
 
                     {!error && processes?.length === 0 && (
-                        <p className="py-2 text-xs text-slate-500">Aucun processus pour l’instant. Démarre le Sandbox pour voir l’installation et le serveur ici.</p>
+                        <p className="py-2 text-xs text-[var(--dr-text-3)]">Aucun processus pour l’instant. Démarre le Sandbox pour voir l’installation et le serveur ici.</p>
                     )}
 
                     {processes?.map((process) => {
@@ -516,7 +516,7 @@ function ProcessHistory({ project }) {
                         ].filter(Boolean);
 
                         return (
-                            <div key={process.id} className="rounded-xl border border-white/[0.05] bg-[#08111F] px-3 py-2.5">
+                            <div key={process.id} className="rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)] px-3 py-2.5">
                                 <button
                                     type="button"
                                     onClick={() => details && setExpanded(isOpen ? null : process.id)}
@@ -527,16 +527,16 @@ function ProcessHistory({ project }) {
                                     <span className={"mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full " + style.dot + (process.status === "running" ? " animate-pulse motion-reduce:animate-none" : "")} />
                                     <span className="min-w-0 flex-1">
                                         <span className="flex items-center justify-between gap-2">
-                                            <span className="truncate text-xs font-semibold text-slate-200">{process.name}</span>
+                                            <span className="truncate text-xs font-semibold text-[var(--dr-text)]">{process.name}</span>
                                             <span className={"shrink-0 text-[10px] font-bold uppercase tracking-[0.08em] " + style.text}>{style.label}</span>
                                         </span>
-                                        <code className="mt-0.5 block truncate font-mono text-[11px] text-slate-500">{process.command}</code>
-                                        {meta.length > 0 && <span className="mt-1 block text-[10px] text-slate-600">{meta.join(" · ")}</span>}
+                                        <code className="mt-0.5 block truncate font-mono text-[11px] text-[var(--dr-text-3)]">{process.command}</code>
+                                        {meta.length > 0 && <span className="mt-1 block text-[10px] text-[var(--dr-text-3)]">{meta.join(" · ")}</span>}
                                     </span>
                                 </button>
 
                                 {isOpen && details && (
-                                    <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/30 p-2.5 font-mono text-[11px] leading-5 text-slate-300">
+                                    <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/30 p-2.5 font-mono text-[11px] leading-5 text-[var(--dr-text-2)]">
                                         {process.error ? "Erreur : " + process.error + (process.output ? "\n\n" + process.output : "") : process.output}
                                     </pre>
                                 )}
@@ -552,12 +552,12 @@ function ProcessHistory({ project }) {
 function Status({ status }) {
     const running = status === "running";
     const classes = running
-        ? "bg-emerald-400/10 text-emerald-300"
-        : "bg-white/[0.06] text-slate-500";
+        ? "bg-emerald-400/10 text-[var(--dr-success)]"
+        : "bg-[var(--dr-hover)] text-[var(--dr-text-3)]";
 
     return (
         <span className={"inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase " + classes}>
-            <span className={"h-1.5 w-1.5 rounded-full " + (running ? "bg-emerald-400" : "bg-slate-600")} />
+            <span className={"h-1.5 w-1.5 rounded-full " + (running ? "bg-emerald-400" : "bg-[var(--dr-border-2)]")} />
             {status}
         </span>
     );
@@ -570,24 +570,24 @@ function CreateModal({ templates, loading, onClose, onCreate }) {
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
-            <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0D1725] p-5 shadow-2xl">
+            <div className="w-full max-w-md rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 shadow-2xl">
                 <div className="flex items-center justify-between">
                     <b>Nouveau Sandbox</b>
-                    <button onClick={onClose} className="text-slate-500 hover:text-white" aria-label="Fermer">×</button>
+                    <button onClick={onClose} className="text-[var(--dr-text-3)] hover:text-[var(--dr-text)]" aria-label="Fermer">×</button>
                 </div>
-                <label className="mt-5 block text-xs text-slate-400">
+                <label className="mt-5 block text-xs text-[var(--dr-text-2)]">
                     Nom
-                    <input value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#08111F] p-3 text-sm text-white outline-none focus:border-[#FF6A00]/50" />
+                    <input value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)] p-3 text-sm text-[var(--dr-text)] outline-none focus:border-[#FF6A00]/50" />
                 </label>
-                <label className="mt-4 block text-xs text-slate-400">
+                <label className="mt-4 block text-xs text-[var(--dr-text-2)]">
                     Template
-                    <select value={template} onChange={(event) => setTemplate(event.target.value)} className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#08111F] p-3 text-sm text-white outline-none focus:border-[#FF6A00]/50">
+                    <select value={template} onChange={(event) => setTemplate(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)] p-3 text-sm text-[var(--dr-text)] outline-none focus:border-[#FF6A00]/50">
                         {entries.map(([key, definition]) => <option key={key} value={key}>{definition.label}</option>)}
                     </select>
                 </label>
                 <div className="mt-5 flex justify-end gap-2">
-                    <button onClick={onClose} className="px-4 py-2 text-xs text-slate-500">Annuler</button>
-                    <button disabled={loading || !name.trim()} onClick={() => onCreate(name, template)} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] disabled:opacity-40">
+                    <button onClick={onClose} className="px-4 py-2 text-xs text-[var(--dr-text-3)]">Annuler</button>
+                    <button disabled={loading || !name.trim()} onClick={() => onCreate(name, template)} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[var(--dr-ink)] disabled:opacity-40">
                         Créer
                     </button>
                 </div>

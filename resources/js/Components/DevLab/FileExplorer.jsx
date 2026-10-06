@@ -14,11 +14,11 @@ export default function FileExplorer({
     const [openMenu, setOpenMenu] = useState(null);
 
     return (
-        <aside className="hidden border-r border-white/[0.06] bg-[#07101A] lg:block">
-            <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-3">
+        <aside className="hidden border-r border-[var(--dr-border)] bg-[var(--dr-bg)] lg:block">
+            <div className="flex items-center justify-between border-b border-[var(--dr-border)] px-3 py-3">
                 <div className="flex items-center gap-2">
-                    <FolderOpen size={14} className="text-[#FF8A3D]" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">
+                    <FolderOpen size={14} className="text-[var(--dr-accent-text)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">
                         Explorateur
                     </span>
                 </div>
@@ -27,7 +27,7 @@ export default function FileExplorer({
                     <button
                         type="button"
                         onClick={onCreate}
-                        className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.04] hover:text-white"
+                        className="rounded-lg p-1.5 text-[var(--dr-text-3)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                         aria-label="Créer un fichier"
                         title="Créer un fichier"
                     >
@@ -37,7 +37,7 @@ export default function FileExplorer({
                     <button
                         type="button"
                         onClick={onImport}
-                        className="rounded-lg p-1.5 text-slate-600 transition hover:bg-white/[0.04] hover:text-[#FF8A3D]"
+                        className="rounded-lg p-1.5 text-[var(--dr-text-3)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-accent-text)]"
                         aria-label="Importer des fichiers"
                         title="Importer des fichiers"
                     >
@@ -53,8 +53,8 @@ export default function FileExplorer({
                         className={[
                             "group relative mb-1 flex w-full items-center rounded-lg text-[11px]",
                             activeFile === file.path
-                                ? "bg-[#FF6A00]/10 text-[#FF8A3D]"
-                                : "text-slate-500 hover:bg-white/[0.03] hover:text-white",
+                                ? "bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]"
+                                : "text-[var(--dr-text-3)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]",
                         ].join(" ")}
                     >
                         <button
@@ -77,7 +77,7 @@ export default function FileExplorer({
                                     current === file.path ? null : file.path,
                                 );
                             }}
-                            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white/[0.06] hover:text-white"
+                            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--dr-text-3)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                             aria-label={"Actions de " + file.path}
                             title="Actions du fichier"
                         >
@@ -86,7 +86,7 @@ export default function FileExplorer({
 
                         <div
                             className={[
-                                "absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1.5 shadow-2xl",
+                                "absolute right-1 top-9 z-[90] w-44 overflow-hidden rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-1.5 shadow-2xl",
                                 openMenu === file.path ? "block" : "hidden",
                             ].join(" ")}
                         >
@@ -96,7 +96,7 @@ export default function FileExplorer({
                                     setOpenMenu(null);
                                     onRename(file);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]"
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)]"
                             >
                                 <Pencil size={13} /> Renommer
                             </button>
@@ -107,7 +107,7 @@ export default function FileExplorer({
                                     setOpenMenu(null);
                                     onDuplicate(file);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]"
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)]"
                             >
                                 <Copy size={13} /> Dupliquer
                             </button>
@@ -118,7 +118,7 @@ export default function FileExplorer({
                                     setOpenMenu(null);
                                     onDelete(file);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]"
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-[var(--dr-danger)] hover:bg-red-400/[0.08]"
                             >
                                 <Trash2 size={13} /> Supprimer
                             </button>

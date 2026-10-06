@@ -22,7 +22,7 @@ export default function Pagination({ links }) {
 
                 if (!link.url) {
                     return (
-                        <span key={index} className={`${base} text-slate-600`}>
+                        <span key={index} className={`${base} text-[var(--dr-text-3)]`}>
                             {label}
                         </span>
                     );
@@ -36,8 +36,8 @@ export default function Pagination({ links }) {
                         aria-current={link.active ? 'page' : undefined}
                         className={`${base} ${
                             link.active
-                                ? 'bg-[#FF6A00] text-[#08111F]'
-                                : 'border border-white/[0.07] bg-[#0D1725] text-slate-400 hover:text-white'
+                                ? 'bg-[#FF6A00] text-[var(--dr-ink)]'
+                                : 'border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)] hover:text-[var(--dr-text)]'
                         }`}
                     >
                         {label}

@@ -35,7 +35,7 @@ export default function DesktopTopBar({ preference, resolved }) {
     }
 
     return (
-        <header className="sticky top-0 z-30 hidden border-b border-[var(--dr-border)] bg-[var(--dr-bg)]/95 font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] backdrop-blur-xl lg:block">
+        <header className="sticky top-0 z-30 hidden border-b border-[var(--dr-border)] [background-color:color-mix(in_srgb,var(--dr-bg)_90%,transparent)] font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] backdrop-blur-xl lg:block">
             <div className="flex h-[76px] items-center gap-3 px-10">
                 <form onSubmit={submit} role="search" className="m-0 flex max-w-[560px] flex-1">
                     <label className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-3.5 text-[var(--dr-text-3)] focus-within:border-[var(--dr-accent)]">

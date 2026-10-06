@@ -67,6 +67,7 @@ class SearchController extends Controller
                     ->through(fn (Roadmap $r) => [
                         'id' => $r->id,
                         'title' => $r->title,
+                        'technology' => $r->technology,
                         'status' => $r->status,
                         'steps_count' => $r->steps_count,
                         'progress' => $r->progress,

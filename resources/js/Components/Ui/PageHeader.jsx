@@ -3,11 +3,11 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function PageHeader({ title, subtitle, backHref, backLabel = 'Retour', actions }) {
     return (
-        <header className="mb-5 sm:mb-6">
+        <header className="mb-6 font-['Figtree',system-ui,sans-serif] lg:mb-7">
             {backHref && (
                 <Link
                     href={backHref}
-                    className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-slate-400 transition hover:text-white sm:mb-4"
+                    className="-ml-1 mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-[var(--dr-text-2)] transition hover:text-[var(--dr-text)] sm:mb-4"
                 >
                     <ArrowLeft size={16} aria-hidden="true" />
                     {backLabel}
@@ -16,12 +16,12 @@ export default function PageHeader({ title, subtitle, backHref, backLabel = 'Ret
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="min-w-0 max-w-3xl">
-                    <h1 className="break-words text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
+                    <h1 className="m-0 break-words font-['Manrope',sans-serif] text-[30px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[var(--dr-text)] lg:text-[38px]">
                         {title}
                     </h1>
 
                     {subtitle && (
-                        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500 sm:mt-2">
+                        <p className="m-0 mt-1.5 max-w-2xl text-[15px] leading-[1.5] text-[var(--dr-text-2)]">
                             {subtitle}
                         </p>
                     )}

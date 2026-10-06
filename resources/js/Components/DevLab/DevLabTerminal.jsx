@@ -60,22 +60,22 @@ export default function DevLabTerminal({ files, runtime, onPreview }) {
     }
 
     return (
-        <section className="flex min-h-0 flex-col border-t border-white/[0.06] bg-[#050B12] lg:h-48">
-            <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-2">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                    <Terminal size={13} className="text-[#FF8A3D]" /> Terminal
+        <section className="flex min-h-0 flex-col border-t border-[var(--dr-border)] bg-[var(--dr-bg)] lg:h-48">
+            <div className="flex items-center justify-between border-b border-[var(--dr-border)] px-3 py-2">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--dr-text-3)]">
+                    <Terminal size={13} className="text-[var(--dr-accent-text)]" /> Terminal
                 </div>
-                <button type="button" onClick={() => setLines([])} className="rounded-lg p-1.5 text-slate-600 hover:bg-white/[0.04] hover:text-slate-300" aria-label="Effacer le terminal">
+                <button type="button" onClick={() => setLines([])} className="rounded-lg p-1.5 text-[var(--dr-text-3)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text-2)]" aria-label="Effacer le terminal">
                     <Trash2 size={13} />
                 </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 font-mono text-[10px] leading-5 text-slate-400">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 font-mono text-[10px] leading-5 text-[var(--dr-text-2)]">
                 {lines.map((line, index) => <pre key={index} className="whitespace-pre-wrap break-words">{line}</pre>)}
                 <div ref={endRef} />
             </div>
-            <form onSubmit={(event) => { event.preventDefault(); execute(command); }} className="flex items-center gap-2 border-t border-white/[0.05] px-3 py-2">
-                <span className="font-mono text-xs text-[#FF8A3D]">$</span>
-                <input value={command} onChange={(event) => setCommand(event.target.value)} className="min-w-0 flex-1 bg-transparent font-mono text-[11px] text-white outline-none placeholder:text-slate-700" placeholder="help" aria-label="Commande DevLab" />
+            <form onSubmit={(event) => { event.preventDefault(); execute(command); }} className="flex items-center gap-2 border-t border-[var(--dr-border)] px-3 py-2">
+                <span className="font-mono text-xs text-[var(--dr-accent-text)]">$</span>
+                <input value={command} onChange={(event) => setCommand(event.target.value)} className="min-w-0 flex-1 bg-transparent font-mono text-[11px] text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)]" placeholder="help" aria-label="Commande DevLab" />
             </form>
         </section>
     );

@@ -73,13 +73,13 @@ export default function Login({ status, canResetPassword }) {
 
                     <RouteAside>
                         <div className="flex flex-wrap items-center justify-between gap-x-4">
-                            <label className="flex min-h-[44px] cursor-pointer items-center gap-3 text-sm text-slate-300">
+                            <label className="flex min-h-[44px] cursor-pointer items-center gap-3 text-sm text-[var(--dr-text-2)]">
                                 <input
                                     type="checkbox"
                                     name="remember"
                                     checked={data.remember}
                                     onChange={(event) => setData('remember', event.target.checked)}
-                                    className="h-5 w-5 rounded-md border-[#5A6A82] bg-[#101A2A] text-[#FF6A00] focus:ring-2 focus:ring-[#FF6A00]/40 focus:ring-offset-0"
+                                    className="h-5 w-5 rounded-md border-[var(--dr-border-2)] bg-[var(--dr-field)] text-[var(--dr-accent-text)] focus:ring-2 focus:ring-[#FF6A00]/40 focus:ring-offset-0"
                                 />
                                 Se souvenir de moi
                             </label>

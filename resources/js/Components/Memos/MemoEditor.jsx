@@ -327,33 +327,33 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
         element.innerHTML = memoValueToHtml(content);
     }
 
-    return <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#08111F]">
-        <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.06] bg-[#0D1725] p-2">
-            <div className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-[#08111F] px-1.5">
-                <Type size={14} className="ml-1 text-slate-600" />
-                <select value={style.fontFamily} onChange={(e) => applyFont(e.target.value)} className="h-8 border-0 bg-transparent px-1 text-xs text-slate-300 outline-none" aria-label="Police">
+    return <div className="overflow-hidden rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-bg)]">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--dr-border)] bg-[var(--dr-surface)] p-2">
+            <div className="flex items-center gap-1 rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)] px-1.5">
+                <Type size={14} className="ml-1 text-[var(--dr-text-3)]" />
+                <select value={style.fontFamily} onChange={(e) => applyFont(e.target.value)} className="h-8 border-0 bg-transparent px-1 text-xs text-[var(--dr-text-2)] outline-none" aria-label="Police">
                     {FONTS.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
                 </select>
             </div>
-            <div className="flex items-center rounded-lg border border-white/[0.06] bg-[#08111F]">
-                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => adjustSize(-1)} className="flex h-8 w-8 items-center justify-center text-slate-500 hover:text-white"><Minus size={13} /></button>
-                <span className="min-w-8 text-center text-[11px] text-slate-400">{style.fontSize}</span>
-                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => adjustSize(1)} className="flex h-8 w-8 items-center justify-center text-slate-500 hover:text-white"><Plus size={13} /></button>
+            <div className="flex items-center rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)]">
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => adjustSize(-1)} className="flex h-8 w-8 items-center justify-center text-[var(--dr-text-3)] hover:text-[var(--dr-text)]"><Minus size={13} /></button>
+                <span className="min-w-8 text-center text-[11px] text-[var(--dr-text-2)]">{style.fontSize}</span>
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => adjustSize(1)} className="flex h-8 w-8 items-center justify-center text-[var(--dr-text-3)] hover:text-[var(--dr-text)]"><Plus size={13} /></button>
             </div>
-            <div className="flex rounded-lg border border-white/[0.06] bg-[#08111F] p-0.5">
+            <div className="flex rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)] p-0.5">
                 <FormatButton active={style.textTransform === 'none'} onClick={() => applyCase('none')} label="Normal"><Type size={14} /></FormatButton>
                 <FormatButton onClick={() => applyCase('uppercase')} label="Majuscules"><CaseUpper size={14} /></FormatButton>
                 <FormatButton onClick={() => applyCase('lowercase')} label="Minuscules"><CaseLower size={14} /></FormatButton>
             </div>
-            <div className="flex rounded-lg border border-white/[0.06] bg-[#08111F] p-0.5">
+            <div className="flex rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)] p-0.5">
                 <FormatButton onClick={() => update('textAlign', 'left')} label="Gauche"><AlignLeft size={14} /></FormatButton>
                 <FormatButton onClick={() => update('textAlign', 'center')} label="Centre"><AlignCenter size={14} /></FormatButton>
                 <FormatButton onClick={() => update('textAlign', 'right')} label="Droite"><AlignRight size={14} /></FormatButton>
                 <FormatButton onClick={() => update('textAlign', 'justify')} label="Justifié"><AlignJustify size={14} /></FormatButton>
             </div>
-            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => runCommand('bold')} className="flex h-8 items-center rounded-lg border border-white/[0.06] bg-[#08111F] px-2 text-xs font-bold text-slate-500 hover:text-white" title="Gras">B</button>
-            <div className="h-6 w-px bg-white/[0.06]" />
-            <select defaultValue="" onChange={(e) => { if (e.target.value) applyBlock(e.target.value); e.target.value = ''; }} className="h-8 rounded-lg border border-white/[0.06] bg-[#08111F] px-2 text-xs text-slate-400 outline-none" aria-label="Insérer un bloc">
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => runCommand('bold')} className="flex h-8 items-center rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)] px-2 text-xs font-bold text-[var(--dr-text-3)] hover:text-[var(--dr-text)]" title="Gras">B</button>
+            <div className="h-6 w-px bg-[var(--dr-hover)]" />
+            <select defaultValue="" onChange={(e) => { if (e.target.value) applyBlock(e.target.value); e.target.value = ''; }} className="h-8 rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)] px-2 text-xs text-[var(--dr-text-2)] outline-none" aria-label="Insérer un bloc">
                 <option value="">Bloc…</option>
                 <option value="h1">Titre 1</option><option value="h2">Titre 2</option><option value="h3">Titre 3</option>
                 <option value="bullet">Liste</option><option value="number">Liste numérotée</option><option value="check">Checklist</option><option value="quote">Citation</option>
@@ -363,10 +363,10 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
             <FormatButton onClick={() => insertAttachmentInline(attachments.find((item) => !item.is_image))} label="Fichier inline"><Paperclip size={14} /></FormatButton>
             <FormatButton onClick={insertSeparator} label="Séparateur"><Minus size={14} /></FormatButton>
             <button type="button" onClick={() => insertText('')} className="hidden" aria-hidden="true" />
-            <button type="button" onClick={() => onAutoTitle?.(autoMemoTitle(editorRef.current?.innerText ?? ''))} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-2.5 text-xs font-semibold text-[#FF8A3D]"><Sparkles size={13} />Titre automatique</button>
+            <button type="button" onClick={() => onAutoTitle?.(autoMemoTitle(editorRef.current?.innerText ?? ''))} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#FF6A00]/20 bg-[var(--dr-accent-soft)] px-2.5 text-xs font-semibold text-[var(--dr-accent-text)]"><Sparkles size={13} />Titre automatique</button>
         </div>
         {slashOpen && <SlashMenu query={currentSlashQuery() ?? ''} attachments={attachments} onSelect={applySlashCommand} onInsertAttachment={insertAttachmentInline} />}
-        <div className="flex items-center gap-2 border-b border-white/[0.05] px-3 py-2 text-[10px] text-slate-600"><FileText size={12} /><span>Éditeur riche · les titres, listes et styles sont appliqués directement, sans dièses ni marqueurs.</span></div>
+        <div className="flex items-center gap-2 border-b border-[var(--dr-border)] px-3 py-2 text-[10px] text-[var(--dr-text-3)]"><FileText size={12} /><span>Éditeur riche · les titres, listes et styles sont appliqués directement, sans dièses ni marqueurs.</span></div>
         <div
             ref={(element) => { editorRef.current = element; initializeEditor(element); }}
             contentEditable
@@ -378,7 +378,7 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
             aria-label="Contenu de la fiche"
             spellCheck
             style={{ fontFamily: MEMO_FONT_STACKS[style.fontFamily] ?? MEMO_FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}
-            className="min-h-[400px] w-full resize-y overflow-y-auto bg-[#08111F] p-4 leading-7 text-slate-200 outline-none empty:before:text-slate-600 empty:before:content-[attr(data-placeholder)] [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-[1.5em] [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:text-white first:[&_h2]:mt-0 [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-[1.25em] [&_h3]:font-semibold [&_h3]:text-white [&_h4]:mb-1.5 [&_h4]:mt-3 [&_h4]:text-[1.1em] [&_h4]:font-semibold [&_h4]:text-white [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:marker:text-[#FF6A00] [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-[#FF6A00]/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-400 [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-white/[0.06] [&_pre]:bg-[#060D18] [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-[0.85em] [&_hr]:my-5 [&_hr]:border-white/[0.08] [&_strong]:font-bold [&_strong]:text-white [&_a]:text-[#FF8A3D] [&_a]:underline [&_img]:max-w-full [&_img]:rounded-xl"
+            className="min-h-[400px] w-full resize-y overflow-y-auto bg-[var(--dr-bg)] p-4 leading-7 text-[var(--dr-text)] outline-none empty:before:text-[var(--dr-text-3)] empty:before:content-[attr(data-placeholder)] [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-[1.5em] [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:text-[var(--dr-text)] first:[&_h2]:mt-0 [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-[1.25em] [&_h3]:font-semibold [&_h3]:text-[var(--dr-text)] [&_h4]:mb-1.5 [&_h4]:mt-3 [&_h4]:text-[1.1em] [&_h4]:font-semibold [&_h4]:text-[var(--dr-text)] [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:marker:text-[var(--dr-accent-text)] [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-[#FF6A00]/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[var(--dr-text-2)] [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[var(--dr-border)] [&_pre]:bg-[var(--dr-bg)] [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-[0.85em] [&_hr]:my-5 [&_hr]:border-[var(--dr-border)] [&_strong]:font-bold [&_strong]:text-[var(--dr-text)] [&_a]:text-[var(--dr-accent-text)] [&_a]:underline [&_img]:max-w-full [&_img]:rounded-xl"
             data-placeholder="Écris une note puis applique les formats directement, comme dans Notion."
         />
     </div>;
@@ -391,15 +391,15 @@ function SlashMenu({ query, attachments, onSelect, onInsertAttachment }) {
         ['image', 'Image', 'Insérer une image'], ['file', 'Fichier', 'Insérer un fichier'],
     ];
     const filtered = commands.filter(([key, label]) => !query || key.includes(query) || label.toLowerCase().includes(query));
-    return <div className="border-b border-white/[0.05] bg-[#0D1725] p-2">
-        <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Commandes rapides</div>
+    return <div className="border-b border-[var(--dr-border)] bg-[var(--dr-surface)] p-2">
+        <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">Commandes rapides</div>
         <div className="grid gap-1 sm:grid-cols-2">
-            {filtered.map(([key, label, description]) => <button key={key} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => onSelect(key)} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-white/[0.05]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.04] text-xs font-semibold text-[#FF8A3D]">/</span>
-                <span className="min-w-0"><span className="block text-xs font-semibold text-slate-200">{label}</span><span className="block truncate text-[10px] text-slate-600">{description}</span></span>
+            {filtered.map(([key, label, description]) => <button key={key} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => onSelect(key)} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--dr-hover)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--dr-hover)] text-xs font-semibold text-[var(--dr-accent-text)]">/</span>
+                <span className="min-w-0"><span className="block text-xs font-semibold text-[var(--dr-text)]">{label}</span><span className="block truncate text-[10px] text-[var(--dr-text-3)]">{description}</span></span>
             </button>)}
         </div>
-        {query === 'image' && attachments.filter((item) => item.is_image).length > 0 && <div className="mt-2 flex gap-2 overflow-x-auto border-t border-white/[0.05] pt-2">{attachments.filter((item) => item.is_image).slice(0, 6).map((item) => <button key={item.id} type="button" onClick={() => onInsertAttachment(item)} className="shrink-0 overflow-hidden rounded-lg border border-white/[0.06]"><img src={item.url} alt={item.name} className="h-14 w-14 object-cover" /></button>)}</div>}
+        {query === 'image' && attachments.filter((item) => item.is_image).length > 0 && <div className="mt-2 flex gap-2 overflow-x-auto border-t border-[var(--dr-border)] pt-2">{attachments.filter((item) => item.is_image).slice(0, 6).map((item) => <button key={item.id} type="button" onClick={() => onInsertAttachment(item)} className="shrink-0 overflow-hidden rounded-lg border border-[var(--dr-border)]"><img src={item.url} alt={item.name} className="h-14 w-14 object-cover" /></button>)}</div>}
     </div>;
 }
-function FormatButton({ active, onClick, label, children }) { return <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={onClick} aria-label={label} title={label} className={'flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-[#08111F] transition ' + (active ? 'text-white' : 'text-slate-500 hover:text-white')}>{children}</button>; }
+function FormatButton({ active, onClick, label, children }) { return <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={onClick} aria-label={label} title={label} className={'flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--dr-border)] bg-[var(--dr-bg)] transition ' + (active ? 'text-[var(--dr-text)]' : 'text-[var(--dr-text-3)] hover:text-[var(--dr-text)]')}>{children}</button>; }

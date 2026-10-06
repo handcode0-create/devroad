@@ -43,7 +43,7 @@ export default function AddStepForm({ roadmapId }) {
             </div>
 
             {form.errors.title && (
-                <p role="alert" className="mt-1.5 text-xs font-medium text-red-400">
+                <p role="alert" className="mt-1.5 text-xs font-medium text-[var(--dr-danger)]">
                     {form.errors.title}
                 </p>
             )}

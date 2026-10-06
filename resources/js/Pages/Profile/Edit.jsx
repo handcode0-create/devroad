@@ -13,11 +13,12 @@ import {
     Target,
     GraduationCap,
     UserRound,
-    Sun,
-    Moon,
+    Palette,
 } from 'lucide-react';
 import { useState } from 'react';
 
+import ThemePicker from '@/Components/Ui/ThemePicker';
+import { PageHead } from '@/Components/Ui/Design';
 import AppLayout from '@/Layouts/AppLayout';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
@@ -35,7 +36,7 @@ const dailyGoalOptions = [15, 30, 45, 60, 90];
 const faqItems = [
     {
         question: 'Comment créer un nouveau parcours ?',
-        answer: 'Depuis Roadmaps, ouvre « Nouvelle roadmap », choisis une technologie et DevRoad génère le parcours correspondant.',
+        answer: 'Depuis Parcours, ouvre « Nouveau parcours », choisis une technologie et DevRoad génère le parcours correspondant.',
     },
     {
         question: 'Comment reprendre un cours ?',
@@ -73,7 +74,6 @@ export default function Edit({
         preferred_technology: preferences.preferred_technology ?? '',
         email_notifications: preferences.email_notifications ?? true,
         learning_reminders: preferences.learning_reminders ?? true,
-        light_mode: preferences.light_mode ?? false,
     });
 
     const [openFaq, setOpenFaq] = useState(0);
@@ -104,58 +104,36 @@ export default function Edit({
     const recommendedLevel = learningProfile?.assessment_scores?.recommended_level;
     const preferencesSaved = status === 'preferences-updated';
 
-    const toggleLightMode = (value) => {
-        setData('light_mode', value);
-        document.documentElement.dataset.theme = value ? 'light' : 'dark';
-
-        router.patch(route('profile.theme'), { light_mode: value }, {
-            preserveScroll: true,
-            preserveState: true,
-        });
-    };
-
     return (
         <AppLayout>
             <Head title="Paramètres" />
 
-            <div className="mx-auto max-w-5xl space-y-6">
-                <header>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#FF8A3D]">
-                        Compte & apprentissage
-                    </p>
+            <div className="mx-auto max-w-5xl space-y-6 font-['Figtree',system-ui,sans-serif]">
+                <PageHead title="Paramètres" subtitle="Ton profil, ton apparence, ton rythme d’apprentissage et l’aide dont tu as besoin." />
 
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                        Paramètres
-                    </h1>
-
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                        Personnalise ton expérience DevRoad, fixe ton rythme d’apprentissage,
-                        gère tes notifications et retrouve rapidement l’aide dont tu as besoin.
-                    </p>
-                </header>
-
-                <nav className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <nav aria-label="Sections des paramètres" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 dr-scrollbar-none sm:mx-0 sm:px-0">
                     <SettingsAnchor href="#profil" label="Profil" icon={UserRound} />
                     <SettingsAnchor href="#preferences" label="Préférences" icon={Settings2} />
+                    <SettingsAnchor href="#apparence" label="Apparence" icon={Palette} />
                     <SettingsAnchor href="#objectifs" label="Objectifs" icon={Target} />
                     <SettingsAnchor href="#aide" label="Aide & support" icon={CircleHelp} />
                 </nav>
 
                 <section
                     id="profil"
-                    className="scroll-mt-24 overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725]"
+                    className="scroll-mt-24 overflow-hidden rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)]"
                 >
                     <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-7">
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#FF6A00] text-[#08111F] shadow-[0_10px_30px_rgba(255,106,0,0.18)]">
-                            <UserRound size={28} />
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--dr-accent)] text-xl font-bold text-[var(--dr-ink)]">
+                            {String(user?.name ?? 'U').trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')}
                         </div>
 
                         <div className="min-w-0 flex-1">
-                            <p className="text-xl font-bold text-white">
+                            <p className="font-['Manrope',sans-serif] text-xl font-extrabold tracking-[-0.02em] text-[var(--dr-text)]">
                                 {user?.name ?? 'Utilisateur'}
                             </p>
 
-                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                            <div className="mt-1 flex items-center gap-2 text-xs text-[var(--dr-text-3)]">
                                 <Mail size={14} />
                                 <span className="truncate">
                                     {user?.email ?? 'Compte DevRoad'}
@@ -163,7 +141,7 @@ export default function Edit({
                             </div>
                         </div>
 
-                        <div className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400">
+                        <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--dr-field)] px-3 py-1.5 text-xs font-semibold text-[var(--dr-text-2)]">
                             <ShieldCheck size={14} />
                             Compte sécurisé
                         </div>
@@ -172,30 +150,30 @@ export default function Edit({
 
                 <section
                     id="niveau-apprentissage"
-                    className="scroll-mt-24 overflow-hidden rounded-3xl border border-[#FF6A00]/15 bg-gradient-to-br from-[#FF6A00]/10 via-[#0D1725] to-[#0D1725] p-5 sm:p-7"
+                    className="scroll-mt-24 overflow-hidden rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
                 >
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FF6A00]/10 text-[#FF8A3D]">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]">
                                 <GraduationCap size={22} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#FF8A3D]">Niveau d’apprentissage</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--dr-accent-text)]">Niveau d’apprentissage</p>
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                                    <h2 className="text-xl font-bold text-white">{levelLabels[selectedLevel] ?? 'Non défini'}</h2>
-                                    {selectedLevel && <span className="rounded-full border border-[#FF6A00]/25 bg-[#FF6A00]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FF8A3D]">Niveau choisi</span>}
+                                    <h2 className="text-xl font-bold text-[var(--dr-text)]">{levelLabels[selectedLevel] ?? 'Non défini'}</h2>
+                                    {selectedLevel && <span className="rounded-full border border-[#FF6A00]/25 bg-[var(--dr-accent-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--dr-accent-text)]">Niveau choisi</span>}
                                 </div>
-                                <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-400">{levelDescriptions[selectedLevel] ?? 'Choisis ton niveau pour personnaliser les évaluations et recommandations DevRoad.'}</p>
-                                {recommendedLevel && recommendedLevel !== selectedLevel && <p className="mt-2 text-xs text-slate-500">Le questionnaire recommande : <span className="font-semibold text-slate-300">{levelLabels[recommendedLevel]}</span>.</p>}
+                                <p className="mt-2 max-w-2xl text-xs leading-5 text-[var(--dr-text-2)]">{levelDescriptions[selectedLevel] ?? 'Choisis ton niveau pour personnaliser les évaluations et recommandations DevRoad.'}</p>
+                                {recommendedLevel && recommendedLevel !== selectedLevel && <p className="mt-2 text-xs text-[var(--dr-text-3)]">Le questionnaire recommande : <span className="font-semibold text-[var(--dr-text-2)]">{levelLabels[recommendedLevel]}</span>.</p>}
                             </div>
                         </div>
-                        <Link href={route('onboarding.level')} className="inline-flex w-full shrink-0 items-center justify-center rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-4 py-2.5 text-sm font-bold text-[#FF8A3D] transition hover:bg-[#FF6A00]/15 sm:w-auto">Modifier mon niveau</Link>
+                        <Link href={route('onboarding.level')} className="inline-flex w-full shrink-0 items-center justify-center rounded-xl border border-[#FF6A00]/20 bg-[var(--dr-accent-soft)] px-4 py-2.5 text-sm font-bold text-[var(--dr-accent-text)] transition hover:bg-[var(--dr-accent-soft)] sm:w-auto">Modifier mon niveau</Link>
                     </div>
                 </section>
 
                 <section
                     id="profil-informations"
-                    className="scroll-mt-24 rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
                 >
                     <SectionHeader
                         icon={UserRound}
@@ -212,7 +190,7 @@ export default function Edit({
 
                 <section
                     id="preferences"
-                    className="scroll-mt-24 rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
                 >
                     <SectionHeader
                         icon={Settings2}
@@ -261,27 +239,19 @@ export default function Edit({
                                 checked={Boolean(data.learning_reminders)}
                                 onChange={(value) => setData('learning_reminders', value)}
                             />
-
-                            <ToggleRow
-                                icon={data.light_mode ? Sun : Moon}
-                                title="Mode clair"
-                                description="Utiliser une interface claire au lieu du thème sombre."
-                                checked={Boolean(data.light_mode)}
-                                onChange={toggleLightMode}
-                            />
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[var(--dr-ink)] transition hover:bg-[#ff781a] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {processing ? 'Enregistrement...' : 'Enregistrer les préférences'}
                             </button>
 
                             {preferencesSaved && (
-                                <span className="text-xs font-semibold text-emerald-400">
+                                <span className="text-xs font-semibold text-[var(--dr-accent-text)]">
                                     Préférences enregistrées.
                                 </span>
                             )}
@@ -290,8 +260,22 @@ export default function Edit({
                 </section>
 
                 <section
+                    id="apparence"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
+                >
+                    <SectionHeader
+                        icon={Palette}
+                        title="Apparence"
+                        description="Choisis ton thème : il s’applique tout de suite et suit ton compte sur tous tes appareils."
+                    />
+                    <div className="mt-5 flex flex-col gap-4">
+                        <ThemePicker preference={user?.theme ?? 'nuit'} columns="grid-cols-3 sm:grid-cols-5" />
+                    </div>
+                </section>
+
+                <section
                     id="objectifs"
-                    className="scroll-mt-24 rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
                 >
                     <SectionHeader
                         icon={Target}
@@ -301,7 +285,7 @@ export default function Edit({
 
                     <div className="grid gap-5 md:grid-cols-2">
                         <div>
-                            <label className="mb-2 block text-xs font-semibold text-slate-300">
+                            <label className="mb-2 block text-xs font-semibold text-[var(--dr-text-2)]">
                                 Objectif principal
                             </label>
 
@@ -318,12 +302,12 @@ export default function Edit({
                             </select>
 
                             {errors.learning_goal && (
-                                <p className="mt-1.5 text-xs text-red-400">{errors.learning_goal}</p>
+                                <p className="mt-1.5 text-xs text-[var(--dr-danger)]">{errors.learning_goal}</p>
                             )}
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-xs font-semibold text-slate-300">
+                            <label className="mb-2 block text-xs font-semibold text-[var(--dr-text-2)]">
                                 Sessions ciblées par semaine
                             </label>
 
@@ -339,8 +323,8 @@ export default function Edit({
                                             className={[
                                                 'flex h-10 items-center justify-center rounded-xl border text-xs font-bold transition',
                                                 active
-                                                    ? 'border-[#FF6A00]/40 bg-[#FF6A00] text-[#08111F]'
-                                                    : 'border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-white',
+                                                    ? 'border-[#FF6A00]/40 bg-[#FF6A00] text-[var(--dr-ink)]'
+                                                    : 'border-[var(--dr-border)] bg-[var(--dr-hover)] text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]',
                                             ].join(' ')}
                                         >
                                             {sessions}
@@ -349,7 +333,7 @@ export default function Edit({
                                 })}
                             </div>
 
-                            <p className="mt-2 text-[11px] text-slate-500">
+                            <p className="mt-2 text-[11px] text-[var(--dr-text-3)]">
                                 {data.weekly_goal_sessions} session
                                 {Number(data.weekly_goal_sessions) > 1 ? 's' : ''} ciblée
                                 {Number(data.weekly_goal_sessions) > 1 ? 's' : ''} par semaine.
@@ -358,16 +342,16 @@ export default function Edit({
                     </div>
 
                     <div className="mt-6 rounded-2xl border border-[#FF6A00]/10 bg-[#FF6A00]/[0.04] p-4">
-                        <p className="text-xs font-semibold text-[#FF8A3D]">
+                        <p className="text-xs font-semibold text-[var(--dr-accent-text)]">
                             Ton rythme actuel
                         </p>
 
-                        <p className="mt-1 text-sm font-bold text-white">
+                        <p className="mt-1 text-sm font-bold text-[var(--dr-text)]">
                             {data.daily_goal_minutes} minutes par jour · {data.weekly_goal_sessions} session
                             {Number(data.weekly_goal_sessions) > 1 ? 's' : ''} par semaine
                         </p>
 
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">
                             DevRoad conservera ces paramètres sur ton compte pour tes prochains parcours.
                         </p>
                     </div>
@@ -377,7 +361,7 @@ export default function Edit({
                             type="button"
                             onClick={savePreferences}
                             disabled={processing}
-                            className="rounded-xl border border-[#FF6A00]/20 bg-[#FF6A00]/10 px-4 py-2.5 text-sm font-bold text-[#FF8A3D] transition hover:bg-[#FF6A00]/15 disabled:opacity-50"
+                            className="rounded-xl border border-[#FF6A00]/20 bg-[var(--dr-accent-soft)] px-4 py-2.5 text-sm font-bold text-[var(--dr-accent-text)] transition hover:bg-[var(--dr-accent-soft)] disabled:opacity-50"
                         >
                             {processing ? 'Enregistrement...' : 'Enregistrer mes objectifs'}
                         </button>
@@ -386,7 +370,7 @@ export default function Edit({
 
                 <section
                     id="securite"
-                    className="scroll-mt-24 rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
                 >
                     <SectionHeader
                         icon={KeyRound}
@@ -399,7 +383,7 @@ export default function Edit({
 
                 <section
                     id="aide"
-                    className="scroll-mt-24 rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
                 >
                     <SectionHeader
                         icon={CircleHelp}
@@ -412,23 +396,23 @@ export default function Edit({
                             href="https://github.com/handcode0-create/devroad/issues"
                             target="_blank"
                             rel="noreferrer"
-                            className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition hover:border-[#FF6A00]/20 hover:bg-[#FF6A00]/[0.04]"
+                            className="group rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-hover)] p-4 transition hover:border-[#FF6A00]/20 hover:bg-[#FF6A00]/[0.04]"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-slate-300">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dr-hover)] text-[var(--dr-text-2)]">
                                     <MessageCircleQuestion size={18} />
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-white">Signaler un problème</p>
-                                    <p className="mt-1 text-xs text-slate-500">
+                                    <p className="text-sm font-bold text-[var(--dr-text)]">Signaler un problème</p>
+                                    <p className="mt-1 text-xs text-[var(--dr-text-3)]">
                                         Ouvrir les issues du projet DevRoad.
                                     </p>
                                 </div>
 
                                 <ExternalLink
                                     size={16}
-                                    className="text-slate-500 transition group-hover:text-[#FF8A3D]"
+                                    className="text-[var(--dr-text-3)] transition group-hover:text-[var(--dr-accent-text)]"
                                 />
                             </div>
                         </a>
@@ -437,53 +421,53 @@ export default function Edit({
                             href="https://github.com/handcode0-create/devroad"
                             target="_blank"
                             rel="noreferrer"
-                            className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition hover:border-[#FF6A00]/20 hover:bg-[#FF6A00]/[0.04]"
+                            className="group rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-hover)] p-4 transition hover:border-[#FF6A00]/20 hover:bg-[#FF6A00]/[0.04]"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-slate-300">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dr-hover)] text-[var(--dr-text-2)]">
                                     <Code2 size={18} />
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-white">Projet DevRoad</p>
-                                    <p className="mt-1 text-xs text-slate-500">
+                                    <p className="text-sm font-bold text-[var(--dr-text)]">Projet DevRoad</p>
+                                    <p className="mt-1 text-xs text-[var(--dr-text-3)]">
                                         Consulter le dépôt et son évolution.
                                     </p>
                                 </div>
 
                                 <ExternalLink
                                     size={16}
-                                    className="text-slate-500 transition group-hover:text-[#FF8A3D]"
+                                    className="text-[var(--dr-text-3)] transition group-hover:text-[var(--dr-accent-text)]"
                                 />
                             </div>
                         </a>
                     </div>
 
-                    <div className="mt-5 overflow-hidden rounded-2xl border border-white/[0.06]">
+                    <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--dr-border)]">
                         {faqItems.map((item, index) => {
                             const open = openFaq === index;
 
                             return (
                                 <div
                                     key={item.question}
-                                    className={index > 0 ? 'border-t border-white/[0.06]' : ''}
+                                    className={index > 0 ? 'border-t border-[var(--dr-border)]' : ''}
                                 >
                                     <button
                                         type="button"
                                         onClick={() => setOpenFaq(open ? -1 : index)}
                                         className="flex w-full items-center gap-3 px-4 py-4 text-left"
                                     >
-                                        <span className="flex-1 text-sm font-semibold text-slate-200">
+                                        <span className="flex-1 text-sm font-semibold text-[var(--dr-text)]">
                                             {item.question}
                                         </span>
 
-                                        <span className="text-xs font-bold text-[#FF8A3D]">
+                                        <span className="text-xs font-bold text-[var(--dr-accent-text)]">
                                             {open ? '−' : '+'}
                                         </span>
                                     </button>
 
                                     {open && (
-                                        <div className="px-4 pb-4 text-xs leading-5 text-slate-500">
+                                        <div className="px-4 pb-4 text-xs leading-5 text-[var(--dr-text-3)]">
                                             {item.answer}
                                         </div>
                                     )}
@@ -493,7 +477,7 @@ export default function Edit({
                     </div>
                 </section>
 
-                <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
+                <section className="rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7">
                     <SectionHeader
                         icon={Code2}
                         title="À propos de DevRoad"
@@ -507,16 +491,16 @@ export default function Edit({
                     </div>
                 </section>
 
-                <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
+                <section className="rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-slate-400">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dr-hover)] text-[var(--dr-text-2)]">
                                 <LogOut size={18} />
                             </div>
 
                             <div>
-                                <h2 className="text-base font-bold text-white">Session</h2>
-                                <p className="mt-1 text-xs leading-5 text-slate-500">
+                                <h2 className="text-base font-bold text-[var(--dr-text)]">Session</h2>
+                                <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">
                                     Ferme ta session actuelle sur DevRoad.
                                 </p>
                             </div>
@@ -526,7 +510,7 @@ export default function Edit({
                             href={route('logout')}
                             method="post"
                             as="button"
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/10 hover:text-[#FF8A3D] sm:w-auto"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-hover)] px-4 py-2.5 text-sm font-bold text-[var(--dr-text)] transition hover:border-[#FF6A00]/30 hover:bg-[var(--dr-accent-soft)] hover:text-[var(--dr-accent-text)] sm:w-auto"
                         >
                             <LogOut size={16} />
                             Se déconnecter
@@ -544,7 +528,7 @@ function SettingsAnchor({ href, label, icon: Icon }) {
     return (
         <a
             href={href}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-[#0D1725] px-3 py-2.5 text-xs font-bold text-slate-300 transition hover:border-[#FF6A00]/20 hover:text-[#FF8A3D]"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--dr-border)] bg-[var(--dr-surface)] px-4 text-[13px] font-semibold text-[var(--dr-text-2)] transition hover:border-[#FF6A00]/20 hover:text-[var(--dr-accent-text)]"
         >
             <Icon size={15} />
             {label}
@@ -555,13 +539,13 @@ function SettingsAnchor({ href, label, icon: Icon }) {
 function SectionHeader({ icon: Icon, title, description }) {
     return (
         <div className="mb-6 flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]">
                 <Icon size={18} />
             </div>
 
             <div>
-                <h2 className="text-base font-bold text-white">{title}</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+                <h2 className="text-base font-bold text-[var(--dr-text)]">{title}</h2>
+                <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">{description}</p>
             </div>
         </div>
     );
@@ -570,7 +554,7 @@ function SectionHeader({ icon: Icon, title, description }) {
 function FieldSelect({ label, value, onChange, options, error }) {
     return (
         <div>
-            <label className="mb-2 block text-xs font-semibold text-slate-300">
+            <label className="mb-2 block text-xs font-semibold text-[var(--dr-text-2)]">
                 {label}
             </label>
 
@@ -586,22 +570,22 @@ function FieldSelect({ label, value, onChange, options, error }) {
                 ))}
             </select>
 
-            {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+            {error && <p className="mt-1.5 text-xs text-[var(--dr-danger)]">{error}</p>}
         </div>
     );
 }
 
 function ToggleRow({ icon: Icon, title, description, checked, onChange }) {
     return (
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-hover)] p-4">
             <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-slate-400">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--dr-hover)] text-[var(--dr-text-2)]">
                     <Icon size={17} />
                 </div>
 
                 <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white">{title}</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+                    <p className="text-sm font-semibold text-[var(--dr-text)]">{title}</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">{description}</p>
                 </div>
             </div>
 
@@ -612,7 +596,7 @@ function ToggleRow({ icon: Icon, title, description, checked, onChange }) {
                 onClick={() => onChange(!checked)}
                 className={[
                     'relative h-7 w-12 shrink-0 rounded-full transition',
-                    checked ? 'bg-[#FF6A00]' : 'bg-slate-700',
+                    checked ? 'bg-[#FF6A00]' : 'bg-[var(--dr-border-2)]',
                 ].join(' ')}
             >
                 <span
@@ -628,14 +612,14 @@ function ToggleRow({ icon: Icon, title, description, checked, onChange }) {
 
 function InfoCard({ label, value }) {
     return (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+        <div className="rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-hover)] p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">
                 {label}
             </p>
-            <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+            <p className="mt-2 text-sm font-semibold text-[var(--dr-text)]">{value}</p>
         </div>
     );
 }
 
 const selectClass =
-    'w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-3 py-2.5 text-sm text-white outline-none transition focus:border-[#FF6A00]/50 focus:ring-2 focus:ring-[#FF6A00]/10';
+    'w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-3 py-2.5 text-sm text-[var(--dr-text)] outline-none transition focus:border-[#FF6A00]/50 focus:ring-2 focus:ring-[#FF6A00]/10';

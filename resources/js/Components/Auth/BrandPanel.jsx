@@ -13,8 +13,8 @@ export function Brand({ className = '' }) {
             className={`inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6A00]/60 ${className}`}
         >
             <img src="/icondevroad.png" alt="" width="36" height="36" className="h-9 w-9 object-contain" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.02em] text-white">
-                Dev<span className="text-[#FF6A00]">Road</span>
+            <span className="font-display text-xl font-extrabold tracking-[-0.02em] text-[var(--dr-text)]">
+                Dev<span className="text-[var(--dr-accent-text)]">Road</span>
             </span>
         </Link>
     );
@@ -36,13 +36,13 @@ const PROGRESS = 3 / 4;
 function RoadPreview() {
     return (
         <figure aria-label="Exemple de roadmap : Laravel">
-            <figcaption className="mb-4 text-sm text-slate-400">Exemple : la roadmap Laravel</figcaption>
+            <figcaption className="mb-4 text-sm text-[var(--dr-text-2)]">Exemple : la roadmap Laravel</figcaption>
 
             <div className="relative" style={{ '--p': PROGRESS }}>
-                <span aria-hidden="true" className="road-line absolute bottom-6 left-[13px] top-6 text-white/[0.2]" />
+                <span aria-hidden="true" className="road-line absolute bottom-6 left-[13px] top-6 text-[var(--dr-text-2)]" />
                 <span
                     aria-hidden="true"
-                    className="road-line road-fill road-draw absolute bottom-6 left-[13px] top-6 text-[#FF6A00]"
+                    className="road-line road-fill road-draw absolute bottom-6 left-[13px] top-6 text-[var(--dr-accent-text)]"
                 />
 
                 <ol>
@@ -54,8 +54,8 @@ function RoadPreview() {
                                     step.state === 'done'
                                         ? 'border-[#FF6A00] bg-[#FF6A00] text-[#0D1725]'
                                         : step.state === 'current'
-                                          ? 'border-[#FF6A00] bg-[#0D1725]'
-                                          : 'border-white/25 bg-[#0D1725] text-slate-400'
+                                          ? 'border-[#FF6A00] bg-[var(--dr-surface)]'
+                                          : 'border-[var(--dr-border-2)] bg-[var(--dr-surface)] text-[var(--dr-text-2)]'
                                 }`}
                             >
                                 {step.state === 'done' && <Check size={14} strokeWidth={3} />}
@@ -66,10 +66,10 @@ function RoadPreview() {
                             <span
                                 className={`text-[0.9375rem] ${
                                     step.state === 'current'
-                                        ? 'font-semibold text-white'
+                                        ? 'font-semibold text-[var(--dr-text)]'
                                         : step.state === 'done'
-                                          ? 'text-slate-200'
-                                          : 'text-slate-400'
+                                          ? 'text-[var(--dr-text)]'
+                                          : 'text-[var(--dr-text-2)]'
                                 }`}
                             >
                                 {step.title}
@@ -82,7 +82,7 @@ function RoadPreview() {
                             </span>
 
                             {step.state === 'current' && (
-                                <span aria-hidden="true" className="ml-auto text-sm font-medium text-[#FF6A00]">
+                                <span aria-hidden="true" className="ml-auto text-sm font-medium text-[var(--dr-accent-text)]">
                                     En cours
                                 </span>
                             )}
@@ -97,7 +97,7 @@ function RoadPreview() {
 // Panneau de marque des écrans d'authentification (visible dès 1024 px).
 export default function BrandPanel() {
     return (
-        <aside className="relative hidden overflow-hidden border-r border-white/[0.06] bg-[#0D1725] lg:flex lg:min-h-dvh lg:flex-col lg:justify-between lg:gap-14 lg:px-14 lg:py-12 xl:px-20">
+        <aside className="relative hidden overflow-hidden border-r border-[var(--dr-border)] bg-[var(--dr-surface)] lg:flex lg:min-h-dvh lg:flex-col lg:justify-between lg:gap-14 lg:px-14 lg:py-12 xl:px-20">
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -110,13 +110,13 @@ export default function BrandPanel() {
 
             <div className="relative">
                 {/* Les trois mots s'éclairent : le parcours va du plan à la progression. */}
-                <p className="font-display text-[3.5rem] font-extrabold leading-[0.95] tracking-[-0.04em] text-white xl:text-[4.5rem]">
-                    <span className="block text-white/[0.5]">Planifie.</span>
-                    <span className="block text-white/[0.75]">Apprends.</span>
+                <p className="font-display text-[3.5rem] font-extrabold leading-[0.95] tracking-[-0.04em] text-[var(--dr-text)] xl:text-[4.5rem]">
+                    <span className="block text-[var(--dr-text-2)]">Planifie.</span>
+                    <span className="block text-[var(--dr-text-2)]">Apprends.</span>
                     <span className="block">Progresse.</span>
                 </p>
 
-                <p className="mt-8 max-w-md text-base leading-7 text-slate-400">
+                <p className="mt-8 max-w-md text-base leading-7 text-[var(--dr-text-2)]">
                     Des roadmaps claires, des fiches mémo efficaces et un suivi de progression pour atteindre
                     tes objectifs.
                 </p>

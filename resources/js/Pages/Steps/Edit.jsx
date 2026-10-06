@@ -47,8 +47,8 @@ export default function Edit({ roadmap, step }) {
                 <PageHeader title="Modifier le cours" subtitle={'Cours ' + step.position + ' · ' + roadmap.title} backHref={'/roadmaps/' + roadmap.id} backLabel={roadmap.title} />
                 <CourseForm form={form} roadmap={roadmap} onSubmit={submit} submitLabel="Enregistrer les modifications" cancelHref={'/steps/' + step.id} mode="edit" />
                 <section className="mt-6 rounded-2xl border border-red-500/15 bg-red-500/[0.04] p-5">
-                    <h2 className="text-sm font-semibold text-white">Zone sensible</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Supprimer ce cours le retire définitivement de ce parcours.</p>
+                    <h2 className="text-sm font-semibold text-[var(--dr-text)]">Zone sensible</h2>
+                    <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">Supprimer ce cours le retire définitivement de ce parcours.</p>
                     <button type="button" onClick={() => setConfirmDelete(true)} className={buttonClass('danger')}>
                         <Trash2 size={16} />
                         Supprimer ce cours

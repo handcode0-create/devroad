@@ -43,7 +43,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                 </Field>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div className="rounded-2xl border border-amber-400/10 bg-amber-400/[0.05] p-4 text-xs leading-5 text-amber-300">
+                    <div className="rounded-2xl border border-amber-400/10 bg-amber-400/[0.05] p-4 text-xs leading-5 text-[var(--dr-warning)]">
                         Ton adresse e-mail n'est pas encore vérifiée.{' '}
                         <Link
                             href={route('verification.send')}
@@ -54,7 +54,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                             Renvoyer le lien de vérification
                         </Link>
                         {status === 'verification-link-sent' && (
-                            <p className="mt-2 text-emerald-300">
+                            <p className="mt-2 text-[var(--dr-success)]">
                                 Un nouveau lien de vérification a été envoyé.
                             </p>
                         )}
@@ -65,13 +65,13 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                     <button
                         type="submit"
                         disabled={processing}
-                        className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:opacity-50"
+                        className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[var(--dr-ink)] transition hover:bg-[#ff781a] disabled:opacity-50"
                     >
                         {processing ? 'Enregistrement...' : 'Enregistrer'}
                     </button>
 
                     {recentlySuccessful && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--dr-success)]">
                             <CheckCircle2 size={15} />
                             Enregistré
                         </span>

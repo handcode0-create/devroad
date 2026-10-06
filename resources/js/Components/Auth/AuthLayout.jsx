@@ -55,7 +55,7 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
     }, []);
 
     const layout = (
-        <div className="min-h-dvh bg-[#08111F] font-sans text-white lg:grid lg:grid-cols-[5fr_6fr]">
+        <div className="min-h-dvh bg-[var(--dr-bg)] font-sans text-[var(--dr-text)] lg:grid lg:grid-cols-[5fr_6fr]">
             <BrandPanel />
 
             <div className="flex min-h-dvh flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10 lg:px-16">
@@ -81,7 +81,7 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
 
                     <Link
                         href="/"
-                        className="ml-auto rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6A00]/60"
+                        className="ml-auto rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--dr-text-2)] transition hover:text-[var(--dr-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6A00]/60"
                     >
                         Accueil
                     </Link>
@@ -92,11 +92,11 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
                         {title}
                     </h1>
 
-                    {subtitle && <p data-auth-animate className="mt-3 text-base leading-7 text-slate-400">{subtitle}</p>}
+                    {subtitle && <p data-auth-animate className="mt-3 text-base leading-7 text-[var(--dr-text-2)]">{subtitle}</p>}
 
                     <div data-auth-animate className="mt-9">{children}</div>
 
-                    {footer && <p data-auth-animate className="mt-8 text-sm text-slate-400">{footer}</p>}
+                    {footer && <p data-auth-animate className="mt-8 text-sm text-[var(--dr-text-2)]">{footer}</p>}
                 </main>
             </div>
         </div>
@@ -121,7 +121,7 @@ export function AuthLink({ href, children, ...props }) {
     return (
         <Link
             href={href}
-            className="rounded font-semibold text-[#FF6A00] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6A00]/60"
+            className="rounded font-semibold text-[var(--dr-accent-text)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6A00]/60"
             {...props}
         >
             {children}

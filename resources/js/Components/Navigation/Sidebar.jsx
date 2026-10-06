@@ -72,7 +72,7 @@ export default function Sidebar({ user }) {
     return (
         <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col gap-7 overflow-y-auto border-r border-[var(--dr-border)] bg-[var(--dr-bg)] px-4 py-6 font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] lg:flex">
             <Link href="/dashboard" className="flex items-center gap-2.5 px-2" aria-label="DevRoad — Accueil">
-                <span className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[var(--dr-accent)] text-[var(--dr-ink)]"><Svg d={ICONS.road} size={20} stroke={2.4} /></span>
+                <img src="/icondevroad.png" alt="" width="40" height="40" className="h-10 w-10 shrink-0 object-contain" />
                 <span className="font-['Manrope',sans-serif] text-xl font-extrabold tracking-[-0.02em]">Dev<span className="text-[var(--dr-accent-text)]">Road</span></span>
             </Link>
 

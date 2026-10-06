@@ -144,11 +144,11 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
 
             <form onSubmit={submit} noValidate>
                 <div className="mb-7">
-                <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">
                     <span>Étape {step + 1} / 4</span>
                     <span>{step === 2 ? assessmentProgress + '% évalué' : 'Profil'}</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-1.5 overflow-hidden rounded-full bg-[var(--dr-hover)]">
                     <div className="h-full rounded-full bg-[#FF6A00] transition-all" style={{ width: ((step + 1) / 4) * 100 + '%' }} />
                 </div>
             </div>
@@ -163,7 +163,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                         single
                     />
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-white">
+                        <label className="mb-2 block text-sm font-semibold text-[var(--dr-text)]">
                             Années d’expérience en développement
                         </label>
                         <input
@@ -172,7 +172,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                             max="50"
                             value={data.experience_years}
                             onChange={(event) => setData('experience_years', event.target.value)}
-                            className="h-12 w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-4 text-white outline-none focus:border-[#FF6A00]/50"
+                            className="h-12 w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-4 text-[var(--dr-text)] outline-none focus:border-[#FF6A00]/50"
                             placeholder="0"
                         />
                     </div>
@@ -184,16 +184,16 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                     <div>
                         <div className="mb-3 flex items-end justify-between">
                             <div>
-                                <h2 className="text-sm font-semibold text-white">Technologies</h2>
-                                <p className="mt-1 text-xs text-slate-500">Jusqu’à 10 technologies.</p>
+                                <h2 className="text-sm font-semibold text-[var(--dr-text)]">Technologies</h2>
+                                <p className="mt-1 text-xs text-[var(--dr-text-3)]">Jusqu’à 10 technologies.</p>
                             </div>
-                            <span className="text-xs text-slate-500">{data.technologies.length}/10</span>
+                            <span className="text-xs text-[var(--dr-text-3)]">{data.technologies.length}/10</span>
                         </div>
                         <input
                             value={technologySearch}
                             onChange={(event) => setTechnologySearch(event.target.value)}
                             placeholder="Rechercher une technologie..."
-                            className="mb-3 h-11 w-full rounded-xl border border-white/[0.08] bg-[#101A2A] px-4 text-sm text-white outline-none focus:border-[#FF6A00]/50"
+                            className="mb-3 h-11 w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-4 text-sm text-[var(--dr-text)] outline-none focus:border-[#FF6A00]/50"
                         />
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {filteredTechnologies.map((item) => (
@@ -221,33 +221,33 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                     <div className="rounded-2xl border border-[#FF6A00]/20 bg-gradient-to-br from-[#FF6A00]/10 to-[#FF6A00]/[0.03] p-4 sm:p-5">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#FF8A3D]">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--dr-accent-text)]">
                                     Évaluation personnalisée
                                 </p>
                                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                                    <h2 className="text-lg font-bold text-white">
+                                    <h2 className="text-lg font-bold text-[var(--dr-text)]">
                                         Niveau {levelLabels[data.level] ?? 'sélectionné'}
                                     </h2>
-                                    <span className="rounded-full border border-[#FF6A00]/25 bg-[#FF6A00]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#FF8A3D]">
+                                    <span className="rounded-full border border-[#FF6A00]/25 bg-[var(--dr-accent-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--dr-accent-text)]">
                                         15 questions
                                     </span>
                                 </div>
-                                <p className="mt-2 max-w-xl text-xs leading-5 text-slate-400">
+                                <p className="mt-2 max-w-xl text-xs leading-5 text-[var(--dr-text-2)]">
                                     Les questions sont adaptées à ton niveau choisi. Tu vas parcourir 5 catégories pour évaluer tes connaissances.
                                 </p>
                             </div>
                             <div className="shrink-0 text-left sm:text-right">
-                                <p className="text-2xl font-bold text-white">{assessmentProgress}%</p>
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">progression</p>
+                                <p className="text-2xl font-bold text-[var(--dr-text)]">{assessmentProgress}%</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--dr-text-3)]">progression</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--dr-accent-text)]">
                             {currentCategory?.label ?? 'Catégorie'} · {categoryIndex + 1} / {categoryEntries.length}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[var(--dr-text-3)]">
                             {currentQuestions.filter((question) => data.answers[question.id]).length}/{currentQuestions.length}
                         </p>
                     </div>
@@ -263,15 +263,15 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                             <div
                                 key={question.id}
                                 className={[
-                                    'rounded-2xl border bg-[#0D1725] p-4 transition',
+                                    'rounded-2xl border bg-[var(--dr-surface)] p-4 transition',
                                     answeredQuestion
                                         ? isCorrect
                                             ? 'border-emerald-400/20'
                                             : 'border-red-400/20'
-                                        : 'border-white/[0.06]',
+                                        : 'border-[var(--dr-border)]',
                                 ].join(' ')}
                             >
-                                <p className="text-sm font-semibold leading-6 text-white">
+                                <p className="text-sm font-semibold leading-6 text-[var(--dr-text)]">
                                     {index + 1}. {question.question}
                                 </p>
 
@@ -293,7 +293,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                                                             ? 'border-red-400/40 bg-red-400/10 text-red-100'
                                                             : isCorrectAnswer
                                                                 ? 'border-emerald-400/30 bg-emerald-400/[0.06] text-emerald-200'
-                                                                : 'border-white/[0.07] bg-white/[0.02] text-slate-400 hover:border-white/[0.14] hover:text-white',
+                                                                : 'border-[var(--dr-border)] bg-[var(--dr-hover)] text-[var(--dr-text-2)] hover:border-[var(--dr-border-2)] hover:text-[var(--dr-text)]',
                                                 ].join(' ')}
                                             >
                                                 <span className="flex items-center justify-between gap-3">
@@ -304,7 +304,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                                                         </span>
                                                     )}
                                                     {!isSelected && isCorrectAnswer && (
-                                                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-300">
+                                                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--dr-success)]">
                                                             Bonne réponse
                                                         </span>
                                                     )}
@@ -325,15 +325,15 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                                     >
                                         <p className={[
                                             'text-xs font-bold',
-                                            isCorrect ? 'text-emerald-300' : 'text-red-300',
+                                            isCorrect ? 'text-[var(--dr-success)]' : 'text-[var(--dr-danger)]',
                                         ].join(' ')}>
                                             {isCorrect ? '✓ Bonne réponse' : '✕ Réponse incorrecte'}
                                         </p>
 
-                                        <p className="mt-1.5 text-xs leading-5 text-slate-400">
+                                        <p className="mt-1.5 text-xs leading-5 text-[var(--dr-text-2)]">
                                             {isCorrect
                                                 ? 'Cette réponse correspond au concept attendu.'
-                                                : <>La bonne réponse est : <strong className="font-semibold text-slate-200">{correctOption?.label}</strong>.</>}
+                                                : <>La bonne réponse est : <strong className="font-semibold text-[var(--dr-text)]">{correctOption?.label}</strong>.</>}
                                         </p>
                                     </div>
                                 )}
@@ -347,31 +347,31 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                 <section className="space-y-5">
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.06] p-5">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--dr-accent-text)]">
                                 Ton niveau
                             </p>
-                            <p className="mt-2 text-2xl font-bold text-white">
+                            <p className="mt-2 text-2xl font-bold text-[var(--dr-text)]">
                                 {levelLabels[data.level] ?? 'Non défini'}
                             </p>
-                            <p className="mt-2 text-xs leading-5 text-slate-400">
+                            <p className="mt-2 text-xs leading-5 text-[var(--dr-text-2)]">
                                 Niveau choisi au début de ton inscription.
                             </p>
                             <Link
                                 href={route('onboarding.level')}
-                                className="mt-3 inline-flex text-xs font-semibold text-[#FF8A3D] hover:text-[#FFA66E]"
+                                className="mt-3 inline-flex text-xs font-semibold text-[var(--dr-accent-text)] hover:text-[#FFA66E]"
                             >
                                 Modifier mon niveau
                             </Link>
                         </div>
 
-                        <div className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-5">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        <div className="rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">
                                 Recommandation du questionnaire
                             </p>
-                            <p className="mt-2 text-2xl font-bold text-white">
+                            <p className="mt-2 text-2xl font-bold text-[var(--dr-text)]">
                                 {levelLabels[estimatedLevel]}
                             </p>
-                            <p className="mt-2 text-xs leading-5 text-slate-400">
+                            <p className="mt-2 text-xs leading-5 text-[var(--dr-text-2)]">
                                 Cette recommandation est enregistrée avec ton score sans remplacer ton choix.
                             </p>
                         </div>
@@ -380,18 +380,18 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                     <div className="rounded-2xl border border-[#FF6A00]/20 bg-[#FF6A00]/[0.05] p-4">
                         <div className="flex flex-wrap items-end justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--dr-accent-text)]">
                                     Résultat de l’évaluation
                                 </p>
-                                <p className="mt-1 text-xl font-bold text-white">
+                                <p className="mt-1 text-xl font-bold text-[var(--dr-text)]">
                                     {assessmentStats.correct} / {assessmentStats.answered} bonnes réponses
                                 </p>
                             </div>
-                            <p className="text-2xl font-extrabold text-white">
+                            <p className="text-2xl font-extrabold text-[var(--dr-text)]">
                                 {Math.round(assessmentStats.percentage)}%
                             </p>
                         </div>
-                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                        <p className="mt-2 text-xs leading-5 text-[var(--dr-text-3)]">
                             Le niveau recommandé est calculé à partir des réponses corrigées, pas uniquement de ton choix initial.
                         </p>
                     </div>
@@ -406,9 +406,9 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                             });
 
                             return (
-                                <div key={item[0]} className="rounded-xl border border-white/[0.06] bg-[#0D1725] p-4">
-                                    <p className="text-sm font-semibold text-white">{item[1].label}</p>
-                                    <p className="mt-1 text-xs text-slate-500">
+                                <div key={item[0]} className="rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-4">
+                                    <p className="text-sm font-semibold text-[var(--dr-text)]">{item[1].label}</p>
+                                    <p className="mt-1 text-xs text-[var(--dr-text-3)]">
                                         {correctAnswers.length}/{questions.length} bonnes réponses
                                     </p>
                                 </div>
@@ -420,7 +420,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
 
             <div className="mt-7 flex gap-3">
                 {step > 0 && (
-                    <button type="button" onClick={previous} className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-300">
+                    <button type="button" onClick={previous} className="flex-1 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-hover)] px-4 py-3 text-sm font-semibold text-[var(--dr-text-2)]">
                         Retour
                     </button>
                 )}
@@ -434,7 +434,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
                             (step === 1 && (!data.technologies.length || !data.goals.length)) ||
                             (step === 2 && !currentQuestions.every((question) => data.answers[question.id]))
                         }
-                        className="flex-1 rounded-xl bg-[#FF6A00] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex-1 rounded-xl bg-[#FF6A00] px-4 py-3 text-sm font-semibold text-[var(--dr-text)] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         Continuer
                     </button>
@@ -446,7 +446,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
             </div>
 
                 {Object.keys(errors).length > 0 && (
-                <p className="mt-4 text-sm text-red-400">{Object.values(errors)[0]}</p>
+                <p className="mt-4 text-sm text-[var(--dr-danger)]">{Object.values(errors)[0]}</p>
             )}
                 </form>
         </AuthLayout>
@@ -456,7 +456,7 @@ export default function Onboarding({ academicLevels, technologies, goals, catego
 function ChoiceGroup({ title, options, value, values = [], onChange, single = false }) {
     return (
         <div>
-            <h2 className="text-sm font-semibold text-white">{title}</h2>
+            <h2 className="text-sm font-semibold text-[var(--dr-text)]">{title}</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {Object.entries(options ?? {}).map((item) => (
                     <Choice
@@ -479,8 +479,8 @@ function Choice({ label, active, onClick }) {
             className={[
                 'rounded-xl border px-4 py-3 text-left text-sm font-medium transition',
                 active
-                    ? 'border-[#FF6A00]/50 bg-[#FF6A00]/10 text-white'
-                    : 'border-white/[0.07] bg-white/[0.02] text-slate-400 hover:border-white/[0.14] hover:text-white',
+                    ? 'border-[#FF6A00]/50 bg-[var(--dr-accent-soft)] text-[var(--dr-text)]'
+                    : 'border-[var(--dr-border)] bg-[var(--dr-hover)] text-[var(--dr-text-2)] hover:border-[var(--dr-border-2)] hover:text-[var(--dr-text)]',
             ].join(' ')}
         >
             {label}

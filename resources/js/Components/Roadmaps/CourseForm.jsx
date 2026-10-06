@@ -46,12 +46,12 @@ export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enr
 
     return (
         <form onSubmit={onSubmit} className="space-y-6">
-            <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#FF8A3D]">
+            <section className="rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--dr-accent-text)]">
                     {mode === 'create' ? 'Nouveau cours' : 'Édition du cours'}
                 </p>
-                <h2 className="mt-1 text-lg font-bold text-white">{roadmap?.title}</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <h2 className="mt-1 text-lg font-bold text-[var(--dr-text)]">{roadmap?.title}</h2>
+                <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">
                     Un cours doit expliquer une notion, montrer une structure correcte et proposer une mise en pratique.
                 </p>
 
@@ -74,37 +74,37 @@ export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enr
                 </div>
             </section>
 
-            <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
+            <section className="rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7">
                 <div className="flex items-center justify-between gap-4">
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#FF8A3D]">Workspace DevLab</p>
-                        <h2 className="mt-1 text-base font-bold text-white">Structure de fichiers</h2>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--dr-accent-text)]">Workspace DevLab</p>
+                        <h2 className="mt-1 text-base font-bold text-[var(--dr-text)]">Structure de fichiers</h2>
+                        <p className="mt-1 text-xs leading-5 text-[var(--dr-text-3)]">
                             Utilise plusieurs fichiers lorsque le concept doit montrer la séparation des responsabilités.
                         </p>
                     </div>
-                    <button type="button" onClick={addFile} className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-3 py-2 text-xs font-bold text-[#08111F]">
+                    <button type="button" onClick={addFile} className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-3 py-2 text-xs font-bold text-[var(--dr-ink)]">
                         <Plus size={14} /> Fichier
                     </button>
                 </div>
 
                 <div className="mt-5 space-y-4">
                     {(form.data.workspace_files ?? []).length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-white/[0.08] p-5 text-xs text-slate-600">
+                        <div className="rounded-2xl border border-dashed border-[var(--dr-border)] p-5 text-xs text-[var(--dr-text-3)]">
                             Aucun fichier initial. Le workspace utilisera l'exemple principal.
                         </div>
                     ) : (
                         (form.data.workspace_files ?? []).map((file, index) => (
-                            <div key={index} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                            <div key={index} className="rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-hover)] p-4">
                                 <div className="flex items-center gap-2">
                                     <input value={file.path} onChange={(e) => updateFile(index, 'path', e.target.value)} className={inputClass} placeholder="app/Models/Roadmap.php" />
-                                    <button type="button" onClick={() => removeFile(index)} className="shrink-0 rounded-xl p-2 text-slate-600 hover:bg-red-500/10 hover:text-red-400" aria-label="Supprimer le fichier">
+                                    <button type="button" onClick={() => removeFile(index)} className="shrink-0 rounded-xl p-2 text-[var(--dr-text-3)] hover:bg-red-500/10 hover:text-[var(--dr-danger)]" aria-label="Supprimer le fichier">
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
                                 <textarea value={file.content ?? ''} onChange={(e) => updateFile(index, 'content', e.target.value)} className={textareaClass + ' mt-3 font-mono'} rows={10} placeholder="Contenu du fichier..." />
                                 {form.errors['workspace_files.' + index + '.path'] && (
-                                    <p className="mt-2 text-xs text-red-400">{form.errors['workspace_files.' + index + '.path']}</p>
+                                    <p className="mt-2 text-xs text-[var(--dr-danger)]">{form.errors['workspace_files.' + index + '.path']}</p>
                                 )}
                             </div>
                         ))
@@ -112,8 +112,8 @@ export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enr
                 </div>
             </section>
 
-            <section className="rounded-3xl border border-white/[0.06] bg-[#0D1725] p-5 sm:p-7">
-                <button type="button" onClick={() => setShowAdvanced((value) => !value)} className="text-sm font-bold text-white">
+            <section className="rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7">
+                <button type="button" onClick={() => setShowAdvanced((value) => !value)} className="text-sm font-bold text-[var(--dr-text)]">
                     {showAdvanced ? 'Masquer les options pédagogiques' : 'Afficher les options pédagogiques'}
                 </button>
 
@@ -168,8 +168,8 @@ export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enr
             </section>
 
             <div className="flex flex-wrap justify-end gap-3">
-                {cancelHref && <a href={cancelHref} className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-400 hover:bg-white/[0.06] hover:text-white">Annuler</a>}
-                <button type="submit" disabled={form.processing} className="rounded-xl bg-[#FF6A00] px-5 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">
+                {cancelHref && <a href={cancelHref} className="rounded-xl border border-[var(--dr-border)] bg-[var(--dr-hover)] px-4 py-2.5 text-sm font-semibold text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]">Annuler</a>}
+                <button type="submit" disabled={form.processing} className="rounded-xl bg-[#FF6A00] px-5 py-2.5 text-sm font-bold text-[var(--dr-ink)] disabled:opacity-50">
                     {form.processing ? 'Enregistrement...' : submitLabel}
                 </button>
             </div>
@@ -180,12 +180,12 @@ export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enr
 function Field({ label, error, children }) {
     return (
         <div>
-            <label className="mb-2 block text-xs font-semibold text-slate-300">{label}</label>
+            <label className="mb-2 block text-xs font-semibold text-[var(--dr-text-2)]">{label}</label>
             {children}
-            {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+            {error && <p className="mt-1.5 text-xs text-[var(--dr-danger)]">{error}</p>}
         </div>
     );
 }
 
-const inputClass = 'h-11 w-full rounded-xl border border-white/[0.08] bg-[#07101A] px-3 text-sm text-white outline-none placeholder:text-slate-700 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10';
-const textareaClass = 'w-full rounded-xl border border-white/[0.08] bg-[#07101A] px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-slate-700 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10';
+const inputClass = 'h-11 w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)] px-3 text-sm text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10';
+const textareaClass = 'w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)] px-3 py-3 text-sm leading-6 text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10';

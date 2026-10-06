@@ -775,7 +775,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
     }
 
     return (
-        <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#09111D] shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+        <section className="overflow-hidden rounded-3xl border border-[var(--dr-border)] bg-[#09111D] shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
             <input
                 ref={importInputRef}
                 type="file"
@@ -786,18 +786,18 @@ export default function CodeWorkspace({ workspace, stepId }) {
                 onChange={importFiles}
             />
 
-            <div className="flex flex-col gap-3 border-b border-white/[0.06] bg-[#0A1422] p-3 sm:p-4">
+            <div className="flex flex-col gap-3 border-b border-[var(--dr-border)] bg-[#0A1422] p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]">
                             <Code2 size={17} />
                         </div>
 
                         <div className="min-w-0">
-                            <p className="truncate text-xs font-bold text-white">
+                            <p className="truncate text-xs font-bold text-[var(--dr-text)]">
                                 DevLab
                             </p>
-                            <p className="truncate text-[10px] text-slate-600">
+                            <p className="truncate text-[10px] text-[var(--dr-text-3)]">
                                 IDE navigateur · sauvegarde locale
                             </p>
                         </div>
@@ -809,7 +809,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                                 type="button"
                                 onClick={() => runServer()}
                                 disabled={running}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-3 py-2 text-[11px] font-bold text-[#08111F] transition hover:bg-[#ff781a] disabled:cursor-wait disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#FF6A00] px-3 py-2 text-[11px] font-bold text-[var(--dr-ink)] transition hover:bg-[#ff781a] disabled:cursor-wait disabled:opacity-60"
                             >
                                 <Play size={13} fill="currentColor" />
                                 {running ? "Exécution..." : "Exécuter"}
@@ -819,7 +819,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                         <button
                             type="button"
                             onClick={saveWorkspace}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[11px] font-semibold text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--dr-border)] bg-[var(--dr-hover)] px-2.5 py-2 text-[11px] font-semibold text-[var(--dr-text-2)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                         >
                             {saved ? <Check size={13} /> : <Save size={13} />}
                             {saved ? "Sauvé" : "Sauver"}
@@ -828,7 +828,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                         <button
                             type="button"
                             onClick={resetWorkspace}
-                            className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-2 text-slate-500 hover:text-white"
+                            className="rounded-lg border border-[var(--dr-border)] bg-[var(--dr-hover)] p-2 text-[var(--dr-text-3)] hover:text-[var(--dr-text)]"
                             aria-label="Réinitialiser"
                         >
                             <RotateCcw size={14} />
@@ -865,7 +865,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                         onDelete={deleteFile}
                     />
 
-                    <div className="flex items-center justify-between border-t border-white/[0.05] bg-[#08111C] px-3 py-2">
+                    <div className="flex items-center justify-between border-t border-[var(--dr-border)] bg-[var(--dr-bg)] px-3 py-2">
                         <div className="flex gap-1">
                             <button
                                 type="button"
@@ -873,8 +873,8 @@ export default function CodeWorkspace({ workspace, stepId }) {
                                 className={[
                                     "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-bold",
                                     panel === "terminal"
-                                        ? "bg-[#FF6A00] text-[#08111F]"
-                                        : "text-slate-600 hover:text-white",
+                                        ? "bg-[#FF6A00] text-[var(--dr-ink)]"
+                                        : "text-[var(--dr-text-3)] hover:text-[var(--dr-text)]",
                                 ].join(" ")}
                             >
                                 <Terminal size={12} />
@@ -887,8 +887,8 @@ export default function CodeWorkspace({ workspace, stepId }) {
                                 className={[
                                     "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-bold",
                                     panel === "preview"
-                                        ? "bg-[#FF6A00] text-[#08111F]"
-                                        : "text-slate-600 hover:text-white",
+                                        ? "bg-[#FF6A00] text-[var(--dr-ink)]"
+                                        : "text-[var(--dr-text-3)] hover:text-[var(--dr-text)]",
                                 ].join(" ")}
                             >
                                 <Eye size={12} />
@@ -896,7 +896,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                             </button>
                         </div>
 
-                        <span className="text-[10px] text-slate-700">
+                        <span className="text-[10px] text-[var(--dr-text-3)]">
                             {workspace.runtime === "server"
                                 ? "Runtime local DevRoad · " + workspace.label
                                 : "Runtime navigateur"}
@@ -934,15 +934,15 @@ export default function CodeWorkspace({ workspace, stepId }) {
                         }
                     }}
                 >
-                    <div className="w-full max-w-md overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0D1725] shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
-                        <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                    <div className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+                        <div className="flex items-center justify-between border-b border-[var(--dr-border)] px-5 py-4">
                             <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FF8A3D]">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--dr-accent-text)]">
                                     Explorateur
                                 </p>
                                 <h2
                                     id="devroad-create-file-title"
-                                    className="mt-1 text-base font-bold text-white"
+                                    className="mt-1 text-base font-bold text-[var(--dr-text)]"
                                 >
                                     Nouveau fichier
                                 </h2>
@@ -951,7 +951,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                             <button
                                 type="button"
                                 onClick={closeCreateFileModal}
-                                className="rounded-xl p-2 text-slate-600 transition hover:bg-white/[0.05] hover:text-white"
+                                className="rounded-xl p-2 text-[var(--dr-text-3)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                                 aria-label="Fermer"
                             >
                                 <X size={18} />
@@ -968,7 +968,7 @@ export default function CodeWorkspace({ workspace, stepId }) {
                             <div>
                                 <label
                                     htmlFor="devroad-new-file-path"
-                                    className="text-xs font-semibold text-slate-300"
+                                    className="text-xs font-semibold text-[var(--dr-text-2)]"
                                 >
                                     Chemin du fichier
                                 </label>
@@ -982,16 +982,16 @@ export default function CodeWorkspace({ workspace, stepId }) {
                                         setCreateFileError("");
                                     }}
                                     placeholder="src/components/Button.jsx"
-                                    className="mt-2 h-11 w-full rounded-xl border border-white/[0.08] bg-[#07101A] px-3 text-sm text-white outline-none transition placeholder:text-slate-700 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10"
+                                    className="mt-2 h-11 w-full rounded-xl border border-[var(--dr-border)] bg-[var(--dr-bg)] px-3 text-sm text-[var(--dr-text)] outline-none transition placeholder:text-[var(--dr-text-3)] focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/10"
                                 />
 
-                                <p className="mt-2 text-[10px] leading-5 text-slate-600">
+                                <p className="mt-2 text-[10px] leading-5 text-[var(--dr-text-3)]">
                                     Tu peux créer un fichier dans un dossier,
-                                    par exemple <span className="text-slate-400">js/app.js</span>.
+                                    par exemple <span className="text-[var(--dr-text-2)]">js/app.js</span>.
                                 </p>
 
                                 {createFileError && (
-                                    <p className="mt-2 text-xs font-medium text-red-400">
+                                    <p className="mt-2 text-xs font-medium text-[var(--dr-danger)]">
                                         {createFileError}
                                     </p>
                                 )}
@@ -1001,14 +1001,14 @@ export default function CodeWorkspace({ workspace, stepId }) {
                                 <button
                                     type="button"
                                     onClick={closeCreateFileModal}
-                                    className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-xs font-semibold text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+                                    className="rounded-xl border border-[var(--dr-border)] bg-[var(--dr-hover)] px-4 py-2.5 text-xs font-semibold text-[var(--dr-text-2)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]"
                                 >
                                     Annuler
                                 </button>
 
                                 <button
                                     type="submit"
-                                    className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[#08111F] transition hover:bg-[#ff781a]"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-[var(--dr-ink)] transition hover:bg-[#ff781a]"
                                 >
                                     <FilePlus2 size={14} />
                                     Créer le fichier
