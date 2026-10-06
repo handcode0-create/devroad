@@ -82,11 +82,23 @@ class ProfileController extends Controller
      */
     public function updateTheme(Request $request): RedirectResponse
     {
+        // « theme » (nouveau) ou « light_mode » (ancien interrupteur du profil).
         $validated = $request->validate([
-            'light_mode' => ['required', 'boolean'],
+            'theme' => ['required_without:light_mode', 'string', \Illuminate\Validation\Rule::in(\App\Models\User::THEMES)],
+            'light_mode' => ['required_without:theme', 'boolean'],
         ]);
 
-        $request->user()->update($validated);
+        $theme = $validated['theme'] ?? ($request->boolean('light_mode') ? 'clair' : 'nuit');
+
+        $request->user()->update([
+            'theme' => $theme,
+            'light_mode' => in_array($theme, \App\Models\User::LIGHT_THEMES, true),
+        ]);
+
+        // Choix depuis le panneau « Apparence » : on reste sur la page courante.
+        if ($request->has('theme')) {
+            return back()->with('status', 'theme-updated');
+        }
 
         return Redirect::route('profile.edit')
             ->with('status', 'theme-updated');

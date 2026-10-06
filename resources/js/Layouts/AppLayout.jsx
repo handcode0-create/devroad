@@ -6,29 +6,40 @@ import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
 import { Box, Code2 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import AppearanceSheet from '@/Components/Ui/AppearanceSheet';
+import { applyTheme, isLightTheme, useResolvedTheme } from '@/theme';
+import { reducedMotionPreferred } from '@/theme';
 
-export default function AppLayout({ children }) {
+export default function AppLayout({ children, mobileHeader = true }) {
     const { auth } = usePage().props;
     const [navigating, setNavigating] = useState(false);
     const [loadingLabel, setLoadingLabel] = useState('Chargement...');
     const contentRef = useRef(null);
     const currentUrl = usePage().url;
     const user = auth?.user;
+    const themePreference = user?.theme ?? (user?.light_mode ? 'clair' : 'nuit');
+    const resolvedTheme = useResolvedTheme(themePreference);
+    const light = isLightTheme(resolvedTheme);
+    const [appearanceOpen, setAppearanceOpen] = useState(false);
 
+    // Garde <html data-ui-theme> aligné sur le thème enregistré du compte.
     useEffect(() => {
-        document.documentElement.dataset.theme = user?.light_mode ? 'light' : 'dark';
+        applyTheme(themePreference);
+    }, [themePreference]);
 
-        return () => {
-            document.documentElement.dataset.theme = 'dark';
-        };
-    }, [user?.light_mode]);
+    // N'importe quel composant peut ouvrir le panneau « Apparence ».
+    useEffect(() => {
+        const open = () => setAppearanceOpen(true);
+        window.addEventListener('devroad:appearance', open);
+        return () => window.removeEventListener('devroad:appearance', open);
+    }, []);
 
     useLayoutEffect(() => {
         const root = contentRef.current;
         const page = root?.firstElementChild;
 
         if (!root || !page || typeof window === 'undefined') return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (reducedMotionPreferred()) return;
 
         const targets = Array.from(page.children);
         if (!targets.length) return;
@@ -67,9 +78,9 @@ export default function AppLayout({ children }) {
 
     return (
         <div className={[
-            'min-h-[100dvh] overflow-x-clip bg-[#08111F] text-white',
-            user?.light_mode ? 'theme-light' : '',
-        ].join(' ')} data-theme={user?.light_mode ? 'light' : 'dark'}>
+            'min-h-[100dvh] overflow-x-clip bg-[var(--dr-bg)] text-white',
+            light ? 'theme-light' : '',
+        ].join(' ')} data-theme={light ? 'light' : 'dark'}>
             <LoadingOverlay visible={navigating} label={loadingLabel} />
 
             <Sidebar user={user} />
@@ -99,7 +110,7 @@ export default function AppLayout({ children }) {
                     </div>
                 </header>
 
-                <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#08111F]/95 backdrop-blur-xl lg:hidden supports-[backdrop-filter]:bg-[#08111F]/85">
+                {mobileHeader && <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#08111F]/95 backdrop-blur-xl lg:hidden supports-[backdrop-filter]:bg-[#08111F]/85">
                     <div className="flex min-h-[64px] items-center justify-between gap-3 px-3 sm:px-5">
                         <Link href="/dashboard" className="flex min-h-11 min-w-0 items-center gap-2.5" aria-label="DevRoad">
                             <img src="/icondevroad.png" alt="" className="h-9 w-9 shrink-0 object-contain" />
@@ -116,12 +127,12 @@ export default function AppLayout({ children }) {
                             <Link href="/search" className="touch-target flex items-center justify-center rounded-xl bg-[#101A2A] text-slate-300" aria-label="Rechercher">
                                 <Icon name="search" size={18} />
                             </Link>
-                            <Link href="/profile" className="touch-target flex items-center justify-center" aria-label="Profil">
+                            <button type="button" onClick={() => setAppearanceOpen(true)} className="touch-target flex items-center justify-center" aria-label="Apparence" aria-haspopup="dialog">
                                 <UserAvatar user={user} />
-                            </Link>
+                            </button>
                         </div>
                     </div>
-                </header>
+                </header>}
 
                 <main className="min-h-[calc(100dvh-64px)] pb-[calc(6rem+env(safe-area-inset-bottom))] lg:min-h-[calc(100dvh-72px)] lg:pb-8">
                     <div ref={contentRef} className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10 2xl:px-12">
@@ -132,6 +143,7 @@ export default function AppLayout({ children }) {
 
             <ToastViewport />
             <BottomNav />
+            <AppearanceSheet open={appearanceOpen} onClose={() => setAppearanceOpen(false)} preference={themePreference} />
         </div>
     );
 }

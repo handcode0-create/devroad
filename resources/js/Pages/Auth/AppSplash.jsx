@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import LoadingSpinner from '@/Components/Ui/LoadingSpinner';
 import { gsap } from 'gsap';
+import { reducedMotionPreferred } from '@/theme';
 
 export default function AppSplash() {
     const [progress, setProgress] = useState(0);
@@ -11,7 +12,7 @@ export default function AppSplash() {
     useEffect(() => {
         const root = rootRef.current;
 
-        if (root && typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (root && typeof window !== 'undefined' && !reducedMotionPreferred()) {
             const context = gsap.context(() => {
                 const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
 

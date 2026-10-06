@@ -2,11 +2,146 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * DevRoad — jetons de thème (maquette « Refonte & thèmes », Claude Design).
+ * Les composants ne connaissent que ces rôles ; chaque thème les redéfinit.
+ * Le thème est posé sur <html data-ui-theme="…"> par app.blade.php.
+ */
+:root,
+html[data-ui-theme='nuit'] {
+    --dr-bg: #08111F;
+    --dr-surface: #0D1725;
+    --dr-surface-2: #111D2E;
+    --dr-field: #101A2A;
+    --dr-border: rgba(255, 255, 255, 0.07);
+    --dr-border-2: rgba(255, 255, 255, 0.12);
+    --dr-text: #F4F6FA;
+    --dr-text-2: #A3AEC2;
+    --dr-text-3: #7D8BA3;
+    --dr-accent: #FF6A00;
+    --dr-ink: #08111F;
+    --dr-accent-text: #FF8A3D;
+    --dr-accent-soft: rgba(255, 106, 0, 0.12);
+    --dr-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.9);
+    --dr-nav-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.55);
+    --dr-scrim: rgba(0, 0, 0, 0.42);
+    --dr-danger: #F87171;
+    color-scheme: dark;
+}
+
+html[data-ui-theme='minuit'] {
+    --dr-bg: #000000;
+    --dr-surface: #0B0B0D;
+    --dr-surface-2: #141417;
+    --dr-field: #141417;
+    --dr-border: rgba(255, 255, 255, 0.08);
+    --dr-border-2: rgba(255, 255, 255, 0.14);
+    --dr-text: #F5F5F6;
+    --dr-text-2: #A6A6B0;
+    --dr-text-3: #85858F;
+    --dr-accent: #FF6A00;
+    --dr-ink: #000000;
+    --dr-accent-text: #FF8A3D;
+    --dr-accent-soft: rgba(255, 106, 0, 0.14);
+    --dr-shadow: none;
+    --dr-nav-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.55);
+    --dr-scrim: rgba(0, 0, 0, 0.55);
+    --dr-danger: #F87171;
+    color-scheme: dark;
+}
+
+html[data-ui-theme='ardoise'] {
+    --dr-bg: #1A1F27;
+    --dr-surface: #222833;
+    --dr-surface-2: #2A313D;
+    --dr-field: #2A313D;
+    --dr-border: rgba(255, 255, 255, 0.08);
+    --dr-border-2: rgba(255, 255, 255, 0.14);
+    --dr-text: #EEF1F5;
+    --dr-text-2: #B6BECA;
+    --dr-text-3: #929CAB;
+    --dr-accent: #FF6A00;
+    --dr-ink: #14181F;
+    --dr-accent-text: #FF9A55;
+    --dr-accent-soft: rgba(255, 106, 0, 0.14);
+    --dr-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.7);
+    --dr-nav-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.55);
+    --dr-scrim: rgba(0, 0, 0, 0.42);
+    --dr-danger: #FCA5A5;
+    color-scheme: dark;
+}
+
+html[data-ui-theme='clair'] {
+    --dr-bg: #F4F6F9;
+    --dr-surface: #FFFFFF;
+    --dr-surface-2: #FFFFFF;
+    --dr-field: #EEF1F5;
+    --dr-border: rgba(8, 17, 31, 0.09);
+    --dr-border-2: rgba(8, 17, 31, 0.16);
+    --dr-text: #0B1424;
+    --dr-text-2: #475467;
+    --dr-text-3: #5F6B7D;
+    --dr-accent: #FF6A00;
+    --dr-ink: #08111F;
+    --dr-accent-text: #C2410C;
+    --dr-accent-soft: rgba(255, 106, 0, 0.10);
+    --dr-shadow: 0 12px 28px -18px rgba(16, 24, 40, 0.28);
+    --dr-nav-shadow: 0 18px 44px -14px rgba(16, 24, 40, 0.35);
+    --dr-scrim: rgba(0, 0, 0, 0.42);
+    --dr-danger: #B91C1C;
+    color-scheme: light;
+}
+
+html[data-ui-theme='sable'] {
+    --dr-bg: #F3EEE5;
+    --dr-surface: #FBF8F2;
+    --dr-surface-2: #FFFDF8;
+    --dr-field: #EFE8DC;
+    --dr-border: rgba(60, 40, 20, 0.10);
+    --dr-border-2: rgba(60, 40, 20, 0.18);
+    --dr-text: #261D14;
+    --dr-text-2: #5B4F42;
+    --dr-text-3: #6F6253;
+    --dr-accent: #FF6A00;
+    --dr-ink: #261D14;
+    --dr-accent-text: #B4400A;
+    --dr-accent-soft: rgba(255, 106, 0, 0.12);
+    --dr-shadow: 0 12px 28px -20px rgba(60, 40, 20, 0.3);
+    --dr-nav-shadow: 0 18px 44px -14px rgba(60, 40, 20, 0.35);
+    --dr-scrim: rgba(0, 0, 0, 0.42);
+    --dr-danger: #B91C1C;
+    color-scheme: light;
+}
+
+/* Fondu du changement de thème (View Transitions). */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* « Réduire les animations » choisi dans le panneau Apparence. */
+html[data-motion='reduce'] *,
+html[data-motion='reduce'] *::before,
+html[data-motion='reduce'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
+.dr-scrollbar-none {
+    scrollbar-width: none;
+}
+
+.dr-scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
 @layer base {
     html {
         min-width: 320px;
-        background: #08111F;
-        color-scheme: dark;
+        background: var(--dr-bg);
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
     }
@@ -15,7 +150,7 @@
         min-width: 320px;
         min-height: 100vh;
         overflow-x: hidden;
-        background: #08111F;
+        background: var(--dr-bg);
         @apply antialiased;
     }
 
@@ -201,16 +336,16 @@
 @layer base {
     html[data-theme='light'],
     html[data-theme='light'] body {
-        background: #F8FAFC;
-        color: #0F172A;
+        background: var(--dr-bg);
+        color: var(--dr-text);
         color-scheme: light;
     }
 }
 
 @layer components {
     .theme-light {
-        background: #F8FAFC !important;
-        color: #0F172A !important;
+        background: var(--dr-bg) !important;
+        color: var(--dr-text) !important;
     }
 
     .theme-light .bg-\[\#08111F\] {
@@ -288,8 +423,8 @@
  */
 @layer components {
     html[data-theme='light'] .theme-light {
-        background: #F8FAFC !important;
-        color: #0F172A !important;
+        background: var(--dr-bg) !important;
+        color: var(--dr-text) !important;
     }
 
     html[data-theme='light'] .theme-light [class*="bg-[#08111F]"],
@@ -766,4 +901,18 @@
         background-color: rgba(14, 165, 233, 0.10) !important;
         color: #0369A1 !important;
     }
+}
+
+/*
+ * Champs déjà passés au système de thèmes (data-dr-native) : l'ancien
+ * « mode clair » ne doit pas leur imposer son fond blanc ni ses couleurs.
+ */
+html .theme-light input[data-dr-native]:not([type="checkbox"]):not([type="radio"]) {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--dr-text);
+}
+
+html .theme-light input[data-dr-native]::placeholder {
+    color: var(--dr-text-3);
 }

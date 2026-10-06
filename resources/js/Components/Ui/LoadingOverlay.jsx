@@ -1,13 +1,14 @@
 import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import LoadingSpinner from './LoadingSpinner';
+import { reducedMotionPreferred } from '@/theme';
 
 export default function LoadingOverlay({ visible = false, label = 'Chargement...' }) {
     const rootRef = useRef(null);
 
     useLayoutEffect(() => {
         if (!visible || !rootRef.current || typeof window === 'undefined') return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (reducedMotionPreferred()) return;
 
         const context = gsap.context(() => {
             gsap.fromTo('[data-loading-panel]', { autoAlpha: 0, y: -10, scale: 0.97 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: 'power3.out' });

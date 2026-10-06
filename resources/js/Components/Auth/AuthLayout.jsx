@@ -4,6 +4,7 @@ import OnboardingSwipe from '@/Components/OnboardingSwipe';
 import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { reducedMotionPreferred } from '@/theme';
 
 // Mise en page commune des écrans d'authentification.
 // Desktop : panneau de marque (5/11) + formulaire (6/11).
@@ -20,7 +21,7 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
         const root = contentRef.current;
 
         if (!root || typeof window === 'undefined') return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (reducedMotionPreferred()) return;
 
         const targets = Array.from(root.querySelectorAll('[data-auth-animate]'));
         if (!targets.length) return;

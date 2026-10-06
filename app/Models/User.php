@@ -11,6 +11,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
+    /** Thèmes d'interface disponibles (« auto » suit le système : Nuit ou Clair). */
+    public const THEMES = ['nuit', 'minuit', 'ardoise', 'clair', 'sable', 'auto'];
+
+    /** Thèmes clairs : gardent le mode clair historique (light_mode) synchronisé. */
+    public const LIGHT_THEMES = ['clair', 'sable'];
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -25,6 +31,7 @@ class User extends Authenticatable
         'email_notifications',
         'learning_reminders',
         'light_mode',
+        'theme',
     ];
 
     protected $hidden = [
