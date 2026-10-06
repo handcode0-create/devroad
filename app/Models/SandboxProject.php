@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class SandboxProject extends Model
 {
@@ -53,5 +54,10 @@ class SandboxProject extends Model
     public function activeInstance(): HasMany
     {
         return $this->instances()->whereIn('status', ['starting', 'running', 'sleeping']);
+    }
+
+    public function processes(): HasManyThrough
+    {
+        return $this->hasManyThrough(SandboxProcess::class, SandboxInstance::class);
     }
 }

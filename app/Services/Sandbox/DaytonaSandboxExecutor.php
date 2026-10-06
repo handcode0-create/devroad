@@ -45,7 +45,10 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
         $this->startServer($project->fresh(), $sandbox);
 
-        return $this->syncInstance($project->fresh(), $sandbox, true);
+        $instance = $this->syncInstance($project->fresh(), $sandbox, true);
+        $this->recordServer($instance, $project->fresh());
+
+        return $instance;
     }
 
     public function stop(SandboxProject $project): SandboxInstance
@@ -55,10 +58,14 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
         $this->api()->post('/sandbox/' . rawurlencode($providerId) . '/stop')->throw();
 
-        return $this->syncInstance($project, [
+        $instance = $this->syncInstance($project, [
             'id' => $providerId,
             'state' => 'stopped',
         ], false);
+
+        $this->recorder()->stopRunning($project);
+
+        return $instance;
     }
 
     public function restart(SandboxProject $project): SandboxInstance
@@ -108,6 +115,8 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         $providerId = $this->providerId($project);
 
         $this->api()->delete('/sandbox/' . rawurlencode($providerId))->throw();
+
+        $this->recorder()->stopRunning($project);
 
         $metadata = $project->metadata ?? [];
         foreach ([
@@ -179,7 +188,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
         $project->updateQuietly(['metadata' => $metadata]);
 
         $sandbox = $this->waitUntilStarted($providerId, $sandbox);
-        $this->syncInstance($project->fresh(), $sandbox, true);
+        $instance = $this->syncInstance($project->fresh(), $sandbox, true);
 
         $project->updateQuietly([
             'status' => 'starting',
@@ -188,11 +197,25 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             ]),
         ]);
 
-        $bootstrap = $this->execute($toolboxUrl, '/process/execute', [
-            'command' => $definition['bootstrap'],
-            'cwd' => 'workspace',
-            'timeout' => 900,
-        ]);
+        $install = $this->recorder()->begin($instance, 'installation', $definition['bootstrap']);
+
+        try {
+            $bootstrap = $this->execute($toolboxUrl, '/process/execute', [
+                'command' => $definition['bootstrap'],
+                'cwd' => 'workspace',
+                'timeout' => 900,
+            ]);
+        } catch (\Throwable $exception) {
+            $this->recorder()->finish($install, null, null, $exception->getMessage());
+
+            throw $exception;
+        }
+
+        $this->recorder()->finish(
+            $install,
+            isset($bootstrap['exitCode']) ? (int) $bootstrap['exitCode'] : null,
+            (string) ($bootstrap['result'] ?? $bootstrap['output'] ?? '')
+        );
 
         if (($bootstrap['exitCode'] ?? 1) !== 0) {
             $project->updateQuietly(['status' => 'error']);
@@ -243,12 +266,45 @@ class DaytonaSandboxExecutor implements SandboxExecutor
             'metadata' => $metadata,
         ]);
 
-        return $this->syncInstance($project->fresh(), [
+        $instance = $this->syncInstance($project->fresh(), [
             'id' => $providerId,
             'state' => 'started',
             'target' => config('sandbox.default_region'),
             'toolboxProxyUrl' => $toolboxUrl,
         ], true);
+
+        $this->recordServer($instance, $project->fresh());
+
+        return $instance;
+    }
+
+    /**
+     * Historise le serveur de développement lancé en tâche de fond
+     * (session « devroad-server ») avec son port.
+     */
+    private function recordServer(SandboxInstance $instance, SandboxProject $project): void
+    {
+        $definition = config('sandbox.templates.' . $project->template);
+        $metadata = $project->metadata ?? [];
+
+        if (! is_array($definition) || empty($definition['serve'])) {
+            return;
+        }
+
+        $port = $metadata['server_port'] ?? $definition['port'] ?? null;
+        $commandId = $metadata['server_command_id'] ?? null;
+
+        $this->recorder()->serverStarted(
+            $instance,
+            'cd workspace && ' . $definition['serve'],
+            is_numeric($port) ? (int) $port : null,
+            is_scalar($commandId) ? (string) $commandId : null,
+        );
+    }
+
+    private function recorder(): SandboxProcessRecorder
+    {
+        return app(SandboxProcessRecorder::class);
     }
 
     private function startServer(SandboxProject $project, array $sandbox): void

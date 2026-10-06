@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{project}/command', [SandboxController::class, 'command'])->middleware('throttle:30,1')->name('command');
         Route::post('/{project}/terminal', [SandboxController::class, 'terminal'])->middleware('throttle:20,1')->name('terminal');
         Route::get('/{project}/status', [SandboxController::class, 'status'])->name('status');
+        Route::get('/{project}/processes', [SandboxController::class, 'processes'])->name('processes');
     });
 
     Route::prefix('devlab/projects')->name('devlab.projects.')->group(function () {
