@@ -1,799 +1,264 @@
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { useRef, useState } from "react";
-import useGsapScrollReveal from "@/hooks/useGsapScrollReveal";
-import {
-    ArrowRight,
-    BookOpen,
-    CheckCircle2,
-    FileText,
-    Map,
-    Search,
-    Sparkles,
-    TrendingUp,
-} from "lucide-react";
-
+import { Head, Link, usePage } from "@inertiajs/react";
+import { useLayoutEffect, useRef } from "react";
+import { gsap } from "gsap";
 import AppLayout from "@/Layouts/AppLayout";
-import technologyLogos from "@/Config/technologyLogos";
+import { m, softSpring } from "@/Components/Ui/Motion";
+import { reducedMotionPreferred } from "@/theme";
 
-export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, learning_profile }) {
+// Accueil — artboard « Mobile — Accueil » (Claude Design), étendu en 2 colonnes sur desktop.
+const MotionLink = m.create(Link);
+
+const ICONS = {
+    search: "M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-3.5-3.5",
+    newMemo: "M7 3h7l5 5v13H7zM14 3v5h5M13 12v6M10 15h6",
+    code: "M8 7l-5 5 5 5M16 7l5 5-5 5",
+    map: "M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14",
+    box: "M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12L4 7.5M12 12v9",
+    arrow: "M5 12h14M13 6l6 6-6 6",
+    road: ["M8 20L11 4", "M16 20L13 4", "M12 16v1M12 11v1M12 7v1"],
+};
+
+function Svg({ d, size = 18, stroke = 2, className = "" }) {
+    const paths = Array.isArray(d) ? d : [d];
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+            {paths.map((path) => <path key={path} d={path} />)}
+        </svg>
+    );
+}
+
+function monogram(title) {
+    const match = String(title ?? "").match(/[\p{L}\p{N}]/u);
+    return match ? match[0].toUpperCase() : "#";
+}
+
+function initials(name) {
+    return String(name ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "DR";
+}
+
+function relativeDay(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    const today = new Date();
+    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const days = Math.round((startOfDay(today) - startOfDay(date)) / 86400000);
+    if (days === 0) return "Aujourd’hui";
+    if (days === 1) return "Hier";
+    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+function todayLabel() {
+    const label = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+const clamp = (value) => Math.min(100, Math.max(0, Math.round(Number(value ?? 0)) || 0));
+
+export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, recent_memos = [] }) {
     const { auth } = usePage().props;
-
     const user = auth?.user;
+    const firstName = user?.name?.trim()?.split(" ")[0] ?? "développeur";
+    const roadmaps = Array.isArray(recent_roadmaps) ? recent_roadmaps : [];
+    const memos = Array.isArray(recent_memos) ? recent_memos : [];
+    const resume = continue_roadmap ?? null;
+    const progress = clamp(stats?.progress);
+    const rootRef = useRef(null);
 
-    const [search, setSearch] = useState("");
-    const animationRef = useRef(null);
-
-    const safeStats = {
-        roadmaps: Number(stats?.roadmaps ?? 0),
-        memos: Number(stats?.memos ?? 0),
-        steps_total: Number(stats?.steps_total ?? 0),
-        steps_completed: Number(stats?.steps_completed ?? 0),
-        progress: Number(stats?.progress ?? 0),
-    };
-
-    // Doit rester APRÈS la déclaration de safeStats : l'utiliser avant
-    // provoque « Cannot access before initialization » et un écran vide.
-    useGsapScrollReveal(animationRef, [recent_roadmaps?.length, safeStats.progress]);
-
-    const firstName = user?.name?.trim()?.split(" ")[0] ?? "Développeur";
-
-    const recentRoadmaps = Array.isArray(recent_roadmaps)
-        ? recent_roadmaps
-        : [];
-
-    const latestRoadmap = continue_roadmap ?? recentRoadmaps[0] ?? null;
-
-    function submitSearch(event) {
-        event.preventDefault();
-
-        const query = search.trim();
-
-        if (!query) {
-            router.visit("/search");
-            return;
-        }
-
-        router.get(
-            "/search",
-            {
-                q: query,
-                type: "all",
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    }
+    // GSAP : les blocs de l'accueil se posent en cascade.
+    useLayoutEffect(() => {
+        if (!rootRef.current || reducedMotionPreferred()) return undefined;
+        const context = gsap.context(() => {
+            gsap.fromTo("[data-anim='block']", { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.07, ease: "power3.out", clearProps: "opacity,visibility,transform" });
+        }, rootRef);
+        return () => context.revert();
+    }, []);
 
     return (
-        <AppLayout>
+        <AppLayout mobileHeader={false}>
             <Head title="Accueil" />
 
-            <div ref={animationRef} className="space-y-7">
-                {/* =========================================================
-                    HEADER
-                ========================================================= */}
-                <section data-gsap-reveal>
-                    <div className="flex flex-col gap-5">
-                        <div>
-                            <p className="text-sm font-medium text-slate-400">
-                                Bonjour {firstName} 👋
-                            </p>
+            <div ref={rootRef} className="-mx-4 -mt-5 flex flex-col gap-[22px] px-5 pt-[18px] font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)] sm:-mx-6 sm:-mt-6 lg:mx-0 lg:mt-0 lg:gap-7 lg:px-0 lg:pt-0">
+                {/* En-tête mobile de la maquette */}
+                <header className="-mb-2 flex items-center gap-2.5 lg:hidden">
+                    <Link href="/dashboard" className="flex flex-1 items-center gap-2.5" aria-label="DevRoad — Accueil">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[var(--dr-accent)] text-[var(--dr-ink)]"><Svg d={ICONS.road} size={18} stroke={2.4} /></span>
+                        <span className="font-['Manrope',sans-serif] text-[19px] font-extrabold tracking-[-0.02em]">Dev<span className="text-[var(--dr-accent-text)]">Road</span></span>
+                    </Link>
+                    <MotionLink whileTap={{ scale: 0.92 }} href="/search" aria-label="Rechercher" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)]">
+                        <Svg d={ICONS.search} size={19} />
+                    </MotionLink>
+                    <m.button whileTap={{ scale: 0.92 }} type="button" onClick={() => window.dispatchEvent(new Event("devroad:appearance"))} aria-label="Profil et apparence" aria-haspopup="dialog" className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--dr-accent)] text-sm font-bold text-[var(--dr-ink)]">
+                        {initials(user?.name)}
+                    </m.button>
+                </header>
 
-                            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                                Ton parcours de développeur.
-                            </h1>
+                <div data-anim="block" className="flex flex-col gap-1">
+                    <span className="text-sm text-[var(--dr-text-2)]">{todayLabel()}</span>
+                    <h1 className="m-0 font-['Manrope',sans-serif] text-[30px] font-extrabold leading-[1.1] tracking-[-0.03em] lg:text-[38px]">Bonjour {firstName}</h1>
+                </div>
 
-                            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                                Continue à apprendre, organise tes connaissances
-                                et progresse étape par étape.
-                            </p>
-                        </div>
+                <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-6">
+                    <div className="flex min-w-0 flex-col gap-[22px] lg:gap-6">
+                        <ResumeCard resume={resume} hasRoadmaps={roadmaps.length > 0} />
 
-                        {/* =================================================
-                            SEARCH
-                        ================================================= */}
-                        <form onSubmit={submitSearch} className="relative">
-                            <Search
-                                size={19}
-                                strokeWidth={2}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
-                            />
+                        <section data-anim="block" aria-label="Raccourcis" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                            <Shortcut href="/memos/create" icon={ICONS.newMemo} label="Nouvelle fiche" />
+                            <Shortcut href="/devlab" icon={ICONS.code} label="Ouvrir DevLab" />
+                            <Shortcut href="/roadmaps/create" icon={ICONS.map} label="Nouveau parcours" className="hidden lg:flex" />
+                            <Shortcut href="/sandbox" icon={ICONS.box} label="Sandbox" className="hidden lg:flex" />
+                        </section>
 
-                            <input
-                                type="search"
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                                placeholder="Rechercher une roadmap, une techno, un mémo..."
-                                className="
-                                    h-12
-                                    w-full
-                                    rounded-2xl
-                                    border
-                                    border-white/[0.07]
-                                    bg-[#101A2A]
-                                    pl-11
-                                    pr-24
-                                    text-sm
-                                    text-white
-                                    outline-none
-                                    transition
-                                    placeholder:text-slate-600
-                                    focus:border-[#FF6A00]/40
-                                    focus:ring-2
-                                    focus:ring-[#FF6A00]/10
-                                "
-                            />
-
-                            <button
-                                type="submit"
-                                className="
-                                    absolute
-                                    right-1.5
-                                    top-1/2
-                                    -translate-y-1/2
-                                    rounded-xl
-                                    bg-[#FF6A00]
-                                    px-3.5
-                                    py-2
-                                    text-xs
-                                    font-bold
-                                    text-white
-                                    transition
-                                    hover:bg-[#ff781a]
-                                "
-                            >
-                                Rechercher
-                            </button>
-                        </form>
+                        {roadmaps.length > 0 && <section data-anim="block" aria-label="Parcours récents" className="hidden flex-col gap-2.5 lg:flex">
+                            <SectionTitle title="Parcours récents" href="/roadmaps" />
+                            {roadmaps.map((roadmap) => <RoadmapRow key={roadmap.id} roadmap={roadmap} />)}
+                        </section>}
                     </div>
-                </section>
 
-                {/* =========================================================
-                    PRIMARY CTA
-                ========================================================= */}
-                {latestRoadmap ? (
-                    <section data-gsap-reveal className="overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725]">
-                        <div className="flex flex-col gap-5 p-5 sm:p-6 md:flex-row md:items-center md:justify-between">
-                            <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                                        <TrendingUp size={18} />
-                                    </span>
+                    <div className="flex min-w-0 flex-col gap-[22px] lg:gap-6">
+                        <section data-anim="block" aria-label="Fiches récentes" className="flex flex-col gap-2.5">
+                            <SectionTitle title="Fiches récentes" href="/memos" />
+                            {memos.length > 0
+                                ? memos.map((memo) => (
+                                    <MotionLink key={memo.id} whileTap={{ scale: 0.985 }} href={"/memos/" + memo.id} className="flex items-center gap-3 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] px-3.5 py-3 text-[var(--dr-text)]">
+                                        <span aria-hidden="true" className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[var(--dr-field)] font-['JetBrains_Mono',ui-monospace,monospace] text-sm text-[var(--dr-accent-text)]">{monogram(memo.title)}</span>
+                                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                            <span className="truncate text-[15px] font-semibold">{memo.title}</span>
+                                            <span className="truncate text-xs text-[var(--dr-text-3)]">{[relativeDay(memo.updated_at), memo.folder ?? memo.tag].filter(Boolean).join(" · ")}</span>
+                                        </span>
+                                    </MotionLink>
+                                ))
+                                : <EmptyRow text="Aucune fiche pour l’instant." action="Écrire ma première fiche" href="/memos/create" />}
+                        </section>
 
-                                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                        À reprendre
-                                    </span>
-                                </div>
-
-                                <h2 className="mt-3 truncate text-xl font-bold text-white">
-                                    {latestRoadmap.current_step?.title ??
-                                        latestRoadmap.title}
-                                </h2>
-
-                                <p className="mt-1 text-sm text-slate-500">
-                                    {latestRoadmap.current_step
-                                        ? `Étape ${latestRoadmap.current_step.position} · ${latestRoadmap.title}`
-                                        : `${latestRoadmap.completed_steps_count ?? 0} étape${(latestRoadmap.completed_steps_count ?? 0) > 1 ? "s" : ""} sur ${latestRoadmap.steps_count ?? 0}`}
-                                </p>
-
-                                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                                    <div
-                                        className="h-full rounded-full bg-[#FF6A00]"
-                                        style={{
-                                            width: `${clampProgress(
-                                                latestRoadmap.progress,
-                                            )}%`,
-                                        }}
-                                    />
-                                </div>
+                        <section data-anim="block" aria-label="Progression globale" className="hidden flex-col gap-4 rounded-[22px] border border-[var(--dr-border)] bg-[var(--dr-surface)] p-[18px] shadow-[var(--dr-shadow)] lg:flex">
+                            <div className="flex items-baseline justify-between">
+                                <h2 className="m-0 text-[17px] font-bold">Progression globale</h2>
+                                <span className="text-sm font-bold tabular-nums text-[var(--dr-accent-text)]">{progress}%</span>
                             </div>
-
-                            <div className="flex flex-wrap items-center gap-3">
-                                <Link
-                                    href={latestRoadmap.current_step
-                                        ? `/steps/${latestRoadmap.current_step.id}`
-                                        : `/roadmaps/${latestRoadmap.id}`}
-                                    className="
-                                        inline-flex
-                                        items-center
-                                        gap-2
-                                        rounded-xl
-                                        bg-[#FF6A00]
-                                        px-4
-                                        py-2.5
-                                        text-sm
-                                        font-semibold
-                                        text-white
-                                        shadow-[0_8px_22px_rgba(255,106,0,0.24)]
-                                        transition
-                                        hover:bg-[#ff781a]
-                                    "
-                                >
-                                    Reprendre
-                                    <ArrowRight size={16} />
-                                </Link>
-
-                                <Link
-                                    href="/roadmaps/create"
-                                    className="
-                                        inline-flex
-                                        items-center
-                                        gap-2
-                                        rounded-xl
-                                        border
-                                        border-white/[0.08]
-                                        bg-white/[0.03]
-                                        px-4
-                                        py-2.5
-                                        text-sm
-                                        font-semibold
-                                        text-slate-300
-                                        transition
-                                        hover:bg-white/[0.06]
-                                        hover:text-white
-                                    "
-                                >
-                                    <Map size={16} />
-                                    Nouvelle roadmap
-                                </Link>
+                            <div className="h-2 overflow-hidden rounded-full bg-[var(--dr-field)]" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Progression globale">
+                                <m.div className="h-full rounded-full bg-[var(--dr-accent)]" initial={{ width: 0 }} animate={{ width: progress + "%" }} transition={{ ...softSpring, delay: 0.3 }} />
                             </div>
-                        </div>
-                    </section>
-                ) : (
-                    <section data-gsap-reveal className="rounded-2xl border border-dashed border-white/[0.08] bg-[#0D1725] p-6">
-                        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                                    <Sparkles size={19} />
-                                </div>
-
-                                <h2 className="mt-4 text-lg font-bold text-white">
-                                    Commence ton premier parcours
-                                </h2>
-
-                                <p className="mt-1 max-w-lg text-sm leading-6 text-slate-500">
-                                    Crée une roadmap pour structurer ce que tu
-                                    veux apprendre.
-                                </p>
-                            </div>
-
-                            <Link
-                                href="/roadmaps/create"
-                                className="
-                                    inline-flex
-                                    items-center
-                                    justify-center
-                                    gap-2
-                                    rounded-xl
-                                    bg-[#FF6A00]
-                                    px-4
-                                    py-2.5
-                                    text-sm
-                                    font-semibold
-                                    text-white
-                                    transition
-                                    hover:bg-[#ff781a]
-                                "
-                            >
-                                <Map size={16} />
-                                Créer ma roadmap
-                            </Link>
-                        </div>
-                    </section>
-                )}
-
-                {/* =========================================================
-                    GLOBAL PROGRESS
-                ========================================================= */}
-                <section data-gsap-reveal className="overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#111D2E] to-[#0D1725]">
-                    <div className="p-5 sm:p-6">
-                        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                                        <TrendingUp size={18} />
-                                    </span>
-
-                                    <span className="text-sm font-semibold text-white">
-                                        Progression globale
-                                    </span>
-                                </div>
-
-                                <p className="mt-4 text-sm leading-6 text-slate-400">
-                                    Tu as complété{" "}
-                                    <strong className="text-white">
-                                        {safeStats.steps_completed}
-                                    </strong>{" "}
-                                    étape
-                                    {safeStats.steps_completed > 1
-                                        ? "s"
-                                        : ""}{" "}
-                                    sur{" "}
-                                    <strong className="text-white">
-                                        {safeStats.steps_total}
-                                    </strong>
-                                    .
-                                </p>
-                            </div>
-
-                            <ProgressRing progress={safeStats.progress} />
-                        </div>
+                            <dl className="m-0 grid grid-cols-3 gap-3">
+                                <Stat label="Parcours" value={stats?.roadmaps ?? 0} />
+                                <Stat label="Fiches" value={stats?.memos ?? 0} />
+                                <Stat label="Étapes faites" value={(stats?.steps_completed ?? 0) + "/" + (stats?.steps_total ?? 0)} />
+                            </dl>
+                        </section>
                     </div>
-                </section>
-
-                {/* =========================================================
-                    STATS
-                ========================================================= */}
-                <section data-gsap-reveal className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-                    <StatCard
-                        icon={Map}
-                        label="Roadmaps"
-                        value={safeStats.roadmaps}
-                        tone="orange"
-                    />
-
-                    <StatCard
-                        icon={FileText}
-                        label="Fiches mémo"
-                        value={safeStats.memos}
-                        tone="blue"
-                    />
-
-                    <StatCard
-                        icon={BookOpen}
-                        label="Étapes"
-                        value={safeStats.steps_total}
-                        tone="purple"
-                    />
-
-                    <StatCard
-                        icon={CheckCircle2}
-                        label="Terminées"
-                        value={safeStats.steps_completed}
-                        tone="green"
-                    />
-                </section>
-
-                {/* =========================================================
-                    ROADMAPS
-                ========================================================= */}
-                <section data-gsap-reveal>
-                    <div className="mb-4 flex items-end justify-between gap-4">
-                        <div>
-                            <h2 className="text-lg font-bold text-white">
-                                Mes roadmaps
-                            </h2>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                                Continue là où tu t'es arrêté.
-                            </p>
-                        </div>
-
-                        <Link
-                            href="/roadmaps"
-                            className="shrink-0 text-xs font-semibold text-[#FF8A3D] transition hover:text-[#FFA66E]"
-                        >
-                            Voir tout
-                        </Link>
-                    </div>
-
-                    {recentRoadmaps.length > 0 ? (
-                        <div className="space-y-3">
-                            {recentRoadmaps.map((roadmap) => (
-                                <RoadmapCard
-                                    key={roadmap.id}
-                                    roadmap={roadmap}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <EmptyRoadmaps />
-                    )}
-                </section>
-
-                {/* =========================================================
-                    QUICK ACTIONS
-                ========================================================= */}
-                <section data-gsap-reveal>
-                    <div className="mb-4">
-                        <h2 className="text-lg font-bold text-white">
-                            Accès rapides
-                        </h2>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                            Les actions que tu utiliseras le plus.
-                        </p>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-3">
-                        <QuickAction
-                            href="/memos/create"
-                            icon={FileText}
-                            title="Nouvelle fiche mémo"
-                            description="Note une commande, une notion ou une astuce."
-                        />
-
-                        <QuickAction
-                            href="/roadmaps"
-                            icon={Map}
-                            title="Explorer mes roadmaps"
-                            description="Retrouve tous tes parcours d'apprentissage."
-                        />
-
-                        <QuickAction
-                            href="/search"
-                            icon={Search}
-                            title="Recherche globale"
-                            description="Recherche dans tes roadmaps, mémos et étapes."
-                        />
-                    </div>
-                </section>
+                </div>
             </div>
         </AppLayout>
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Progress Ring
-|--------------------------------------------------------------------------
-*/
+function ResumeCard({ resume, hasRoadmaps }) {
+    const radius = 29;
+    const circumference = 2 * Math.PI * radius;
 
-function ProgressRing({ progress }) {
-    const safeProgress = clampProgress(progress);
+    if (!resume) {
+        return (
+            <section data-anim="block" aria-label="Commencer" className="flex flex-col gap-4 rounded-[22px] border border-[var(--dr-border)] bg-[var(--dr-surface)] p-[18px] shadow-[var(--dr-shadow)]">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dr-accent-text)]">{hasRoadmaps ? "Bravo" : "Pour commencer"}</span>
+                <span className="text-[17px] font-bold leading-[1.3]">{hasRoadmaps ? "Toutes tes étapes sont terminées." : "Crée ton premier parcours."}</span>
+                <span className="text-[13px] text-[var(--dr-text-2)]">{hasRoadmaps ? "Lance un nouveau parcours pour continuer à progresser." : "Une roadmap découpe ce que tu veux apprendre en étapes simples."}</span>
+                <MotionLink whileTap={{ scale: 0.97 }} href="/roadmaps/create" className="flex h-12 items-center justify-center gap-2 rounded-[14px] bg-[var(--dr-accent)] text-[15px] font-bold text-[var(--dr-ink)]">
+                    {hasRoadmaps ? "Nouveau parcours" : "Créer ma roadmap"}<Svg d={ICONS.arrow} size={16} stroke={2.4} />
+                </MotionLink>
+            </section>
+        );
+    }
 
-    return (
-        <div className="flex items-center gap-4">
-            <div className="relative h-20 w-20 shrink-0">
-                <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-                    <circle
-                        cx="18"
-                        cy="18"
-                        r="15"
-                        fill="none"
-                        stroke="rgba(255,255,255,0.06)"
-                        strokeWidth="3"
-                    />
-
-                    <circle
-                        cx="18"
-                        cy="18"
-                        r="15"
-                        fill="none"
-                        stroke="#FF6A00"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeDasharray={`${safeProgress} 100`}
-                    />
-                </svg>
-
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-base font-bold text-white">
-                        {safeProgress}%
-                    </span>
-                </div>
-            </div>
-
-            <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-600">
-                    Avancement
-                </p>
-
-                <p className="mt-1 text-base font-bold text-white">
-                    {getProgressLabel(safeProgress)}
-                </p>
-            </div>
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| Stat Card
-|--------------------------------------------------------------------------
-*/
-
-function StatCard({ icon: Icon, label, value, tone }) {
-    const tones = {
-        orange: {
-            background: "bg-[#FF6A00]/10",
-            text: "text-[#FF8A3D]",
-        },
-        blue: {
-            background: "bg-blue-500/10",
-            text: "text-blue-400",
-        },
-        purple: {
-            background: "bg-violet-500/10",
-            text: "text-violet-400",
-        },
-        green: {
-            background: "bg-emerald-500/10",
-            text: "text-emerald-400",
-        },
-    };
-
-    const currentTone = tones[tone] ?? tones.orange;
+    const progress = clamp(resume.progress);
+    const step = resume.current_step;
 
     return (
-        <div className="rounded-2xl border border-white/[0.06] bg-[#0D1725] p-4 sm:p-5">
-            <div
-                className={[
-                    "flex h-10 w-10 items-center justify-center rounded-xl",
-                    currentTone.background,
-                    currentTone.text,
-                ].join(" ")}
-            >
-                <Icon size={19} strokeWidth={2} />
-            </div>
-
-            <div className="mt-4">
-                <p className="text-2xl font-bold tracking-tight text-white">
-                    {value}
-                </p>
-
-                <p className="mt-1 text-xs font-medium text-slate-500">
-                    {label}
-                </p>
-            </div>
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| Roadmap Card
-|--------------------------------------------------------------------------
-*/
-
-function RoadmapCard({ roadmap }) {
-    const progress = clampProgress(roadmap.progress);
-    const logo = getTechnologyLogo(roadmap.technology);
-
-    return (
-        <Link
-            href={`/roadmaps/${roadmap.id}`}
-            className="
-                group
-                block
-                rounded-2xl
-                border
-                border-white/[0.06]
-                bg-[#0D1725]
-                p-4
-                transition
-                hover:border-white/[0.11]
-                hover:bg-[#101B2C]
-            "
-        >
+        <section data-anim="block" aria-label="Reprendre" className="flex flex-col gap-4 rounded-[22px] border border-[var(--dr-border)] bg-[var(--dr-surface)] p-[18px] shadow-[var(--dr-shadow)]">
             <div className="flex items-center gap-4">
-                {/* Technology */}
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] p-2">
-                    {logo ? (
-                        <img
-                            src={logo}
-                            alt={`${roadmap.title} logo`}
-                            className="h-full w-full object-contain"
+                <div className="relative h-[68px] w-[68px] shrink-0">
+                    <svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true">
+                        <circle cx="34" cy="34" r={radius} fill="none" stroke="var(--dr-field)" strokeWidth="7" />
+                        <m.circle
+                            cx="34" cy="34" r={radius} fill="none" stroke="var(--dr-accent)" strokeWidth="7" strokeLinecap="round"
+                            strokeDasharray={circumference}
+                            initial={{ strokeDashoffset: circumference }}
+                            animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
+                            transition={{ ...softSpring, delay: 0.2 }}
+                            transform="rotate(-90 34 34)"
                         />
-                    ) : (
-                        <span className="text-lg font-bold text-[#FF8A3D]">
-                            {getInitial(roadmap.title)}
-                        </span>
-                    )}
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-base font-bold tabular-nums">{progress}%</span>
                 </div>
-
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <h3 className="truncate text-sm font-semibold text-white">
-                                {roadmap.title}
-                            </h3>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                                {formatStatus(roadmap.status)}
-                            </p>
-                        </div>
-
-                        <span className="shrink-0 text-xs font-semibold text-slate-400">
-                            {progress}%
-                        </span>
-                    </div>
-
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                        <div
-                            className="h-full rounded-full bg-[#FF6A00] transition-all duration-500"
-                            style={{
-                                width: `${progress}%`,
-                            }}
-                        />
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between">
-                        <span className="text-[11px] text-slate-600">
-                            {roadmap.completed_steps_count ?? 0} /{" "}
-                            {roadmap.steps_count ?? 0} étapes
-                        </span>
-
-                        <ArrowRight
-                            size={15}
-                            className="text-slate-600 transition group-hover:translate-x-0.5 group-hover:text-[#FF8A3D]"
-                        />
-                    </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dr-accent-text)]">Reprendre</span>
+                    <span className="text-[17px] font-bold leading-[1.3]">{resume.title}</span>
+                    <span className="text-[13px] text-[var(--dr-text-2)]">{resume.completed_steps_count ?? 0} {(resume.completed_steps_count ?? 0) > 1 ? "étapes" : "étape"} sur {resume.steps_count ?? 0}</span>
                 </div>
             </div>
-        </Link>
+            {step && <div className="flex items-center gap-3 rounded-[14px] bg-[var(--dr-field)] px-3.5 py-3">
+                <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-[var(--dr-accent)] shadow-[0_0_0_4px_var(--dr-accent-soft)]" />
+                <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-xs text-[var(--dr-text-3)]">Étape suivante</span>
+                    <span className="truncate text-sm font-semibold">{step.title}</span>
+                </span>
+            </div>}
+            <MotionLink whileTap={{ scale: 0.97 }} href={step ? "/steps/" + step.id : "/roadmaps/" + resume.id} className="flex h-12 items-center justify-center gap-2 rounded-[14px] bg-[var(--dr-accent)] text-[15px] font-bold text-[var(--dr-ink)]">
+                Continuer<Svg d={ICONS.arrow} size={16} stroke={2.4} />
+            </MotionLink>
+        </section>
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Quick Action
-|--------------------------------------------------------------------------
-*/
-
-function QuickAction({ href, icon: Icon, title, description }) {
+function Shortcut({ href, icon, label, className = "" }) {
     return (
-        <Link
-            href={href}
-            className="
-                group
-                relative
-                isolate
-                flex
-                min-h-[104px]
-                overflow-hidden
-                rounded-2xl
-                border
-                border-white/[0.06]
-                bg-[#0D1725]
-                px-4
-                py-3.5
-                transition
-                hover:border-white/[0.11]
-                hover:bg-[#101B2C]
-            "
-        >
-            <Icon
-                aria-hidden="true"
-                size={76}
-                strokeWidth={1.35}
-                className="
-                    pointer-events-none
-                    absolute
-                    right-3
-                    top-1/2
-                    z-0
-                    -translate-y-1/2
-                    text-[#FF6A00]
-                    opacity-[0.08]
-                    transition
-                    duration-300
-                    group-hover:scale-105
-                    group-hover:opacity-[0.13]
-                "
-            />
-
-            <div className="relative z-10 flex min-w-0 max-w-[82%] flex-col justify-center">
-                <h3 className="text-sm font-semibold text-white">{title}</h3>
-
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                    {description}
-                </p>
-            </div>
-        </Link>
+        <MotionLink whileTap={{ scale: 0.96 }} href={href} className={"flex flex-col gap-2.5 rounded-[18px] border border-[var(--dr-border)] bg-[var(--dr-surface)] p-3.5 text-[var(--dr-text)] " + className}>
+            <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]"><Svg d={icon} /></span>
+            <span className="text-sm font-semibold">{label}</span>
+        </MotionLink>
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Empty state
-|--------------------------------------------------------------------------
-*/
-
-function EmptyRoadmaps() {
+function SectionTitle({ title, href }) {
     return (
-        <div className="rounded-2xl border border-dashed border-white/[0.08] bg-[#0D1725] p-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FF6A00]/10 text-[#FF8A3D]">
-                <Map size={25} />
-            </div>
-
-            <h3 className="mt-4 text-base font-semibold text-white">
-                Aucune roadmap pour le moment
-            </h3>
-
-            <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">
-                Crée ton premier parcours d'apprentissage pour commencer à
-                structurer ta progression.
-            </p>
-
-            <Link
-                href="/roadmaps/create"
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ff781a]"
-            >
-                <Map size={16} />
-                Créer une roadmap
-            </Link>
+        <div className="flex items-baseline justify-between">
+            <h2 className="m-0 text-[17px] font-bold">{title}</h2>
+            <Link href={href} className="text-sm font-semibold text-[var(--dr-accent-text)]">Tout voir</Link>
         </div>
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Helpers
-|--------------------------------------------------------------------------
-*/
-
-
-function formatLearningLevel(level) {
-    return {
-        beginner: 'Débutant',
-        intermediate: 'Intermédiaire',
-        professional: 'Professionnel',
-    }[level] ?? 'Non défini';
-}
-
-function formatAcademicLevel(level) {
-    return {
-        licence: 'Licence',
-        engineering: 'Cycle Ingénieur',
-    }[level] ?? 'Parcours personnalisé';
-}
-
-function getTechnologyLogo(title) {
-    if (!title) {
-        return null;
-    }
-
-    const normalized = title
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, "")
-        .replace(/_/g, "-");
-
+function RoadmapRow({ roadmap }) {
+    const progress = clamp(roadmap.progress);
     return (
-        technologyLogos[normalized] ??
-        technologyLogos[normalized.replace(/\./g, "")] ??
-        null
+        <MotionLink whileTap={{ scale: 0.985 }} href={"/roadmaps/" + roadmap.id} className="flex items-center gap-3 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] px-3.5 py-3 text-[var(--dr-text)]">
+            <span aria-hidden="true" className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[var(--dr-field)] font-['JetBrains_Mono',ui-monospace,monospace] text-sm text-[var(--dr-accent-text)]">{monogram(roadmap.title)}</span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <span className="flex items-baseline justify-between gap-3">
+                    <span className="truncate text-[15px] font-semibold">{roadmap.title}</span>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--dr-text-2)]">{progress}%</span>
+                </span>
+                <span className="h-1.5 overflow-hidden rounded-full bg-[var(--dr-field)]">
+                    <m.span className="block h-full rounded-full bg-[var(--dr-accent)]" initial={{ width: 0 }} animate={{ width: progress + "%" }} transition={{ ...softSpring, delay: 0.25 }} />
+                </span>
+                {roadmap.current_step && <span className="truncate text-xs text-[var(--dr-text-3)]">Étape suivante : {roadmap.current_step.title}</span>}
+            </span>
+        </MotionLink>
     );
 }
 
-function getInitial(title) {
-    return title?.trim()?.charAt(0)?.toUpperCase() ?? "D";
+function Stat({ label, value }) {
+    return (
+        <div className="flex flex-col gap-0.5 rounded-[14px] bg-[var(--dr-field)] px-3 py-2.5">
+            <dt className="text-xs text-[var(--dr-text-3)]">{label}</dt>
+            <dd className="m-0 text-lg font-bold tabular-nums">{value}</dd>
+        </div>
+    );
 }
 
-function clampProgress(value) {
-    const progress = Number(value ?? 0);
-
-    return Math.min(Math.max(progress, 0), 100);
-}
-
-function formatStatus(status) {
-    const labels = {
-        draft: "Brouillon",
-        active: "En cours",
-        completed: "Terminée",
-        archived: "Archivée",
-    };
-
-    return labels[status] ?? status;
-}
-
-function getProgressLabel(progress) {
-    if (progress >= 80) {
-        return "Excellent";
-    }
-
-    if (progress >= 50) {
-        return "Bon rythme";
-    }
-
-    if (progress > 0) {
-        return "Continue";
-    }
-
-    return "À commencer";
+function EmptyRow({ text, action, href }) {
+    return (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--dr-border-2)] px-3.5 py-3.5 text-sm text-[var(--dr-text-2)]">
+            <span>{text}</span>
+            <Link href={href} className="shrink-0 font-semibold text-[var(--dr-accent-text)]">{action}</Link>
+        </div>
+    );
 }

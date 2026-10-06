@@ -23,6 +23,13 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
     const mobileSheetDragRef = useRef(null);
     const editorRef = useRef(null);
     const importRef = useRef(null);
+    // Historique d'annulation par fichier : { past: [], future: [], lastAt, lastKind }.
+    // Le navigateur perd le sien dès que le contenu est modifié par le code
+    // (complétion, symboles, changement d'onglet) : on tient donc le nôtre.
+    const historyRef = useRef(new Map());
+    // Brouillons non encore sauvegardés, pour ne rien perdre en changeant d'onglet.
+    const pendingRef = useRef(new Map());
+    const [, setHistoryVersion] = useState(0);
 
     const current = files.find((file) => file.path === active) ?? files[0];
 
@@ -32,15 +39,121 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
 
     useEffect(() => {
         const file = files.find((item) => item.path === active) ?? files[0];
-        setDraft(file?.content ?? "");
-        setSaved(true);
+        const pending = file ? pendingRef.current.get(file.id) : undefined;
+        setDraft(pending ?? file?.content ?? "");
+        setSaved(pending === undefined);
     }, [active, project.id]);
+
+    useEffect(() => {
+        historyRef.current = new Map();
+        pendingRef.current = new Map();
+        setHistoryVersion((value) => value + 1);
+    }, [project.id]);
+
+    function historyFor(path) {
+        if (!historyRef.current.has(path)) {
+            historyRef.current.set(path, { past: [], future: [], lastAt: 0, lastKind: null });
+        }
+        return historyRef.current.get(path);
+    }
+
+    /** Position du curseur après annulation : fin de la zone qui a changé. */
+    function changedCaret(from, to) {
+        let prefix = 0;
+        while (prefix < from.length && prefix < to.length && from[prefix] === to[prefix]) prefix += 1;
+        let suffix = 0;
+        while (suffix < from.length - prefix && suffix < to.length - prefix && from[from.length - 1 - suffix] === to[to.length - 1 - suffix]) suffix += 1;
+        return to.length - suffix;
+    }
+
+    /**
+     * Applique un nouveau contenu en l'enregistrant dans l'historique.
+     * Les frappes rapprochées d'un même mot sont regroupées (une annulation =
+     * un mot) ; un espace, un retour à la ligne ou une insertion par le code
+     * (complétion, symbole) commence une nouvelle étape.
+     */
+    function commit(value, kind = "type") {
+        if (!current || value === draft) return;
+        const history = historyFor(current.path);
+        const now = Date.now();
+        // Caractère qui vient d'être tapé (juste avant le curseur).
+        const caret = editorRef.current?.selectionStart ?? value.length;
+        const lastChar = value.length > draft.length ? value.charAt(caret - 1) : "";
+        const boundary = kind !== "type" || history.lastKind !== kind || now - history.lastAt > 800 || /\s/.test(lastChar);
+
+        if (boundary || history.past.length === 0) {
+            history.past.push({ content: draft });
+            if (history.past.length > 200) history.past.shift();
+        }
+        history.future = [];
+        history.lastAt = now;
+        history.lastKind = kind;
+
+        pendingRef.current.set(current.id, value);
+        setDraft(value);
+        setSaved(false);
+        setHistoryVersion((v) => v + 1);
+    }
+
+    function restore(snapshot) {
+        const caret = changedCaret(draft, snapshot.content);
+        pendingRef.current.set(current.id, snapshot.content);
+        setDraft(snapshot.content);
+        setSaved(false);
+        setHistoryVersion((v) => v + 1);
+        requestAnimationFrame(() => {
+            const textarea = editorRef.current;
+            if (!textarea) return;
+            textarea.focus();
+            textarea.setSelectionRange(caret, caret);
+        });
+    }
+
+    function undo() {
+        if (!current) return;
+        const history = historyFor(current.path);
+        const previous = history.past.pop();
+        if (!previous) return;
+        history.future.push({ content: draft });
+        history.lastKind = null;
+        restore(previous);
+    }
+
+    function redo() {
+        if (!current) return;
+        const history = historyFor(current.path);
+        const next = history.future.pop();
+        if (!next) return;
+        history.past.push({ content: draft });
+        history.lastKind = null;
+        restore(next);
+    }
+
+    const currentHistory = current ? historyRef.current.get(current.path) : null;
+    const canUndo = Boolean(currentHistory?.past.length);
+    const canRedo = Boolean(currentHistory?.future.length);
+
+    /** Change d'onglet en sauvegardant d'abord le brouillon en attente (aucune perte). */
+    function selectFile(path) {
+        if (path === active) return;
+        if (current && !saved) {
+            const file = current;
+            const content = draft;
+            onSave(file, { path: file.path, content })
+                .then(() => {
+                    if (pendingRef.current.get(file.id) === content) pendingRef.current.delete(file.id);
+                })
+                .catch(() => {});
+        }
+        setActive(path);
+    }
 
     useEffect(() => {
         if (saved || !current) return;
         const timer = window.setTimeout(async () => {
             try {
                 await onSave(current, { path: current.path, content: draft });
+                if (pendingRef.current.get(current.id) === draft) pendingRef.current.delete(current.id);
                 setSaved(true);
             } catch {}
         }, 900);
@@ -58,7 +171,12 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
             return "<!doctype html><html><body style='font-family:system-ui;padding:24px'><pre>Aucun aperçu HTML disponible.</pre></body></html>";
         }
 
+        // Les fichiers CSS/JS du projet sont injectés directement : on retire les
+        // balises qui pointent vers eux (bloquées par la sécurité de l'aperçu).
+        const isLocal = (url) => !/^(?:[a-z]+:)?\/\//i.test(url) && !url.startsWith("data:");
         return html
+            .replace(/<link\b[^>]*\bhref=["']([^"']+)["'][^>]*>/gi, (tag, href) => (/stylesheet/i.test(tag) && isLocal(href) ? "" : tag))
+            .replace(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>\s*<\/script>/gi, (tag, src) => (isLocal(src) ? "" : tag))
             .replace("</head>", "<style>" + css + "</style></head>")
             .replace("</body>", "<script>" + js.replaceAll("</script>", "") + "</script></body>");
     }, [files, current, draft]);
@@ -155,8 +273,12 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
     }
 
     async function removeFile(file) {
-        const deleted = await onDelete?.(file);
+        // Supprime avec le contenu le plus récent (brouillon compris) pour pouvoir le restaurer.
+        const latest = file.id === current?.id ? draft : (pendingRef.current.get(file.id) ?? file.content);
+        const deleted = await onDelete?.({ ...file, content: latest });
         if (!deleted) return;
+        pendingRef.current.delete(file.id);
+        historyRef.current.delete(file.path);
         const remaining = files.filter((item) => item.id !== file.id);
         const next = remaining[0];
         setActive(next?.path ?? "");
@@ -168,6 +290,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
         if (!current || saved) return;
         try {
             await onSave(current, { path: current.path, content: draft });
+            if (pendingRef.current.get(current.id) === draft) pendingRef.current.delete(current.id);
             setSaved(true);
         } catch {}
     }
@@ -181,16 +304,14 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
     function insertSymbol(symbol) {
         const textarea = editorRef.current;
         if (!textarea) {
-            setDraft((value) => value + symbol);
-            setSaved(false);
+            commit(draft + symbol, "insert");
             return;
         }
 
         const start = textarea.selectionStart ?? draft.length;
         const end = textarea.selectionEnd ?? start;
         const value = draft.slice(0, start) + symbol + draft.slice(end);
-        setDraft(value);
-        setSaved(false);
+        commit(value, "insert");
 
         requestAnimationFrame(() => {
             textarea.focus();
@@ -246,7 +367,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                 <EditorTabs
                     files={files}
                     activeFile={active}
-                    onSelect={setActive}
+                    onSelect={selectFile}
                     onCreate={onNewFile}
                     onImport={() => importRef.current?.click()}
                     onRename={renameFile}
@@ -262,10 +383,11 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                     lineCount={Math.max(1, draft.split("\n").length)}
                     copied={copied}
                     editorRef={editorRef}
-                    onChange={(value) => {
-                        setDraft(value);
-                        setSaved(false);
-                    }}
+                    onChange={(value, kind) => commit(value, kind)}
+                    onUndo={undo}
+                    onRedo={redo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
                     onCopy={copy}
                     onDelete={() => current && removeFile(current)}
                 />
@@ -338,7 +460,7 @@ export default function DevLabWorkspace({ project, onSave, onNewFile, onRename, 
                     <FileExplorer
                         files={files}
                         activeFile={active}
-                        onSelect={setActive}
+                        onSelect={selectFile}
                         onCreate={onNewFile}
                         onImport={() => importRef.current?.click()}
                         onRename={renameFile}

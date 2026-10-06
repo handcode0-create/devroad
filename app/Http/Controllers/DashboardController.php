@@ -106,6 +106,20 @@ class DashboardController extends Controller
                     : (int) round($stepsCompleted / $stepsTotal * 100),
             ],
             'recent_roadmaps' => $recentRoadmaps,
+            // Maquette « Mobile — Accueil » : les 3 fiches modifiées le plus récemment.
+            'recent_memos' => $user->memos()
+                ->with(['tags:id,name,slug', 'folder:id,name'])
+                ->latest('updated_at')
+                ->limit(3)
+                ->get(['id', 'title', 'folder_id', 'is_favorite', 'updated_at'])
+                ->map(fn ($memo) => [
+                    'id' => $memo->id,
+                    'title' => $memo->title,
+                    'is_favorite' => $memo->is_favorite,
+                    'updated_at' => $memo->updated_at,
+                    'folder' => $memo->folder?->name,
+                    'tag' => $memo->tags->first()?->name,
+                ]),
             'continue_roadmap' => $continueRoadmapData,
             'learning_profile' => $user->learningProfile ? [
                 'level' => $user->learningProfile->level,

@@ -224,4 +224,26 @@ class DashboardTest extends TestCase
                 ->where('recent_roadmaps.0.title', 'Ancienne')
                 ->where('recent_roadmaps.0.progress', 100));
     }
+
+    public function test_les_trois_fiches_les_plus_recentes_de_l_utilisateur_sont_listees(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $other->memos()->create(['title' => 'Fiche d’un autre', 'content' => 'x']);
+
+        foreach (['Ancienne', 'Moyenne', 'Récente', 'Toute neuve'] as $index => $title) {
+            $memo = $user->memos()->create(['title' => $title, 'content' => 'contenu']);
+            $memo->forceFill(['updated_at' => now()->subDays(10 - $index)])->saveQuietly();
+        }
+        $user->memos()->where('title', 'Toute neuve')->first()->syncTagNames(['laravel']);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Dashboard', false)
+                ->has('recent_memos', 3)
+                ->where('recent_memos.0.title', 'Toute neuve')
+                ->where('recent_memos.0.tag', 'laravel')
+                ->where('recent_memos.2.title', 'Moyenne'));
+    }
 }

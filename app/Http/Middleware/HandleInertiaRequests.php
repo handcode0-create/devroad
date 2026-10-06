@@ -34,6 +34,22 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Barre latérale desktop (maquette « Desktop — Fiches ») : compteurs et dossiers.
+            'nav' => fn () => $request->user() ? [
+                'roadmaps' => $request->user()->roadmaps()->count(),
+                'memos' => $request->user()->memos()->count(),
+                'folders' => $request->user()->memoFolders()
+                    ->withCount('memos')
+                    ->orderBy('position')
+                    ->orderBy('name')
+                    ->get(['id', 'parent_id', 'name'])
+                    ->map(fn ($folder) => [
+                        'id' => $folder->id,
+                        'parent_id' => $folder->parent_id,
+                        'name' => $folder->name,
+                        'memos_count' => $folder->memos_count,
+                    ]),
+            ] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

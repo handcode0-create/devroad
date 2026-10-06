@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
+import DesktopTopBar from '@/Components/Navigation/DesktopTopBar';
 import ToastViewport from '@/Components/Ui/ToastViewport';
 import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
 import { Box, Code2 } from 'lucide-react';
@@ -86,29 +87,7 @@ export default function AppLayout({ children, mobileHeader = true }) {
             <Sidebar user={user} />
 
             <div className="lg:pl-[260px]">
-                <header className="sticky top-0 z-30 hidden border-b border-white/[0.06] bg-[#08111F]/95 backdrop-blur-xl lg:block supports-[backdrop-filter]:bg-[#08111F]/85">
-                    <div className="flex h-[72px] items-center justify-between gap-6 px-6 xl:px-8">
-                        <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-400">Ton espace développeur</p>
-                            <h1 className="mt-0.5 truncate text-lg font-semibold tracking-tight text-white">Continue à progresser 🚀</h1>
-                        </div>
-
-                        <div className="flex shrink-0 items-center gap-3">
-                            <Link href="/search" className="touch-target group flex items-center justify-center rounded-xl border border-white/[0.07] bg-[#101A2A] text-slate-400 transition hover:border-white/[0.12] hover:bg-[#142033] hover:text-white" aria-label="Rechercher">
-                                <Icon name="search" size={19} />
-                            </Link>
-
-                            <Link href="/profile" className="flex min-h-11 max-w-[280px] items-center gap-3 rounded-xl border border-white/[0.07] bg-[#101A2A] px-3 py-2 transition hover:border-white/[0.12] hover:bg-[#142033]">
-                                <UserAvatar user={user} />
-                                <div className="hidden min-w-0 xl:block">
-                                    <p className="text-xs font-medium text-slate-400">Connecté en tant que</p>
-                                    <p className="max-w-[150px] truncate text-sm font-semibold text-white">{user?.name ?? 'Utilisateur'}</p>
-                                </div>
-                                <Icon name="chevronDown" size={16} className="ml-1 shrink-0 text-slate-500" />
-                            </Link>
-                        </div>
-                    </div>
-                </header>
+                <DesktopTopBar preference={themePreference} resolved={resolvedTheme} />
 
                 {mobileHeader && <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#08111F]/95 backdrop-blur-xl lg:hidden supports-[backdrop-filter]:bg-[#08111F]/85">
                     <div className="flex min-h-[64px] items-center justify-between gap-3 px-3 sm:px-5">

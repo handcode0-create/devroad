@@ -2,16 +2,13 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Bookmark, Check, ChevronDown, FileText, Folder, FolderPlus, LayoutGrid, List, MoreHorizontal, Pencil, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import AppLayout from '@/Layouts/AppLayout';
-import PageHeader from '@/Components/Ui/PageHeader';
 import Pagination from '@/Components/Ui/Pagination';
 import FavoriteButton from '@/Components/Memos/FavoriteButton';
-import TagBadge from '@/Components/Memos/TagBadge';
-import { buttonClass } from '@/Components/Ui/buttons';
 import Modal from '@/Components/Ui/Modal';
 import ConfirmModal from '@/Components/Ui/ConfirmModal';
 import useGsapScrollReveal from '@/hooks/useGsapScrollReveal';
 import { useMemoListMotion, useMenuPop, prefersReducedMotion } from '@/Components/Memos/memoMotion';
-import { Sheet, m, softSpring } from '@/Components/Ui/Motion';
+import { AnimatePresence, Sheet, m, softSpring } from '@/Components/Ui/Motion';
 import { gsap } from 'gsap';
 
 function listUrl({ tag, favorites, recent, q, folder, trash, sort }) {
@@ -424,11 +421,40 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
 
     const hasFilter = Boolean(filters.tag || filters.favorites || filters.recent || filters.q || filters.folder || filters.trash);
 
+    const tab = filters.trash ? 'trash' : filters.favorites ? 'favorites' : filters.recent ? 'recent' : (!filters.folder && !filters.tag ? 'all' : null);
+    const TABS = [
+        { key: 'all', label: 'Toutes', href: listUrl({ q: filters.q, sort: filters.sort }) },
+        { key: 'favorites', label: 'Favoris', href: listUrl({ favorites: true, q: filters.q, sort: filters.sort }) },
+        { key: 'recent', label: 'Récents', href: listUrl({ recent: true, q: filters.q, sort: filters.sort }) },
+        { key: 'trash', label: 'Corbeille', href: listUrl({ trash: true, sort: filters.sort }) },
+    ];
+    const shownTotal = memos?.total ?? items.length;
+    const subtitle = filters.q
+        ? plural(shownTotal, 'fiche', 'fiches') + ' pour « ' + filters.q + ' »'
+        : tab === 'all'
+            ? plural(counts.total ?? shownTotal, 'fiche', 'fiches') + ' · ' + (counts.favorites ?? 0) + ' en favoris'
+            : plural(shownTotal, 'fiche', 'fiches');
+
+    // Liens de la barre latérale : « Voir les N dossiers » et « Nouveau dossier ».
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const openLibrary = params.has('dossiers');
+        const newFolder = params.has('nouveau-dossier');
+        if (!openLibrary && !newFolder) return;
+        if (openLibrary) setMobileLibraryOpen(true);
+        if (newFolder) createFolder();
+        params.delete('dossiers');
+        params.delete('nouveau-dossier');
+        const rest = params.toString();
+        // Après l'initialisation de l'historique par Inertia, sinon l'URL est rétablie.
+        setTimeout(() => window.history.replaceState(window.history.state, '', window.location.pathname + (rest ? '?' + rest : '')), 0);
+    }, []);
+
     const libraryPanel = (
-                        <div className="sticky top-5 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-3">
+                        <div className="rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-3 lg:border-0 lg:bg-transparent lg:p-0">
                             <div className="mb-3 flex items-center gap-2 px-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF6A00]/10 text-[#FF8A3D]"><Folder size={16} /></div>
-                                <div className="min-w-0"><p className="text-xs font-semibold text-white">Mon espace</p><p className="text-[10px] text-slate-500">{counts.total ?? 0} fiches</p></div>
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]"><Folder size={16} /></div>
+                                <div className="min-w-0"><p className="text-sm font-semibold text-[var(--dr-text)]">Mon espace</p><p className="text-xs text-[var(--dr-text-3)]">{counts.total ?? 0} fiches</p></div>
                             </div>
                             <div className="space-y-1">
                                 <NavItem href="/memos" active={!hasFilter} icon={FileText} label="Toutes les fiches" count={counts.total} />
@@ -436,23 +462,23 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                                 <NavItem href={listUrl({ trash: true })} active={Boolean(filters.trash)} icon={Trash2} label="Corbeille" count={counts.trash} />
                                 <NavItem href={listUrl({ recent: true })} active={Boolean(filters.recent)} icon={Sparkles} label="Récents" count={counts.recent} />
                             </div>
-                            <div className="mt-5 border-t border-white/[0.06] pt-4">
+                            <div className="mt-5 border-t border-[var(--dr-border)] pt-4">
                                 <div
                                     onDragOver={(event) => { if (dragged) { event.preventDefault(); setDropTarget('root'); } }}
                                     onDragLeave={() => setDropTarget((current) => (current === 'root' ? null : current))}
                                     onDrop={(event) => { event.preventDefault(); dropOnRoot(event); }}
-                                    className={'mb-2 flex items-center justify-between rounded-lg px-2 py-1 transition ' + (dropTarget === 'root' ? 'bg-[#FF6A00]/10 ring-1 ring-[#FF6A00]/30' : '')}
+                                    className={'mb-2 flex items-center justify-between rounded-lg px-2 py-1 transition ' + (dropTarget === 'root' ? 'bg-[var(--dr-accent-soft)] ring-1 ring-[var(--dr-accent)]' : '')}
                                 >
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Dossiers</span>
-                                    <button type="button" onClick={() => createFolder()} className="text-slate-600 transition hover:text-[#FF8A3D]" title="Nouveau dossier"><FolderPlus size={14} /></button>
+                                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">Dossiers</span>
+                                    <button type="button" onClick={() => createFolder()} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--dr-text-3)] transition hover:bg-[var(--dr-field)] hover:text-[var(--dr-accent-text)]" title="Nouveau dossier"><FolderPlus size={14} /></button>
                                 </div>
                                 <div className="space-y-1">
                                     {buildFolderTree(folders).map((folder) => <FolderNavItem key={folder.id} folder={folder} active={Number(filters.folder) === folder.id} onCreateChild={createFolder} onRename={renameFolder} onMove={openMoveFolder} onDelete={deleteFolder} onMoveUp={() => moveFolderByOffset(folder, -1)} onMoveDown={() => moveFolderByOffset(folder, 1)} activeMenu={activeFolderMenu} onMenu={(id) => setActiveFolderMenu((current) => current === id ? null : id)} isDragging={dragged?.type === 'folder' && dragged.id === folder.id} isDropTarget={dropTarget === folder.id} onDragStartFolder={startDragFolder} onDragEnd={endDrag} onDragOverTarget={() => setDropTarget(folder.id)} onDropReorder={reorderFolder} onDropNest={dropOnFolder} canDrop={Boolean(dragged)} />)}
-                                    {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-600 hover:bg-white/[0.035] hover:text-slate-300"><FolderPlus size={14} />Créer ton premier dossier</button>}
+                                    {folders.length === 0 && <button type="button" onClick={() => createFolder()} className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-[var(--dr-text-3)] hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)]"><FolderPlus size={14} />Créer ton premier dossier</button>}
                                 </div>
                             </div>
-                            {tags.length > 0 && <div className="mt-5 border-t border-white/[0.06] pt-4">
-                                <div className="mb-2 flex items-center justify-between px-2"><span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Collections</span><span className="text-[10px] text-slate-600">{tags.length}</span></div>
+                            {tags.length > 0 && <div className="mt-5 border-t border-[var(--dr-border)] pt-4">
+                                <div className="mb-2 flex items-center justify-between px-2"><span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dr-text-3)]">Collections</span><span className="text-xs text-[var(--dr-text-3)]">{tags.length}</span></div>
                                 <div className="space-y-1">
                                     {tags.map((tag) => <NavItem key={tag.id} href={listUrl({ tag: filters.tag === tag.slug ? null : tag.slug, q: filters.q })} active={filters.tag === tag.slug} icon={Folder} label={tag.name} count={tag.memos_count} />)}
                                 </div>
@@ -481,8 +507,11 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                 onOpenLibrary={() => setMobileLibraryOpen(true)}
                 onActions={setActionsMemo}
             />}
-            <Sheet open={!isDesktop && mobileLibraryOpen} onClose={() => setMobileLibraryOpen(false)} label="Dossiers" className="max-h-[85dvh] gap-3 overflow-y-auto pb-[calc(24px+env(safe-area-inset-bottom))]">
-                <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">Dossiers</h2>
+            <Sheet open={mobileLibraryOpen} onClose={() => setMobileLibraryOpen(false)} label="Dossiers et collections" desktopCentered className="max-h-[85dvh] gap-3 overflow-y-auto pb-[calc(24px+env(safe-area-inset-bottom))] lg:max-w-[480px] lg:rounded-[24px] lg:border lg:pb-6">
+                <div className="flex items-center justify-between gap-3">
+                    <h2 className="m-0 font-['Manrope',sans-serif] text-2xl font-extrabold tracking-[-0.02em]">{isDesktop ? 'Dossiers et collections' : 'Dossiers'}</h2>
+                    {isDesktop && <button type="button" onClick={() => setMobileLibraryOpen(false)} aria-label="Fermer" className="flex h-9 w-9 items-center justify-center rounded-[10px] text-[var(--dr-text-3)] hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)]"><X size={18} /></button>}
+                </div>
                 <div onClick={(event) => { if (event.target.closest('a')) setMobileLibraryOpen(false); }}>{libraryPanel}</div>
             </Sheet>
             <Sheet open={!isDesktop && Boolean(actionsMemo)} onClose={() => setActionsMemo(null)} label={shownActionsMemo?.title} className="gap-3 pb-[calc(24px+env(safe-area-inset-bottom))]">
@@ -502,72 +531,91 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
                 </div>
                 </>}
             </Sheet>
-            {isDesktop && <div ref={animationRef} className="space-y-5">
-                <PageHeader title="Fiches mémo" subtitle="Un espace de rangement façon Notion pour organiser tes connaissances, commandes et astuces." actions={
-                    <Link href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className={buttonClass('primary')}>
-                        <Plus size={16} aria-hidden="true" />
-                        <span className="hidden sm:inline">Nouvelle fiche</span>
-                        <span className="sm:hidden">Nouvelle</span>
-                    </Link>
-                } />
+            {isDesktop && <div ref={animationRef} className="flex flex-col gap-7 font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)]">
+                {/* En-tête — artboard « Desktop — Fiches » */}
+                <div data-gsap-reveal className="flex flex-wrap items-end justify-between gap-4">
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                        {activeFolderPath.length > 0 && <nav aria-label="Fil d'Ariane" className="flex flex-wrap items-center gap-1 text-[13px] text-[var(--dr-text-3)]">
+                            <Link href="/memos" className="hover:text-[var(--dr-accent-text)]">Fiches</Link>
+                            {activeFolderPath.map((folder) => <span key={folder.id} className="flex items-center gap-1"><span aria-hidden="true">/</span><Link href={listUrl({ folder: folder.id, sort: filters.sort })} className="hover:text-[var(--dr-accent-text)]">{folder.name}</Link></span>)}
+                        </nav>}
+                        <h1 className="m-0 truncate font-['Manrope',sans-serif] text-[38px] font-extrabold leading-[1.05] tracking-[-0.03em]">{tab === 'all' ? 'Fiches mémo' : activeFolder}</h1>
+                        <span className="text-[15px] text-[var(--dr-text-2)]">{subtitle}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div role="tablist" aria-label="Filtrer" className="flex gap-1 rounded-xl bg-[var(--dr-field)] p-1">
+                            {TABS.map((item) => {
+                                const active = tab === item.key;
+                                return <Link key={item.key} role="tab" aria-selected={active} href={item.href} preserveScroll className={'relative flex h-[34px] items-center rounded-[9px] px-3.5 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (active ? 'font-semibold text-[var(--dr-text)]' : 'text-[var(--dr-text-2)] hover:text-[var(--dr-text)]')}>
+                                    {active && <m.span layoutId="memos-tab" transition={softSpring} aria-hidden="true" className="absolute inset-0 rounded-[9px] bg-[var(--dr-surface)] shadow-[var(--dr-shadow)]" />}
+                                    <span className="relative">{item.label}</span>
+                                    {item.key === 'trash' && counts.trash > 0 && <span className="relative ml-1.5 text-[11px] tabular-nums text-[var(--dr-text-3)]">{counts.trash}</span>}
+                                </Link>;
+                            })}
+                        </div>
+                        <MotionLink whileTap={{ scale: 0.97 }} href={filters.folder ? '/memos/create?folder=' + filters.folder : '/memos/create'} className="flex h-[42px] items-center gap-2 rounded-xl bg-[var(--dr-accent)] px-4 text-sm font-bold text-[var(--dr-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--dr-accent)]">
+                            <Plus size={16} strokeWidth={2.4} aria-hidden="true" />Nouvelle fiche
+                        </MotionLink>
+                    </div>
+                </div>
 
-                <div data-gsap-reveal className="flex items-center gap-2 lg:hidden">
-                    <button type="button" onClick={() => setMobileLibraryOpen((open) => !open)} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0D1725] px-3 py-2 text-xs font-semibold text-slate-300">
-                        <Folder size={15} className="text-[#FF8A3D]" /> Rangement
-                        <ChevronDown size={14} className={mobileLibraryOpen ? 'rotate-180 transition' : 'transition'} />
+                {/* Barre d'outils : recherche dans les fiches, tri, affichage, dossiers */}
+                <div data-gsap-reveal className="-mt-2 flex flex-wrap items-center gap-2">
+                    <form onSubmit={submitSearch} role="search" className="m-0 flex min-w-[220px] max-w-[340px] flex-1">
+                        <label className="flex h-10 w-full items-center gap-2 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-3 text-[var(--dr-text-3)] focus-within:border-[var(--dr-accent)]">
+                            <Search size={15} aria-hidden="true" />
+                            <input data-memo-search data-dr-native type="search" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Filtrer les fiches" placeholder="Filtrer ces fiches…  ( / )" className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-sm text-[var(--dr-text)] outline-none placeholder:text-[var(--dr-text-3)] focus:ring-0 [&::-webkit-search-cancel-button]:hidden" />
+                            {query && <button type="button" onClick={clearSearch} aria-label="Effacer la recherche" className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-[var(--dr-surface)] hover:text-[var(--dr-text)]"><X size={14} /></button>}
+                        </label>
+                    </form>
+                    <button type="button" onClick={() => setMobileLibraryOpen(true)} className="flex h-10 items-center gap-2 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] px-3.5 text-[13px] font-semibold text-[var(--dr-text)] hover:border-[var(--dr-border-2)]">
+                        <Folder size={15} className="text-[var(--dr-accent-text)]" aria-hidden="true" />Dossiers et collections
                     </button>
-                    <span className="truncate text-xs text-slate-500">{activeFolder}</span>
+                    {filters.tag && <Link href={listUrl({ folder: filters.folder, sort: filters.sort })} className="flex h-10 items-center gap-1.5 rounded-xl bg-[var(--dr-accent-soft)] px-3 text-[13px] font-semibold text-[var(--dr-accent-text)]" aria-label="Retirer le filtre de collection">#{tags.find((tag) => tag.slug === filters.tag)?.name ?? filters.tag}<X size={13} /></Link>}
+                    <div className="ml-auto flex items-center gap-2">
+                        {filters.trash && counts.trash > 0 && <button type="button" onClick={() => setEmptyTrashOpen(true)} className="h-10 rounded-xl px-3 text-[13px] font-semibold text-[var(--dr-danger)] hover:bg-[var(--dr-field)]">Vider la corbeille</button>}
+                        <select data-dr-native value={filters.sort ?? 'updated_desc'} onChange={(event) => changeSort(event.target.value)} className="h-10 rounded-xl border border-[var(--dr-border)] bg-[var(--dr-surface)] py-0 pl-3 pr-8 text-[13px] font-semibold text-[var(--dr-text)] outline-none focus:border-[var(--dr-accent)] focus:ring-0" aria-label="Trier les fiches">
+                            <option value="updated_desc">Plus récentes</option><option value="updated_asc">Plus anciennes</option><option value="title_asc">A → Z</option><option value="title_desc">Z → A</option><option value="favorite">Favoris d'abord</option>
+                        </select>
+                        <div className="flex rounded-xl bg-[var(--dr-field)] p-1" role="group" aria-label="Affichage">
+                            <ViewButton active={view === 'grid'} onClick={() => changeView('grid')} icon={LayoutGrid} label="Grille" />
+                            <ViewButton active={view === 'list'} onClick={() => changeView('list')} icon={List} label="Liste" />
+                        </div>
+                    </div>
                 </div>
 
-                <div data-gsap-reveal className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
-                    <aside data-gsap-reveal className={(mobileLibraryOpen ? 'block' : 'hidden') + ' lg:block'}>
-                        {libraryPanel}
-                    </aside>
-
-                    <section data-gsap-reveal className="min-w-0">
-                        <div className="mb-4 rounded-2xl border border-white/[0.06] bg-[#0D1725] p-3">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
-                                    <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
-                                    <input data-memo-search type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher dans tes fiches..." className="h-10 w-full rounded-xl border border-white/[0.06] bg-[#08111F] pl-9 pr-10 text-sm text-white outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-slate-600 focus:border-[#FF6A00]/40 focus:ring-2 focus:ring-[#FF6A00]/5" />
-                                    {query && <button type="button" onClick={clearSearch} aria-label="Effacer la recherche" className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-white"><X size={14} /></button>}
-                                </form>
-                                <div className="flex items-center gap-2">
-                                    <select value={filters.sort ?? 'updated_desc'} onChange={(event) => changeSort(event.target.value)} className="h-9 rounded-lg border border-white/[0.06] bg-[#08111F] py-0 pl-2.5 pr-8 text-xs font-semibold leading-none text-slate-300 outline-none focus:border-[#FF6A00]/30" aria-label="Trier les fiches">
-                                        <option value="updated_desc">Plus récentes</option><option value="updated_asc">Plus anciennes</option><option value="title_asc">A → Z</option><option value="title_desc">Z → A</option><option value="favorite">Favoris d'abord</option>
-                                    </select>
-                                    <div className="flex rounded-xl border border-white/[0.06] bg-[#08111F] p-1">
-                                        <ViewButton active={view === 'list'} onClick={() => changeView('list')} icon={List} label="Liste" />
-                                        <ViewButton active={view === 'grid'} onClick={() => changeView('grid')} icon={LayoutGrid} label="Grille" />
-                                    </div>
-                                </div>
+                <section data-gsap-reveal aria-label="Fiches" className="-mt-2 min-w-0">
+                    <AnimatePresence initial={false}>
+                        {selectedIds.length > 0 && <m.div
+                            initial={{ opacity: 0, y: -6, height: 0 }}
+                            animate={{ opacity: 1, y: 0, height: 'auto' }}
+                            exit={{ opacity: 0, y: -6, height: 0 }}
+                            transition={softSpring}
+                            className="overflow-hidden"
+                        >
+                            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--dr-border-2)] bg-[var(--dr-surface-2)] px-3 py-2 shadow-[var(--dr-shadow)]" role="toolbar" aria-label="Actions sur la sélection">
+                                <label className="flex items-center gap-2 pr-2 text-[13px] font-semibold"><input type="checkbox" checked={selectedIds.length === items.length} onChange={toggleSelectAll} className="h-4 w-4 rounded border-[var(--dr-border-2)] bg-[var(--dr-field)] text-[var(--dr-accent)] focus:ring-[var(--dr-accent)]" />{plural(selectedIds.length, 'sélectionnée', 'sélectionnées')}</label>
+                                <span className="h-5 w-px bg-[var(--dr-border)]" aria-hidden="true" />
+                                {!filters.trash && <>
+                                    <BulkButton onClick={openBulkMove}>Déplacer</BulkButton>
+                                    <BulkButton onClick={() => bulkAction('favorite')}>Ajouter aux favoris</BulkButton>
+                                    <BulkButton danger onClick={() => setBulkDeleteOpen(true)}>Mettre à la corbeille</BulkButton>
+                                </>}
+                                {filters.trash && <>
+                                    <BulkButton accent onClick={() => bulkAction('restore')}>Restaurer</BulkButton>
+                                    <BulkButton danger onClick={() => setBulkDeleteOpen(true)}>Supprimer définitivement</BulkButton>
+                                </>}
+                                <button type="button" onClick={() => setSelectedIds([])} className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-[var(--dr-text-3)] hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)]" aria-label="Annuler la sélection"><X size={15} /></button>
                             </div>
-                        </div>
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
-                                    <Link href="/memos" className="hover:text-[#FF8A3D]">Mémos</Link>
-                                    {activeFolderPath.map((folder) => <span key={folder.id} className="flex items-center gap-1"><span className="text-slate-700">/</span><Link href={listUrl({ folder: folder.id, sort: filters.sort })} className="hover:text-[#FF8A3D]">{folder.name}</Link></span>)}
-                                </div>
-                                <h2 className="mt-1 truncate text-sm font-semibold text-white">{activeFolder}</h2>
-                                <p className="text-xs text-slate-600">{memos?.total ?? items.length} {memos?.total === 1 ? 'fiche' : 'fiches'}{filters.q ? ' pour « ' + filters.q + ' »' : ''}</p>
-                            </div>
-                            {filters.trash && counts.trash > 0 && <button type="button" onClick={() => setEmptyTrashOpen(true)} className="rounded-xl border border-red-400/15 bg-red-400/[0.05] px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/10">Vider la corbeille</button>}
-                            {hasFilter && <Link href="/memos" className="shrink-0 text-xs font-semibold text-[#FF8A3D] hover:text-[#FFB078]">Réinitialiser</Link>}
-                        </div>
-                        {loading ? <MemoSkeletons grid={view === 'grid'} /> : items.length > 0 ? <>
-                            <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-white/[0.05] bg-[#0D1725]/70 px-3 py-2">
-                                <label className="flex items-center gap-2 text-xs font-semibold text-slate-400"><input type="checkbox" checked={items.length > 0 && selectedIds.length === items.length} onChange={toggleSelectAll} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" /><span>{selectedIds.length ? selectedIds.length + ' sélectionnée(s)' : 'Sélectionner'}</span></label>
-                                {selectedIds.length > 0 && <div className="flex flex-wrap items-center gap-1.5">
-                                    {!filters.trash && <><button type="button" onClick={openBulkMove} className="rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08]">Déplacer</button><button type="button" onClick={() => bulkAction('favorite')} className="rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08]">Favori</button><button type="button" onClick={() => setBulkDeleteOpen(true)} className="rounded-lg bg-red-400/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-red-300 hover:bg-red-400/10">Supprimer</button></>}
-                                    {filters.trash && <><button type="button" onClick={() => bulkAction('restore')} className="rounded-lg bg-[#FF6A00]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D]">Restaurer</button><button type="button" onClick={() => setBulkDeleteOpen(true)} className="rounded-lg bg-red-400/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-red-300">Supprimer définitivement</button></>}
-                                    <button type="button" onClick={() => setSelectedIds([])} className="rounded-lg p-1.5 text-slate-500 hover:text-white" aria-label="Annuler la sélection"><X size={14} /></button>
-                                </div>}
-                            </div>
-                            <ul ref={listRef} className={view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'flex flex-col gap-2.5'}>{items.map((memo) => <li key={memo.id} className="min-w-0"><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} menuOpen={activeMenu === memo.id} folderPath={getFolderPath(memo.folder_id)} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} onDuplicate={duplicateMemo} onDelete={deleteMemo} onForceDelete={forceDeleteMemo} /></li>)}</ul><Pagination links={memos.links} />
-                        </> : <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />}
-                    </section>
-                </div>
+                        </m.div>}
+                    </AnimatePresence>
+                    {loading ? <MemoSkeletons grid={view === 'grid'} /> : items.length > 0 ? <>
+                        <ul ref={listRef} className={view === 'grid' ? 'grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]' : 'flex flex-col gap-2.5'}>
+                            {items.map((memo) => <li key={memo.id} className="min-w-0"><MemoCard memo={memo} grid={view === 'grid'} trash={Boolean(filters.trash)} selected={selectedIds.includes(memo.id)} selecting={selectedIds.length > 0} menuOpen={activeMenu === memo.id} folderPath={getFolderPath(memo.folder_id)} onSelect={() => toggleSelected(memo.id)} onMenu={() => setActiveMenu((current) => current === memo.id ? null : memo.id)} onDragStart={(event) => startDragMemo(memo, event)} onDragEnd={endDrag} onMove={openMoveMemo} onDuplicate={duplicateMemo} onDelete={deleteMemo} onForceDelete={forceDeleteMemo} /></li>)}
+                        </ul>
+                        <Pagination links={memos.links} />
+                    </> : <EmptyState filtered={hasFilter} trash={Boolean(filters.trash)} folder={Boolean(filters.folder)} />}
+                </section>
             </div>}
             <Modal show={folderModal.open} onClose={() => !folderProcessing && setFolderModal((current) => ({ ...current, open: false }))} title={folderModal.mode === 'rename' ? 'Renommer le dossier' : (folderModal.parentId ? 'Créer un sous-dossier' : 'Créer un dossier')} description={folderModal.mode === 'rename' ? 'Modifie le nom sans toucher aux fiches.' : 'Organise tes fiches dans une arborescence claire.'} footer={<div className="flex justify-end gap-2"><button type="button" onClick={() => setFolderModal((current) => ({ ...current, open: false }))} className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300">Annuler</button><button type="button" onClick={submitFolder} disabled={!folderName.trim() || folderProcessing} className="rounded-xl bg-[#FF6A00] px-4 py-2.5 text-sm font-bold text-[#08111F] disabled:opacity-50">{folderProcessing ? 'Enregistrement...' : (folderModal.mode === 'rename' ? 'Renommer' : 'Créer le dossier')}</button></div>}>
                 <label className="block"><span className="mb-2 block text-xs font-semibold text-slate-400">Nom du dossier</span><input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submitFolder()} maxLength={120} placeholder="Ex. Laravel, React, DevOps..." className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#08111F] px-3 text-sm text-white outline-none focus:border-[#FF6A00]/40" /></label>
@@ -613,8 +661,8 @@ export default function Index({ memos, tags = [], folders = [], filters = {}, co
 }
 
 function NavItem({ href, active, icon: Icon, label, count }) {
-    return <Link href={href} preserveScroll className={'group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium transition ' + (active ? 'bg-[#FF6A00]/10 text-[#FF8A3D]' : 'text-slate-500 hover:bg-white/[0.035] hover:text-slate-200')}>
-        <Icon size={15} className={active ? 'text-[#FF8A3D]' : 'text-slate-600 group-hover:text-slate-400'} /><span className="min-w-0 flex-1 truncate">{label}</span>{typeof count === 'number' && <span className={active ? 'text-[10px] text-[#FF8A3D]' : 'text-[10px] text-slate-700'}>{count}</span>}
+    return <Link href={href} preserveScroll className={'group flex h-10 items-center gap-2.5 rounded-[10px] px-2.5 text-sm transition-colors ' + (active ? 'bg-[var(--dr-accent-soft)] font-semibold text-[var(--dr-accent-text)]' : 'text-[var(--dr-text-2)] hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)]')}>
+        <Icon size={16} aria-hidden="true" /><span className="min-w-0 flex-1 truncate">{label}</span>{typeof count === 'number' && <span className="text-xs tabular-nums text-[var(--dr-text-3)]">{count}</span>}
     </Link>;
 }
 
@@ -668,37 +716,44 @@ function FolderNavItem({ folder, active, onCreateChild, onRename, onMove, onDele
             onDrop={onDrop}
             className={
                 'group flex items-center gap-1 rounded-xl pr-1 transition ' +
-                (active ? 'bg-[#FF6A00]/10' : 'hover:bg-white/[0.035]') +
+                (active ? 'bg-[var(--dr-accent-soft)]' : 'hover:bg-[var(--dr-field)]') +
                 (isDragging ? ' opacity-40' : '') +
-                (isDropTarget ? (nestHover ? ' bg-[#FF6A00]/10 ring-1 ring-[#FF6A00]/40' : ' border-t-2 border-[#FF6A00]') : '')
+                (isDropTarget ? (nestHover ? ' bg-[var(--dr-accent-soft)] ring-1 ring-[var(--dr-accent)]' : ' border-t-2 border-[var(--dr-accent)]') : '')
             }
         >
-            <Link href={listUrl({ folder: active ? null : folder.id })} className={'flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium ' + (active ? 'text-[#FF8A3D]' : 'text-slate-500 hover:text-slate-200')} style={{ paddingLeft: 10 + (folder.depth ?? 0) * 14 }}>
-                <Folder size={14} className={active ? 'text-[#FF8A3D]' : 'text-slate-600'} />
+            <Link href={listUrl({ folder: active ? null : folder.id })} className={'flex min-w-0 flex-1 items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-sm ' + (active ? 'font-semibold text-[var(--dr-accent-text)]' : 'text-[var(--dr-text-2)] hover:text-[var(--dr-text)]')} style={{ paddingLeft: 10 + (folder.depth ?? 0) * 14 }}>
+                <Folder size={15} aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                {typeof folder.memos_count === 'number' && <span className="text-[10px] text-slate-700">{folder.memos_count}</span>}
+                {typeof folder.memos_count === 'number' && <span className="text-xs tabular-nums text-[var(--dr-text-3)]">{folder.memos_count}</span>}
             </Link>
-            <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); }} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-white/[0.05] hover:text-white sm:hidden sm:group-hover:flex" title="Actions du dossier"><MoreHorizontal size={14} /></button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); }} className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--dr-text-3)] hover:bg-[var(--dr-surface)] hover:text-[var(--dr-text)] focus-visible:flex sm:hidden sm:group-hover:flex" title="Actions du dossier"><MoreHorizontal size={14} /></button>
             {activeMenu === folder.id && <div
-                className="absolute right-1 top-9 z-[70] w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.45)]"
+                className="absolute right-1 top-9 z-[70] w-48 overflow-hidden rounded-2xl border border-[var(--dr-border-2)] bg-[var(--dr-surface-2)] p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]"
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
             >
-                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onCreateChild(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Nouveau sous-dossier</button>
-                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onRename(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Renommer</button>
-                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMove(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.05]">Déplacer</button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onCreateChild(folder.id); }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--dr-text)] hover:bg-[var(--dr-field)]">Nouveau sous-dossier</button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onRename(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--dr-text)] hover:bg-[var(--dr-field)]">Renommer</button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMove(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--dr-text)] hover:bg-[var(--dr-field)]">Déplacer</button>
                 <div className="flex gap-1 px-1 py-1">
-                    <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMoveUp(); }} className="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-slate-300 hover:bg-white/[0.05]" title="Monter d'un rang"><ArrowUp size={12} /> Monter</button>
-                    <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMoveDown(); }} className="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-slate-300 hover:bg-white/[0.05]" title="Descendre d'un rang"><ArrowDown size={12} /> Descendre</button>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMoveUp(); }} className="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[var(--dr-text)] hover:bg-[var(--dr-field)]" title="Monter d'un rang"><ArrowUp size={12} /> Monter</button>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onMoveDown(); }} className="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[var(--dr-text)] hover:bg-[var(--dr-field)]" title="Descendre d'un rang"><ArrowDown size={12} /> Descendre</button>
                 </div>
-                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onDelete(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs text-red-300 hover:bg-red-400/[0.08]">Supprimer</button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(folder.id); onDelete(folder); }} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--dr-danger)] hover:bg-[var(--dr-field)]">Supprimer</button>
             </div>}
         </div>
     </div>;
 }
 
 function ViewButton({ active, onClick, icon: Icon, label }) {
-    return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} className={'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ' + (active ? 'bg-white/[0.07] text-white' : 'text-slate-600 hover:text-slate-300')}><Icon size={15} /></button>;
+    return <button type="button" onClick={onClick} aria-label={label} aria-pressed={active} title={label} className={'relative flex h-8 w-8 items-center justify-center rounded-[9px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (active ? 'text-[var(--dr-text)]' : 'text-[var(--dr-text-3)] hover:text-[var(--dr-text)]')}>
+        {active && <m.span layoutId="memos-view" transition={softSpring} aria-hidden="true" className="absolute inset-0 rounded-[9px] bg-[var(--dr-surface)] shadow-[var(--dr-shadow)]" />}
+        <Icon size={15} className="relative" />
+    </button>;
+}
+
+function BulkButton({ onClick, danger = false, accent = false, children }) {
+    return <button type="button" onClick={onClick} className={'h-8 rounded-lg px-3 text-[13px] font-semibold transition-colors hover:bg-[var(--dr-field)] ' + (danger ? 'text-[var(--dr-danger)]' : accent ? 'text-[var(--dr-accent-text)]' : 'text-[var(--dr-text)]')}>{children}</button>;
 }
 
 function formatMemoDate(value) {
@@ -712,110 +767,122 @@ function formatMemoDate(value) {
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', ...(date.getFullYear() !== today.getFullYear() ? { year: 'numeric' } : {}) });
 }
 
-// Carte d'une fiche. Anatomie identique en liste et en grille sur mobile
-// (en-tête d'actions, titre pleine largeur, extrait, pied) ; en liste à partir
-// de « sm », l'en-tête passe à gauche et les actions à droite.
-function MemoCard({ memo, grid, trash = false, selected = false, menuOpen = false, folderPath = [], onSelect, onMenu, onDragStart, onDragEnd, onMove, onDuplicate, onDelete, onForceDelete }) {
+// Carte desktop — artboard « Desktop — Fiches » : monogramme, favori et menu
+// en tête, titre 17/600, dossier en accent, extrait, pied (tags + date).
+// La case de sélection apparaît au survol (ou dès qu'une sélection existe).
+function MemoCard({ memo, grid, trash = false, selected = false, selecting = false, menuOpen = false, folderPath = [], onSelect, onMenu, onDragStart, onDragEnd, onMove, onDuplicate, onDelete, onForceDelete }) {
     const tags = memo.tags ?? [];
-    const visibleTags = tags.slice(0, grid ? 3 : 4);
+    const visibleTags = tags.slice(0, grid ? 2 : 3);
     const hiddenTags = tags.length - visibleTags.length;
     const date = formatMemoDate(memo.updated_at);
 
-    const layout = grid
-        ? 'h-full grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_1fr_auto] [grid-template-areas:"lead_actions"_"body_body"_"foot_foot"]'
-        : 'grid-cols-[minmax(0,1fr)_auto] [grid-template-areas:"lead_actions"_"body_body"_"foot_foot"] sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:[grid-template-areas:"lead_body_actions"_"lead_foot_actions"] sm:gap-x-4';
-
-    return <article
-        data-memo-card
-        draggable
-        onDragStart={(event) => onDragStart(event)}
-        onDragEnd={onDragEnd}
-        onContextMenu={(event) => { event.preventDefault(); onMenu(); }}
-        className={
-            'group relative grid gap-x-3 rounded-2xl border bg-[#0D1725] p-4 transition-[border-color,background-color,box-shadow,transform] duration-200 ease-out motion-reduce:transition-none '
-            + 'hover:-translate-y-0.5 hover:bg-[#0F1B2B] hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,.9)] active:translate-y-0 active:scale-[.995] motion-reduce:hover:translate-y-0 '
-            + 'has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[#FF6A00]/50 '
-            + (menuOpen ? 'z-50 ' : 'z-0 ')
-            + (selected ? 'border-[#FF6A00]/50 bg-[#FF6A00]/[0.04] ring-1 ring-[#FF6A00]/25 ' : 'border-white/[0.07] hover:border-[#FF6A00]/25 ')
-            + layout
-        }
+    const checkbox = <button
+        type="button"
+        onClick={(event) => { event.stopPropagation(); onSelect(); }}
+        aria-pressed={selected}
+        aria-label={(selected ? 'Désélectionner « ' : 'Sélectionner « ') + memo.title + ' »'}
+        className={'relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-opacity hover:bg-[var(--dr-field)] focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (selected || selecting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}
     >
-        {/* En-tête : sélection + icône de la fiche */}
-        <div className={'flex items-center gap-2.5 [grid-area:lead] ' + (grid ? '' : 'sm:self-start')}>
-            <button
-                type="button"
-                onClick={(event) => { event.stopPropagation(); onSelect(); }}
-                aria-pressed={selected}
-                aria-label={(selected ? 'Désélectionner « ' : 'Sélectionner « ') + memo.title + ' »'}
-                className={'relative z-10 -ml-1.5 flex h-9 w-8 items-center justify-center rounded-lg transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60 ' + (selected ? 'opacity-100' : 'opacity-100 sm:opacity-40 sm:group-hover:opacity-100 sm:focus-visible:opacity-100')}
-            >
-                {selected
-                    ? <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-[#FF6A00] text-[#08111F]"><Check size={12} strokeWidth={3} /></span>
-                    : <span className="h-[18px] w-[18px] rounded-[5px] border border-white/25" />}
+        {selected
+            ? <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-[var(--dr-accent)] text-[var(--dr-ink)]"><Check size={12} strokeWidth={3} /></span>
+            : <span className="h-[18px] w-[18px] rounded-[5px] border-[1.5px] border-[var(--dr-border-2)] bg-[var(--dr-surface)]" />}
+    </button>;
+
+    const actions = <div className="flex shrink-0 items-center">
+        {trash
+            ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore', {}, { preserveScroll: true })} className="relative z-10 h-9 rounded-[10px] px-3 text-[13px] font-semibold text-[var(--dr-accent-text)] hover:bg-[var(--dr-accent-soft)]">Restaurer</button>
+            : <FavoriteButton memo={memo} variant="design" className="!m-0 !h-9 !w-9 !rounded-[10px] hover:bg-[var(--dr-field)]" />}
+        <div className="relative">
+            <button type="button" onMouseDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onMenu(); }} aria-haspopup="menu" aria-expanded={menuOpen} aria-label={'Actions de « ' + memo.title + ' »'} className={'relative z-10 flex h-9 w-9 items-center justify-center rounded-[10px] transition-colors hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] ' + (menuOpen ? 'bg-[var(--dr-field)] text-[var(--dr-text)]' : 'text-[var(--dr-text-3)]')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
             </button>
-            <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-[#08111F] text-[19px] leading-none shadow-[inset_0_1px_0_rgba(255,255,255,.04)] transition-transform duration-200 group-hover:scale-105 motion-reduce:group-hover:scale-100">
-                {memo.icon || '📝'}
-            </span>
+            {menuOpen && <MemoMenu memo={memo} trash={trash} onMove={onMove} onDuplicate={onDuplicate} onDelete={onDelete} onForceDelete={onForceDelete} />}
         </div>
+    </div>;
 
-        {/* Actions : favori / restauration + menu */}
-        <div className={'flex items-center gap-0.5 [grid-area:actions] ' + (grid ? '' : 'sm:self-start')}>
-            {trash
-                ? <button type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className="relative z-10 rounded-lg border border-white/[0.06] px-2.5 py-1.5 text-[11px] font-semibold text-[#FF8A3D] hover:bg-[#FF6A00]/10">Restaurer</button>
-                : <FavoriteButton memo={memo} />}
-            <div className="relative">
-                <button type="button" onClick={(event) => { event.stopPropagation(); onMenu(); }} aria-haspopup="menu" aria-expanded={menuOpen} className={'relative z-10 flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60 ' + (menuOpen ? 'bg-white/[0.06] text-white' : 'text-slate-500')} aria-label={'Actions de « ' + memo.title + ' »'}><MoreHorizontal size={18} /></button>
-                {menuOpen && <MemoMenu memo={memo} trash={trash} onMove={onMove} onDuplicate={onDuplicate} onDelete={onDelete} onForceDelete={onForceDelete} />}
+    const mono = <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--dr-field)] font-['JetBrains_Mono',ui-monospace,monospace] text-[15px] font-medium text-[var(--dr-accent-text)]">{monogram(memo.title)}</span>;
+
+    const title = <Link
+        href={'/memos/' + memo.id}
+        draggable={false}
+        title={memo.title}
+        className={'text-[17px] font-semibold leading-[1.35] tracking-[-0.01em] text-[var(--dr-text)] outline-none after:absolute after:inset-0 after:rounded-[18px] after:content-[\'\'] ' + (grid ? 'line-clamp-3' : 'line-clamp-1')}
+    >{memo.title}</Link>;
+
+    const folder = folderPath.length > 0 && <span className="truncate text-xs font-semibold text-[var(--dr-accent-text)]">{folderPath.map((item) => item.name).join(' / ')}</span>;
+
+    const footer = <>
+        {visibleTags.map((tag) => <span key={tag.id} className="rounded-full bg-[var(--dr-field)] px-2.5 py-1 text-xs text-[var(--dr-text-2)]">{tag.name}</span>)}
+        {hiddenTags > 0 && <span className="px-1 text-xs text-[var(--dr-text-3)]" title={tags.slice(visibleTags.length).map((tag) => tag.name).join(', ')}>+{hiddenTags}</span>}
+        {date && <time dateTime={memo.updated_at} className="ml-auto shrink-0 text-xs tabular-nums text-[var(--dr-text-3)]">{date}</time>}
+    </>;
+
+    const cardClass = 'group relative rounded-[18px] border bg-[var(--dr-surface)] shadow-[var(--dr-shadow)] transition-[border-color,transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-[var(--dr-border-2)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-[var(--dr-accent)] '
+        + (menuOpen ? 'z-50 ' : 'z-0 ')
+        + (selected ? 'border-[var(--dr-accent)] ring-1 ring-[var(--dr-accent)] ' : 'border-[var(--dr-border)] ');
+
+    const shared = {
+        'data-memo-card': true,
+        draggable: !trash,
+        onDragStart: (event) => onDragStart(event),
+        onDragEnd,
+        onContextMenu: (event) => { event.preventDefault(); onMenu(); },
+    };
+
+    if (!grid) {
+        return <article {...shared} className={cardClass + 'flex items-center gap-3 px-4 py-3'}>
+            {/* En liste, la case remplace le monogramme au survol (comme une boîte mail). */}
+            <div className="relative h-10 w-10 shrink-0">
+                <span className={'absolute inset-0 transition-opacity ' + (selected || selecting ? 'opacity-0' : 'group-hover:opacity-0 group-has-[button[aria-pressed]:focus-visible]:opacity-0')}>{mono}</span>
+                <span className="absolute inset-0 flex items-center justify-center">{checkbox}</span>
             </div>
-        </div>
-
-        {/* Corps : le titre est l'information principale */}
-        <div className={'min-w-0 [grid-area:body] ' + (grid ? 'mt-3' : 'mt-3 sm:mt-0')}>
-            <h3 className={'font-semibold tracking-[-0.01em] text-white ' + (grid ? 'line-clamp-3 text-base leading-[1.4]' : 'line-clamp-3 text-[15px] leading-[1.4] sm:line-clamp-2')}>
-                <Link
-                    href={'/memos/' + memo.id}
-                    draggable={false}
-                    title={memo.title}
-                    className="outline-none transition-colors duration-200 after:absolute after:inset-0 after:rounded-2xl after:content-[''] group-hover:text-[#FFE2CC]"
-                >
-                    {memo.title}
-                </Link>
-            </h3>
-            {folderPath.length > 0 && <p className="mt-1.5 flex min-w-0 items-center gap-1 text-[11px] font-medium text-[#FF8A3D]/85">
-                <Folder size={11} aria-hidden="true" className="shrink-0" />
-                <span className="truncate">{folderPath.map((folder) => folder.name).join(' / ')}</span>
-            </p>}
-            {memo.excerpt && <p className={'mt-1.5 text-[13px] leading-5 text-slate-400 ' + (grid ? 'line-clamp-3' : 'line-clamp-2 sm:line-clamp-1')}>{memo.excerpt}</p>}
-        </div>
-
-        {/* Pied : tags + date */}
-        <div className={'flex min-w-0 items-end gap-2 [grid-area:foot] ' + (grid ? 'mt-4 border-t border-white/[0.06] pt-3' : 'mt-3 sm:mt-2')}>
-            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                {visibleTags.map((tag) => <TagBadge key={tag.id} name={tag.name} />)}
-                {hiddenTags > 0 && <span className="rounded-full px-1.5 py-1 text-[11px] font-medium text-slate-500" title={tags.slice(visibleTags.length).map((tag) => tag.name).join(', ')}>+{hiddenTags}</span>}
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                {title}
+                <div className="flex min-w-0 items-center gap-2 text-sm text-[var(--dr-text-2)]">
+                    {folder}
+                    {memo.excerpt && <span className="min-w-0 flex-1 truncate">{memo.excerpt}</span>}
+                </div>
             </div>
-            {date && <time dateTime={memo.updated_at} className="shrink-0 pb-1 text-[11px] font-medium tabular-nums text-slate-500">{date}</time>}
+            <div className="hidden shrink-0 items-center gap-1.5 xl:flex">{footer}</div>
+            {actions}
+        </article>;
+    }
+
+    return <article {...shared} className={cardClass + 'flex h-full min-h-[212px] flex-col gap-3 p-[18px]'}>
+        <div className="flex items-center gap-2.5">
+            {mono}
+            <span className="flex-1" />
+            {checkbox}
+            {actions}
         </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+            {title}
+            {folder}
+        </div>
+        {memo.excerpt && <p className="m-0 line-clamp-3 text-sm leading-[1.55] text-[var(--dr-text-2)]">{memo.excerpt}</p>}
+        <div className="mt-auto flex min-w-0 items-center gap-1.5 border-t border-[var(--dr-border)] pt-3">{footer}</div>
     </article>;
 }
 
 function MemoMenu({ memo, trash, onMove, onDuplicate, onDelete, onForceDelete }) {
     const ref = useRef(null);
     useMenuPop(ref);
-    const item = 'block w-full rounded-lg px-3 py-2.5 text-left text-xs transition-colors';
+    const item = 'flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-sm font-medium transition-colors';
+    const normal = item + ' text-[var(--dr-text)] hover:bg-[var(--dr-field)]';
+    const danger = item + ' text-[var(--dr-danger)] hover:bg-[var(--dr-field)]';
 
-    return <div ref={ref} role="menu" className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1725] p-1 shadow-[0_20px_50px_rgba(0,0,0,.5)]" onClick={(event) => event.stopPropagation()}>
-        <Link role="menuitem" href={'/memos/' + memo.id} className={item + ' text-slate-300 hover:bg-white/[0.05]'}>Ouvrir</Link>
+    return <div ref={ref} role="menu" className="absolute right-0 top-11 z-30 w-56 overflow-hidden rounded-2xl border border-[var(--dr-border-2)] bg-[var(--dr-surface-2)] p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]" onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
+        <Link role="menuitem" href={'/memos/' + memo.id} className={normal}>Ouvrir</Link>
         {!trash && <>
-            <Link role="menuitem" href={'/memos/' + memo.id + '/edit'} className={item + ' text-slate-300 hover:bg-white/[0.05]'}>Modifier</Link>
-            <button role="menuitem" type="button" onClick={() => onMove(memo)} className={item + ' text-slate-300 hover:bg-white/[0.05]'}>Déplacer</button>
-            <button role="menuitem" type="button" onClick={() => onDuplicate(memo)} className={item + ' text-slate-300 hover:bg-white/[0.05]'}>Dupliquer</button>
-            <div className="my-1 h-px bg-white/[0.06]" />
-            <button role="menuitem" type="button" onClick={() => onDelete(memo)} className={item + ' text-red-300 hover:bg-red-400/[0.08]'}>Mettre à la corbeille</button>
+            <Link role="menuitem" href={'/memos/' + memo.id + '/edit'} className={normal}>Modifier</Link>
+            <button role="menuitem" type="button" onClick={() => onMove(memo)} className={normal}>Déplacer</button>
+            <button role="menuitem" type="button" onClick={() => onDuplicate(memo)} className={normal}>Dupliquer</button>
+            <div className="mx-1 my-1 h-px bg-[var(--dr-border)]" />
+            <button role="menuitem" type="button" onClick={() => onDelete(memo)} className={danger}>Mettre à la corbeille</button>
         </>}
         {trash && <>
-            <button role="menuitem" type="button" onClick={() => router.post('/memos/' + memo.id + '/restore')} className={item + ' text-[#FF8A3D] hover:bg-[#FF6A00]/10'}>Restaurer</button>
-            <button role="menuitem" type="button" onClick={() => onForceDelete(memo)} className={item + ' text-red-300 hover:bg-red-400/[0.08]'}>Supprimer définitivement</button>
+            <button role="menuitem" type="button" onClick={() => router.post('/memos/' + memo.id + '/restore', {}, { preserveScroll: true })} className={item + ' text-[var(--dr-accent-text)] hover:bg-[var(--dr-accent-soft)]'}>Restaurer</button>
+            <button role="menuitem" type="button" onClick={() => onForceDelete(memo)} className={danger}>Supprimer définitivement</button>
         </>}
     </div>;
 }
@@ -984,20 +1051,19 @@ function SheetAction({ onClick, href, danger = false, children }) {
 }
 
 function MemoSkeletons({ grid }) {
-    return <div className={grid ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2.5'} aria-label="Chargement">
-        {Array.from({ length: grid ? 6 : 5 }).map((_, index) => <div key={index} className={'animate-pulse rounded-2xl border border-white/[0.05] bg-[#0D1725] ' + (grid ? 'h-52 p-4' : 'h-20 p-4')}>
-            <div className="h-3 w-24 rounded bg-white/[0.06]" />
-            <div className="mt-4 h-4 w-2/3 rounded bg-white/[0.06]" />
-            <div className="mt-3 h-3 w-full rounded bg-white/[0.04]" />
+    return <div className={grid ? 'grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]' : 'flex flex-col gap-2.5'} aria-label="Chargement">
+        {Array.from({ length: 6 }).map((_, index) => <div key={index} className={'animate-pulse rounded-[18px] border border-[var(--dr-border)] bg-[var(--dr-surface)] p-[18px] ' + (grid ? 'h-[212px]' : 'h-[66px]')}>
+            <div className="h-10 w-10 rounded-xl bg-[var(--dr-field)]" />
+            {grid && <><div className="mt-4 h-4 w-2/3 rounded bg-[var(--dr-field)]" /><div className="mt-3 h-3 w-full rounded bg-[var(--dr-field)]" /></>}
         </div>)}
     </div>;
 }
 
 function EmptyState({ filtered, trash = false, folder = false }) {
-    return <div className="rounded-2xl border border-dashed border-white/[0.08] bg-[#0D1725] p-8 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FF6A00]/10 text-[#FF8A3D]"><FileText size={25} aria-hidden="true" /></div>
-        <h2 className="mt-4 text-base font-semibold text-white">{trash ? 'La corbeille est vide' : filtered ? 'Aucune fiche ne correspond' : folder ? 'Ce dossier est vide' : 'Aucune fiche mémo'}</h2>
-        <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">{trash ? 'Les fiches supprimées apparaîtront ici.' : filtered ? 'Essaie une autre recherche, collection ou un autre dossier.' : folder ? 'Crée une fiche ici ou déplace-en une depuis un autre dossier.' : 'Crée ta première fiche pour construire ton espace de connaissances.'}</p>
-        {!trash && <Link href={filtered ? '/memos' : '/memos/create'} className={buttonClass('primary') + ' mt-5'}>{filtered ? 'Voir toutes les fiches' : 'Créer une fiche'}</Link>}
+    return <div className="rounded-[18px] border border-dashed border-[var(--dr-border-2)] bg-[var(--dr-surface)] px-8 py-12 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--dr-accent-soft)] text-[var(--dr-accent-text)]"><FileText size={25} aria-hidden="true" /></div>
+        <h2 className="mt-4 text-lg font-semibold text-[var(--dr-text)]">{trash ? 'La corbeille est vide' : filtered ? 'Aucune fiche ne correspond' : folder ? 'Ce dossier est vide' : 'Aucune fiche mémo'}</h2>
+        <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-[var(--dr-text-2)]">{trash ? 'Les fiches supprimées apparaîtront ici.' : filtered ? 'Essaie une autre recherche, collection ou un autre dossier.' : folder ? 'Crée une fiche ici ou déplace-en une depuis un autre dossier.' : 'Crée ta première fiche pour construire ton espace de connaissances.'}</p>
+        {!trash && <Link href={filtered && !folder ? '/memos' : (folder ? '/memos/create?folder=' + new URLSearchParams(window.location.search).get('folder') : '/memos/create')} className="mt-5 inline-flex h-[42px] items-center gap-2 rounded-xl bg-[var(--dr-accent)] px-4 text-sm font-bold text-[var(--dr-ink)]">{filtered && !folder ? 'Voir toutes les fiches' : 'Créer une fiche'}</Link>}
     </div>;
 }

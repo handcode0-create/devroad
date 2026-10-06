@@ -1,12 +1,13 @@
+import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 // Thèmes de la maquette « Refonte & thèmes » (valeurs des aperçus du panneau Apparence).
 export const THEMES = [
-    { key: 'nuit', name: 'Nuit', bg: '#08111F', surface: '#0D1725', border: 'rgba(255,255,255,0.14)', text: '#F4F6FA', text2: '#A3AEC2' },
-    { key: 'minuit', name: 'Minuit', bg: '#000000', surface: '#0B0B0D', border: 'rgba(255,255,255,0.16)', text: '#F5F5F6', text2: '#A6A6B0' },
-    { key: 'ardoise', name: 'Ardoise', bg: '#1A1F27', surface: '#222833', border: 'rgba(255,255,255,0.16)', text: '#EEF1F5', text2: '#B6BECA' },
-    { key: 'clair', name: 'Clair', bg: '#F4F6F9', surface: '#FFFFFF', border: 'rgba(8,17,31,0.18)', text: '#0B1424', text2: '#475467' },
-    { key: 'sable', name: 'Sable', bg: '#F3EEE5', surface: '#FBF8F2', border: 'rgba(60,40,20,0.20)', text: '#261D14', text2: '#5B4F42' },
+    { key: 'nuit', hint: 'Par défaut', name: 'Nuit', bg: '#08111F', surface: '#0D1725', border: 'rgba(255,255,255,0.14)', text: '#F4F6FA', text2: '#A3AEC2' },
+    { key: 'minuit', hint: 'Noir pur, écrans OLED', name: 'Minuit', bg: '#000000', surface: '#0B0B0D', border: 'rgba(255,255,255,0.16)', text: '#F5F5F6', text2: '#A6A6B0' },
+    { key: 'ardoise', hint: 'Sombre adouci', name: 'Ardoise', bg: '#1A1F27', surface: '#222833', border: 'rgba(255,255,255,0.16)', text: '#EEF1F5', text2: '#B6BECA' },
+    { key: 'clair', hint: 'Plein jour', name: 'Clair', bg: '#F4F6F9', surface: '#FFFFFF', border: 'rgba(8,17,31,0.18)', text: '#0B1424', text2: '#475467' },
+    { key: 'sable', hint: 'Clair chaud, lecture', name: 'Sable', bg: '#F3EEE5', surface: '#FBF8F2', border: 'rgba(60,40,20,0.20)', text: '#261D14', text2: '#5B4F42' },
 ];
 
 const LIGHT = ['clair', 'sable'];
@@ -98,4 +99,17 @@ export function setReducedMotion(reduce) {
     } catch {
         // Stockage indisponible (navigation privée) : le réglage vaut pour cette session.
     }
+}
+
+/**
+ * Choisit un thème : application immédiate, puis enregistrement sur le compte
+ * (retour au thème précédent si le serveur refuse).
+ */
+export function chooseTheme(next, previous, onRevert) {
+    applyTheme(next);
+    router.patch('/profile/theme', { theme: next }, {
+        preserveScroll: true,
+        preserveState: true,
+        onError: () => { applyTheme(previous); onRevert?.(previous); },
+    });
 }

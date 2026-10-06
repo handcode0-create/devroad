@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Prism from "prismjs";
 import "prismjs/components/prism-jsx";
-import { Check, ChevronDown, Clipboard, FileCode2, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Clipboard, FileCode2, Redo2, Trash2, Undo2 } from "lucide-react";
 
 const HTML_TAGS = [
     "html", "head", "title", "meta", "link", "style", "script", "body",
@@ -150,6 +150,10 @@ export default function CodeEditor({
     lineCount,
     copied,
     onChange,
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
     onCopy,
     onDelete,
     editorRef,
@@ -225,7 +229,7 @@ export default function CodeEditor({
         const result = completions.apply(item);
         const nextValue = value.slice(0, completions.replaceStart) + result.text + value.slice(cursor);
 
-        onChange(nextValue);
+        onChange(nextValue, "insert");
 
         requestAnimationFrame(() => {
             textarea.focus();
@@ -236,6 +240,21 @@ export default function CodeEditor({
     }
 
     function handleKeyDown(event) {
+        // Annuler / Rétablir : Ctrl+Z, Ctrl+Y, Ctrl+Maj+Z (Cmd sur Mac).
+        if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+            const key = event.key.toLowerCase();
+            if (key === "z" && !event.shiftKey) {
+                event.preventDefault();
+                onUndo?.();
+                return;
+            }
+            if (key === "y" || (key === "z" && event.shiftKey)) {
+                event.preventDefault();
+                onRedo?.();
+                return;
+            }
+        }
+
         if (!completions || !completions.items.length) return;
 
         if (event.key === "ArrowDown") {
@@ -275,6 +294,34 @@ export default function CodeEditor({
                 </div>
 
                 <div className="flex items-center gap-1">
+                    <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={onUndo}
+                        disabled={!canUndo}
+                        className="flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
+                        aria-label="Annuler (Ctrl+Z)"
+                        title="Annuler (Ctrl+Z)"
+                    >
+                        <Undo2 size={14} />
+                        <span className="hidden sm:inline">Annuler</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={onRedo}
+                        disabled={!canRedo}
+                        className="flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-slate-400 hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
+                        aria-label="Rétablir (Ctrl+Y)"
+                        title="Rétablir (Ctrl+Y)"
+                    >
+                        <Redo2 size={14} />
+                        <span className="hidden sm:inline">Rétablir</span>
+                    </button>
+
+                    <span className="mx-1 h-5 w-px bg-white/[0.06]" aria-hidden="true" />
+
                     <button
                         type="button"
                         onClick={onCopy}

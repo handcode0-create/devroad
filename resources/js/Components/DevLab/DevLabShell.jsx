@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import useGsapScrollReveal from "@/hooks/useGsapScrollReveal";
-import { ArrowLeft, Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
 import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
 
 const API="/devlab/projects";
@@ -53,12 +53,25 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
  async function newFile(){const path=window.prompt("Chemin du fichier","src/app.js");if(!path)return;try{const d=await request(API+"/"+project.id+"/files",{method:"POST",body:JSON.stringify({path,content:""})});setProject(p=>({...p,files:[...p.files,d.file].sort((a,b)=>a.path.localeCompare(b.path))}));return d.file}catch(e){setError(requestError(e));return null}}
  async function renameFile(file){const path=window.prompt("Nouveau nom / chemin du fichier",file.path);if(!path||path.trim()===file.path)return null;try{const d=await request(API+"/"+project.id+"/files/"+file.id,{method:"PATCH",body:JSON.stringify({path:path.trim(),content:file.content??""})});setProject(p=>({...p,files:p.files.map(f=>f.id===file.id?d.file:f).sort((a,b)=>a.path.localeCompare(b.path))}));return d.file}catch(e){setError(requestError(e));return null}}
  async function duplicateFile(file){const lastSlash=file.path.lastIndexOf("/");const dir=lastSlash>=0?file.path.slice(0,lastSlash+1):"";const name=lastSlash>=0?file.path.slice(lastSlash+1):file.path;const dot=name.lastIndexOf(".");const base=dot>0?name.slice(0,dot):name;const ext=dot>0?name.slice(dot):"";let path=dir+base+"-copy"+ext;let index=2;while(project.files.some(f=>f.path===path)){path=dir+base+"-copy-"+index+ext;index+=1}try{const d=await request(API+"/"+project.id+"/files",{method:"POST",body:JSON.stringify({path,content:file.content??""})});setProject(p=>({...p,files:[...p.files,d.file].sort((a,b)=>a.path.localeCompare(b.path))}));return d.file}catch(e){setError(requestError(e));return null}}
+ const [deletedFile,setDeletedFile]=useState(null),[restoring,setRestoring]=useState(false);
+ useEffect(()=>{if(!deletedFile)return undefined;const timer=setTimeout(()=>setDeletedFile(null),10000);return ()=>clearTimeout(timer)},[deletedFile]);
+ async function restoreDeletedFile(){
+  if(!deletedFile||restoring)return;
+  setRestoring(true);
+  try{
+   const d=await request(API+"/"+deletedFile.projectId+"/files",{method:"POST",body:JSON.stringify({path:deletedFile.path,content:deletedFile.content})});
+   setProject(p=>p&&p.id===deletedFile.projectId?({...p,files:[...p.files,d.file].sort((a,b)=>a.path.localeCompare(b.path))}):p);
+   setDeletedFile(null);
+  }catch(e){setError(requestError(e))}finally{setRestoring(false)}
+ }
  async function deleteFile(file){
   if(project.files.length<=1){setError("Un projet doit conserver au moins un fichier.");return false}
   if(!window.confirm("Supprimer le fichier « "+file.path+" » ?")) return false;
   try{
    const deleted=await request(API+"/"+project.id+"/files/"+file.id,{method:"DELETE"});
    setProject(p=>({...p,files:p.files.filter(f=>f.id!==file.id)}));
+   // Filet de sécurité : le fichier peut être recréé tel quel pendant 10 secondes.
+   setDeletedFile({path:file.path,content:file.content??"",projectId:project.id});
    return true;
   }catch(e){setError(requestError(e));return false}
  }
@@ -97,6 +110,11 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
       }
     }}
   />:<ProjectHome projects={projects} loading={loading} onOpen={open} onCreate={()=>setCreate(true)}/>}
+  {deletedFile&&<div role="status" className="absolute bottom-[calc(80px+env(safe-area-inset-bottom))] left-1/2 z-[70] flex max-w-[calc(100vw-24px)] -translate-x-1/2 items-center gap-3 rounded-2xl border border-white/[.10] bg-[#111D2E] py-2 pl-4 pr-2 text-xs text-slate-200 shadow-[0_18px_44px_-14px_rgba(0,0,0,.6)] lg:bottom-6">
+   <span className="min-w-0 truncate">« {deletedFile.path} » supprimé</span>
+   <button type="button" onClick={restoreDeletedFile} disabled={restoring} className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#FF6A00] px-3 font-bold text-[#08111F] disabled:opacity-60"><Undo2 size={14}/>{restoring?"Restauration…":"Annuler"}</button>
+   <button type="button" onClick={()=>setDeletedFile(null)} className="flex min-h-9 min-w-9 items-center justify-center rounded-xl text-slate-500 hover:text-white" aria-label="Fermer"><X size={14}/></button>
+  </div>}
   {drawer&&<Drawer projects={projects} onClose={()=>setDrawer(false)} onOpen={open} onCreate={()=>{setDrawer(false);setCreate(true)}}/>}
   {create&&<CreateModal loading={loading} onClose={()=>setCreate(false)} onCreate={createProject}/>}
  </div>;
