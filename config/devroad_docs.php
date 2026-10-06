@@ -22,17 +22,32 @@ return [
         'site_url' => 'https://laravel.com/docs',
     ],
 
+    /*
+     * Versions françaises officielles (« fr » dans chaque source) :
+     * - mdn   : traduction de la communauté MDN (github.com/mdn/translated-content, CC-BY-SA 2.5)
+     * - react : fr.react.dev (github.com/reactjs/fr.react.dev, CC-BY 4.0)
+     * - php   : manuel PHP en français (php.net/manual/fr, CC-BY 3.0)
+     * Sans version française, la page s'affiche en anglais avec la traduction par l'IA.
+     */
+    'french' => [
+        'mdn_raw_url' => 'https://raw.githubusercontent.com/mdn/translated-content/main/files/fr',
+        'mdn_site_url' => 'https://developer.mozilla.org/fr/docs',
+        'react_raw_url' => 'https://raw.githubusercontent.com/reactjs/fr.react.dev/main/src',
+        'react_site_url' => 'https://fr.react.dev',
+        'php_url' => 'https://www.php.net/manual/fr',
+    ],
+
     // Une source est re-synchronisée au déploiement si elle date de plus de N jours.
     'stale_after_days' => 7,
 
     'sources' => [
         'laravel' => ['provider' => 'laravel', 'name' => 'Laravel', 'technology' => 'laravel'],
-        'php' => ['provider' => 'devdocs', 'slug' => 'php', 'name' => 'PHP', 'technology' => 'php'],
-        'javascript' => ['provider' => 'devdocs', 'slug' => 'javascript', 'name' => 'JavaScript', 'technology' => 'javascript'],
-        'html' => ['provider' => 'devdocs', 'slug' => 'html', 'name' => 'HTML', 'technology' => 'html'],
-        'css' => ['provider' => 'devdocs', 'slug' => 'css', 'name' => 'CSS', 'technology' => 'css'],
-        'dom' => ['provider' => 'devdocs', 'slug' => 'dom', 'name' => 'API Web (DOM)', 'technology' => 'javascript'],
-        'react' => ['provider' => 'devdocs', 'slug' => 'react', 'name' => 'React', 'technology' => 'react'],
+        'php' => ['provider' => 'devdocs', 'slug' => 'php', 'name' => 'PHP', 'technology' => 'php', 'fr' => ['provider' => 'php']],
+        'javascript' => ['provider' => 'devdocs', 'slug' => 'javascript', 'name' => 'JavaScript', 'technology' => 'javascript', 'fr' => ['provider' => 'mdn', 'prefix' => 'Web/JavaScript/Reference']],
+        'html' => ['provider' => 'devdocs', 'slug' => 'html', 'name' => 'HTML', 'technology' => 'html', 'fr' => ['provider' => 'mdn', 'prefix' => 'Web/HTML']],
+        'css' => ['provider' => 'devdocs', 'slug' => 'css', 'name' => 'CSS', 'technology' => 'css', 'fr' => ['provider' => 'mdn', 'prefix' => 'Web/CSS/Reference']],
+        'dom' => ['provider' => 'devdocs', 'slug' => 'dom', 'name' => 'API Web (DOM)', 'technology' => 'javascript', 'fr' => ['provider' => 'mdn', 'prefix' => 'Web/API']],
+        'react' => ['provider' => 'devdocs', 'slug' => 'react', 'name' => 'React', 'technology' => 'react', 'fr' => ['provider' => 'react']],
         'node' => ['provider' => 'devdocs', 'slug' => 'node', 'name' => 'Node.js', 'technology' => 'node'],
         'typescript' => ['provider' => 'devdocs', 'slug' => 'typescript', 'name' => 'TypeScript', 'technology' => 'typescript'],
         'tailwindcss' => ['provider' => 'devdocs', 'slug' => 'tailwindcss', 'name' => 'Tailwind CSS', 'technology' => 'tailwind'],

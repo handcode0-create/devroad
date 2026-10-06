@@ -98,6 +98,7 @@ class DocsAssistant
         // 2. Pages déjà en cache dont le texte contient les mots.
         $pageHits = DocPage::query()
             ->whereIn('doc_source_id', $sources->keys())
+            ->where('missing', false)
             ->where(function ($builder) use ($words) {
                 foreach ($words as $word) {
                     $builder->orWhereRaw('lower(text) like ?', ['%' . addcslashes($word, '%_\\') . '%']);
@@ -130,7 +131,8 @@ class DocsAssistant
         return $picked->map(function ($item) use ($sources, $words, &$n) {
             $source = $sources[$item['source_id']];
             try {
-                $page = $this->library->page($source, $item['path']);
+                // Version française quand elle existe : l'IA cite alors des pages en français.
+                $page = $this->library->read($source, $item['path'], 'fr')['page'];
             } catch (Throwable) {
                 return null; // page injoignable : on continue avec les autres.
             }

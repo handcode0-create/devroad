@@ -32,6 +32,7 @@ class User extends Authenticatable
         'learning_reminders',
         'light_mode',
         'theme',
+        'docs_locale',
     ];
 
     protected $hidden = [

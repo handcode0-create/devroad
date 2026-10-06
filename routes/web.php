@@ -139,6 +139,8 @@ Route::middleware('auth')->group(function () {
     Route::get('docs', [DocsController::class, 'index'])->name('docs.index');
     Route::post('docs/ask', [DocsController::class, 'ask'])->middleware('throttle:12,1')->name('docs.ask');
     Route::post('docs/memo', [DocsController::class, 'saveMemo'])->name('docs.memo');
+    Route::post('docs/translate', [DocsController::class, 'translate'])->middleware('throttle:60,1')->name('docs.translate');
+    Route::patch('docs/locale', [DocsController::class, 'locale'])->name('docs.locale');
     Route::get('docs/{source}/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
 
     Route::put('profile/ai', [AiSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile.ai.update');
