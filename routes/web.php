@@ -17,6 +17,8 @@ use App\Http\Controllers\DevLabProjectController;
 use App\Http\Controllers\SandboxController;
 use App\Http\Controllers\DocsController;
 use App\Http\Controllers\AiSettingsController;
+use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\GroupMembershipController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -142,6 +144,23 @@ Route::middleware('auth')->group(function () {
     Route::post('docs/translate', [DocsController::class, 'translate'])->middleware('throttle:60,1')->name('docs.translate');
     Route::patch('docs/locale', [DocsController::class, 'locale'])->name('docs.locale');
     Route::get('docs/{source}/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
+
+    // Parcours professeur : groupes, code d'invitation, statistiques.
+    Route::post('teacher/activate', [TeacherController::class, 'activate'])->name('teacher.activate');
+    Route::prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/', [TeacherController::class, 'dashboard'])->name('dashboard');
+        Route::post('groups', [TeacherController::class, 'store'])->name('groups.store');
+        Route::get('groups/{group}', [TeacherController::class, 'show'])->name('groups.show');
+        Route::patch('groups/{group}', [TeacherController::class, 'update'])->name('groups.update');
+        Route::post('groups/{group}/code', [TeacherController::class, 'regenerateCode'])->name('groups.code');
+        Route::delete('groups/{group}', [TeacherController::class, 'destroy'])->name('groups.destroy');
+        Route::delete('groups/{group}/students/{student}', [TeacherController::class, 'removeStudent'])->name('groups.students.destroy');
+    });
+
+    // Côté élève : rejoindre un groupe avec un code.
+    Route::get('groups', [GroupMembershipController::class, 'index'])->name('groups.index');
+    Route::post('groups/join', [GroupMembershipController::class, 'join'])->middleware('throttle:10,1')->name('groups.join');
+    Route::delete('groups/{group}/leave', [GroupMembershipController::class, 'leave'])->name('groups.leave');
 
     Route::put('profile/ai', [AiSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile.ai.update');
     Route::delete('profile/ai', [AiSettingsController::class, 'destroy'])->name('profile.ai.destroy');

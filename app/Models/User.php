@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -54,6 +55,30 @@ class User extends Authenticatable
             'light_mode' => 'boolean',
             'ai_api_key' => 'encrypted',
         ];
+    }
+
+    public const ROLE_STUDENT = 'student';
+
+    public const ROLE_TEACHER = 'teacher';
+
+    // `role` n'est volontairement pas dans $fillable : il se définit explicitement côté serveur.
+    public function isTeacher(): bool
+    {
+        return $this->role === self::ROLE_TEACHER;
+    }
+
+    /** Groupes que ce professeur anime. */
+    public function teachingGroups(): HasMany
+    {
+        return $this->hasMany(TeachingGroup::class);
+    }
+
+    /** Groupes que cet élève a rejoints avec un code. */
+    public function joinedGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(TeachingGroup::class, 'teaching_group_members')
+            ->withPivot('joined_at')
+            ->withTimestamps();
     }
 
     public function hasAiAssistant(): bool

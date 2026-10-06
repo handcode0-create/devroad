@@ -20,7 +20,7 @@ class RoadmapGenerator
     {
         $technology = $roadmap->technology;
         $course = config("devroad_courses.{$technology}");
-        $enrichment = config("devroad_course_enrichment.{$technology}", []);
+        $enrichment = $this->loadEnrichment($technology);
 
         if (! is_array($course) || empty($course['lessons'])) {
             throw new InvalidArgumentException("Aucun parcours n'est configuré pour la technologie [{$technology}].");
@@ -60,7 +60,7 @@ class RoadmapGenerator
     public function create(User $user, array $roadmapData, string $technology): Roadmap
     {
         $course = config("devroad_courses.{$technology}");
-        $enrichment = config("devroad_course_enrichment.{$technology}", []);
+        $enrichment = $this->loadEnrichment($technology);
 
         if (! is_array($course) || empty($course['lessons'])) {
             throw new InvalidArgumentException("Aucun parcours n'est configuré pour la technologie [{$technology}].");
@@ -142,6 +142,30 @@ class RoadmapGenerator
 
             return $roadmap->load('steps');
         });
+    }
+
+    /**
+     * Charge l'enrichissement de base puis y superpose le contenu riche
+     * (config/devroad_rich/{technologie}.php) leçon par leçon, champ par champ.
+     */
+    private function loadEnrichment(string $technology): array
+    {
+        $base = config("devroad_course_enrichment.{$technology}", []);
+        $rich = config("devroad_rich.{$technology}", []);
+
+        if (! is_array($rich) || $rich === []) {
+            return $base;
+        }
+
+        foreach (($rich['lessons'] ?? []) as $title => $fields) {
+            $base['lessons'][$title] = array_replace($base['lessons'][$title] ?? [], $fields);
+        }
+
+        if (! empty($rich['sources'])) {
+            $base['sources'] = $rich['sources'];
+        }
+
+        return $base;
     }
 
     private function buildStepPayload(

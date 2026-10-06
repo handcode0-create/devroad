@@ -35,6 +35,7 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'account_type' => ['nullable', 'in:student,teacher'],
         ]);
 
         $user = User::create([
@@ -43,9 +44,18 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Le rôle n'est pas mass-assignable : défini explicitement (défaut : élève).
+        if ($request->input('account_type') === User::ROLE_TEACHER) {
+            $user->forceFill(['role' => User::ROLE_TEACHER])->save();
+        }
+
         event(new Registered($user));
 
         Auth::login($user);
+
+        if ($user->isTeacher()) {
+            return redirect()->route('teacher.dashboard');
+        }
 
         return redirect()->route('onboarding.level');
     }
