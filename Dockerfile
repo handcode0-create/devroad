@@ -89,4 +89,5 @@ ENV APP_DEBUG=false
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec php -S 0.0.0.0:${PORT:-8080} -t public docker/router.php"]
+# Plusieurs processus : une réponse lente (assistant IA, téléchargement de doc) ne bloque pas les autres visiteurs.
+CMD ["sh", "-c", "PHP_CLI_SERVER_WORKERS=${PHP_CLI_SERVER_WORKERS:-4} exec php -S 0.0.0.0:${PORT:-8080} -t public docker/router.php"]

@@ -39,6 +39,20 @@ class ProfileController extends Controller
                 'learning_reminders' => $user->learning_reminders,
                 'light_mode' => $user->light_mode,
             ],
+            // Assistant IA : jamais la clé elle-même, seulement ses 4 derniers caractères.
+            'aiSettings' => [
+                'provider' => $user->ai_provider,
+                'model' => $user->ai_model,
+                'hint' => $user->ai_key_hint,
+                'enabled' => $user->hasAiAssistant(),
+                'providers' => collect(\App\Services\Ai\AiClient::PROVIDERS)->map(fn ($provider, $key) => [
+                    'key' => $key,
+                    'name' => $provider['name'],
+                    'default_model' => $provider['default_model'],
+                    'models' => $provider['models'],
+                    'keys_url' => $provider['keys_url'],
+                ])->values(),
+            ],
             'technologies' => collect(config('devroad.technologies', []))
                 ->map(fn ($label, $value) => [
                     'value' => $value,

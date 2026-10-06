@@ -11,6 +11,7 @@ const ICONS = {
     memo: "M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6",
     code: "M8 7l-5 5 5 5M16 7l5 5-5 5",
     box: "M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12L4 7.5M12 12v9",
+    book: "M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 19V5M8 7h7M8 11h5",
     folder: "M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z",
     plus: "M12 5v14M5 12h14",
     newMemo: "M7 3h7l5 5v13H7zM14 3v5h5M13 12v6M10 15h6",
@@ -43,6 +44,7 @@ export default function Sidebar({ user }) {
         { label: "Fiches mémo", href: "/memos", icon: ICONS.memo, count: nav.memos, active: starts("/memos") && !folderParam },
         { label: "DevLab", href: "/devlab", icon: ICONS.code, active: starts("/devlab") },
         { label: "Sandbox", href: "/sandbox", icon: ICONS.box, active: starts("/sandbox") },
+        { label: "Documentation", href: "/docs", icon: ICONS.book, active: starts("/docs") },
     ];
 
     const folders = orderFolders(nav.folders ?? []);

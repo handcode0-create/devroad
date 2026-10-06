@@ -15,6 +15,8 @@ use App\Http\Controllers\DevLabController;
 use App\Http\Controllers\DevLabFileController;
 use App\Http\Controllers\DevLabProjectController;
 use App\Http\Controllers\SandboxController;
+use App\Http\Controllers\DocsController;
+use App\Http\Controllers\AiSettingsController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -132,6 +134,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('memos/{memo}/favorite', [MemoController::class, 'toggleFavorite'])->name('memos.favorite');
     Route::patch('memos/{memo}/move', [MemoController::class, 'move'])->name('memos.move');
     Route::get('search', SearchController::class)->name('search');
+
+    // Documentation : recherche, lecture, assistant IA (clé de l'utilisateur).
+    Route::get('docs', [DocsController::class, 'index'])->name('docs.index');
+    Route::post('docs/ask', [DocsController::class, 'ask'])->middleware('throttle:12,1')->name('docs.ask');
+    Route::post('docs/memo', [DocsController::class, 'saveMemo'])->name('docs.memo');
+    Route::get('docs/{source}/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
+
+    Route::put('profile/ai', [AiSettingsController::class, 'update'])->middleware('throttle:10,1')->name('profile.ai.update');
+    Route::delete('profile/ai', [AiSettingsController::class, 'destroy'])->name('profile.ai.destroy');
 });
 
 require __DIR__.'/auth.php';

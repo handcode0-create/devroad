@@ -924,3 +924,70 @@ html .theme-light input[data-dr-native]:not([type="checkbox"]):not([type="radio"
 html .theme-light input[data-dr-native]::placeholder {
     color: var(--dr-text-3);
 }
+
+/*
+ * Contenu de documentation (pages DevDocs/Laravel, réponses de l'IA) :
+ * typographie de lecture qui suit les rôles du thème.
+ */
+.dr-doc {
+    color: var(--dr-text-2);
+    font-size: 15.5px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
+.dr-doc > :first-child { margin-top: 0; }
+.dr-doc [id] { scroll-margin-top: 96px; }
+.dr-doc h1, .dr-doc h2, .dr-doc h3, .dr-doc h4, .dr-doc h5 {
+    color: var(--dr-text);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+    scroll-margin-top: 96px;
+}
+.dr-doc h1 { font-size: 1.6em; margin: 1.6em 0 0.6em; }
+.dr-doc h2 { font-size: 1.35em; margin: 1.8em 0 0.6em; padding-top: 0.4em; border-top: 1px solid var(--dr-border); }
+.dr-doc h3 { font-size: 1.12em; margin: 1.5em 0 0.5em; }
+.dr-doc h4, .dr-doc h5 { font-size: 1em; margin: 1.3em 0 0.4em; }
+.dr-doc p, .dr-doc ul, .dr-doc ol, .dr-doc dl, .dr-doc table, .dr-doc pre, .dr-doc blockquote, .dr-doc figure { margin: 0 0 1em; }
+.dr-doc ul { list-style: disc; padding-left: 1.4em; }
+.dr-doc ol { list-style: decimal; padding-left: 1.4em; }
+.dr-doc li { margin: 0.25em 0; }
+.dr-doc li::marker { color: var(--dr-accent); }
+.dr-doc strong, .dr-doc b, .dr-doc dt { color: var(--dr-text); font-weight: 650; }
+.dr-doc dd { margin: 0 0 0.6em 1.2em; }
+.dr-doc a { color: var(--dr-accent-text); font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.dr-doc code, .dr-doc kbd, .dr-doc samp {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--dr-field);
+    color: var(--dr-text);
+    border-radius: 6px;
+    padding: 0.12em 0.4em;
+}
+.dr-doc pre {
+    background: var(--dr-field);
+    border: 1px solid var(--dr-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.6;
+    font-size: 13.5px;
+}
+.dr-doc pre code { background: none; padding: 0; font-size: inherit; }
+.dr-doc blockquote {
+    border-left: 3px solid var(--dr-accent);
+    background: var(--dr-accent-soft);
+    border-radius: 0 12px 12px 0;
+    padding: 10px 14px;
+    color: var(--dr-text);
+}
+.dr-doc blockquote > :last-child { margin-bottom: 0; }
+.dr-doc table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 14px; }
+.dr-doc th, .dr-doc td { border: 1px solid var(--dr-border); padding: 8px 10px; text-align: left; vertical-align: top; }
+.dr-doc th { background: var(--dr-field); color: var(--dr-text); font-weight: 650; }
+.dr-doc img { max-width: 100%; height: auto; border-radius: 12px; }
+.dr-doc hr { border: 0; border-top: 1px solid var(--dr-border); margin: 2em 0; }
+.dr-doc details { background: var(--dr-field); border-radius: 12px; padding: 10px 14px; margin-bottom: 1em; }
+.dr-doc summary { cursor: pointer; color: var(--dr-text); font-weight: 600; }
+.dr-doc mark { background: var(--dr-accent-soft); color: var(--dr-accent-text); border-radius: 4px; padding: 0 2px; }
