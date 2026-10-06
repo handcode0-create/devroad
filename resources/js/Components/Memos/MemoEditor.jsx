@@ -54,22 +54,22 @@ function escapeHtml(value) {
 
 export function memoValueToHtml(value) {
     const raw = String(value ?? '');
-    if (/<(?:p|div|h[1-6]|strong|b|ul|ol|li|blockquote|pre|code|br|hr|a|img|figure)\\b/i.test(raw)) {
+    if (/<(?:p|div|h[1-6]|strong|b|ul|ol|li|blockquote|pre|code|br|hr|a|img|figure)\b/i.test(raw)) {
         return sanitizeMemoHtml(raw);
     }
 
     return raw
-        .split(/\\n{2,}/)
+        .split(/\n{2,}/)
         .map((block) => {
             const line = block.trim();
             if (!line) return '';
-            if (/^###\\s+/.test(line)) return '<h4>' + escapeHtml(line.replace(/^###\\s+/, '')) + '</h4>';
-            if (/^##\\s+/.test(line)) return '<h3>' + escapeHtml(line.replace(/^##\\s+/, '')) + '</h3>';
-            if (/^#\\s+/.test(line)) return '<h2>' + escapeHtml(line.replace(/^#\\s+/, '')) + '</h2>';
-            if (/^>\\s?/.test(line)) return '<blockquote>' + escapeHtml(line.replace(/^>\\s?/, '')) + '</blockquote>';
-            if (/^[-*]\\s+/.test(line)) return '<ul>' + line.split(/\\n/).map((item) => '<li>' + escapeHtml(item.replace(/^[-*]\\s+/, '')) + '</li>').join('') + '</ul>';
-            if (/^\\d+\\.\\s+/.test(line)) return '<ol>' + line.split(/\\n/).map((item) => '<li>' + escapeHtml(item.replace(/^\\d+\\.\\s+/, '')) + '</li>').join('') + '</ol>';
-            return '<p>' + escapeHtml(line).replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>') + '</p>';
+            if (/^###\s+/.test(line)) return '<h4>' + escapeHtml(line.replace(/^###\s+/, '')) + '</h4>';
+            if (/^##\s+/.test(line)) return '<h3>' + escapeHtml(line.replace(/^##\s+/, '')) + '</h3>';
+            if (/^#\s+/.test(line)) return '<h2>' + escapeHtml(line.replace(/^#\s+/, '')) + '</h2>';
+            if (/^>\s?/.test(line)) return '<blockquote>' + escapeHtml(line.replace(/^>\s?/, '')) + '</blockquote>';
+            if (/^[-*]\s+/.test(line)) return '<ul>' + line.split(/\n/).map((item) => '<li>' + escapeHtml(item.replace(/^[-*]\s+/, '')) + '</li>').join('') + '</ul>';
+            if (/^\d+\.\s+/.test(line)) return '<ol>' + line.split(/\n/).map((item) => '<li>' + escapeHtml(item.replace(/^\d+\.\s+/, '')) + '</li>').join('') + '</ol>';
+            return '<p>' + escapeHtml(line).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>') + '</p>';
         })
         .join('');
 }
@@ -378,7 +378,7 @@ export default function MemoEditor({ content, onContentChange, formatting, onFor
             aria-label="Contenu de la fiche"
             spellCheck
             style={{ fontFamily: MEMO_FONT_STACKS[style.fontFamily] ?? MEMO_FONT_STACKS.Inter, fontSize: style.fontSize, fontWeight: style.fontWeight, textTransform: style.textTransform, textAlign: style.textAlign }}
-            className="min-h-[400px] w-full resize-y overflow-y-auto bg-[#08111F] p-4 leading-7 text-slate-200 outline-none empty:before:text-slate-600 empty:before:content-[attr(data-placeholder)]"
+            className="min-h-[400px] w-full resize-y overflow-y-auto bg-[#08111F] p-4 leading-7 text-slate-200 outline-none empty:before:text-slate-600 empty:before:content-[attr(data-placeholder)] [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-[1.5em] [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:text-white first:[&_h2]:mt-0 [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-[1.25em] [&_h3]:font-semibold [&_h3]:text-white [&_h4]:mb-1.5 [&_h4]:mt-3 [&_h4]:text-[1.1em] [&_h4]:font-semibold [&_h4]:text-white [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:marker:text-[#FF6A00] [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-[#FF6A00]/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-400 [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-white/[0.06] [&_pre]:bg-[#060D18] [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-[0.85em] [&_hr]:my-5 [&_hr]:border-white/[0.08] [&_strong]:font-bold [&_strong]:text-white [&_a]:text-[#FF8A3D] [&_a]:underline [&_img]:max-w-full [&_img]:rounded-xl"
             data-placeholder="Écris une note puis applique les formats directement, comme dans Notion."
         />
     </div>;

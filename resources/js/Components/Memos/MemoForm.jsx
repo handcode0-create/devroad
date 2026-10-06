@@ -9,6 +9,11 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
     const { data, setData, errors, processing, isDirty } = form;
     const tagsError = errors.tags ?? Object.entries(errors).find(([key]) => key.startsWith('tags.'))?.[1];
     const selectedFiles = Array.isArray(data.attachments) ? data.attachments : [];
+    // Erreurs des champs qui n'ont pas d'emplacement dédié (mise en forme,
+    // icône, couverture, fichiers…) : sans ce résumé, un refus serait silencieux.
+    const otherErrors = Object.entries(errors)
+        .filter(([key]) => !['title', 'content'].includes(key) && !key.startsWith('tags'))
+        .map(([, message]) => message);
 
     function addFiles(event) {
         const incoming = Array.from(event.target.files ?? []);
@@ -42,7 +47,7 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
             </Field>
 
             <Field label="Contenu" htmlFor="content" error={errors.content} hint="Les blocs de code entre triples accents restent affichés en monospace.">
-                <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} attachments={attachments} />
+                <MemoEditor content={data.content} onContentChange={(content) => setData('content', content)} formatting={data.formatting} onFormattingChange={(formatting) => setData('formatting', formatting)} onAutoTitle={(title) => { if (title) setData('title', title); }} attachments={attachments} />
             </Field>
 
             <Field label="Page" htmlFor="memo-icon" hint="Icône, couverture et largeur de page comme dans Notion.">
@@ -120,6 +125,15 @@ export default function MemoForm({ form, onSubmit, saved = false, submitLabel, c
                 <input type="checkbox" checked={data.is_favorite} onChange={(e) => setData('is_favorite', e.target.checked)} className="h-4 w-4 rounded border-white/20 bg-[#101A2A] text-[#FF6A00] focus:ring-[#FF6A00]/30" />
                 Ajouter aux favoris
             </label>
+
+            {otherErrors.length > 0 && (
+                <div role="alert" className="rounded-xl border border-red-400/20 bg-red-500/[0.06] px-4 py-3 text-sm text-red-300">
+                    <p className="font-semibold">La fiche n’a pas pu être enregistrée :</p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs">
+                        {otherErrors.map((message, index) => <li key={index}>{message}</li>)}
+                    </ul>
+                </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
                 <button type="button" onClick={handleButtonClick} disabled={processing} className={buttonClass('primary')}>

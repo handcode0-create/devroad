@@ -39,6 +39,7 @@ export default function Edit({ memo, folders = [] }) {
     function submit(normalized = null) {
         setSaved(false);
 
+        // Inertia 2 : transform() ne renvoie rien, on ne peut pas enchaîner .post().
         form.transform((data) => {
             const content = normalized?.content ?? normalizeMemoContent(data.content);
             const title = normalized?.title ?? data.title.trim();
@@ -49,7 +50,9 @@ export default function Edit({ memo, folders = [] }) {
                 content,
                 _method: 'put',
             };
-        }).post('/memos/' + memo.id, {
+        });
+
+        form.post('/memos/' + memo.id, {
             forceFormData: true,
             onSuccess: (page) => {
                 const nextMemo = page.props.memo ?? memo;
@@ -68,7 +71,7 @@ export default function Edit({ memo, folders = [] }) {
                 };
 
                 form.setData(nextData);
-                form.defaults(nextData);
+                form.setDefaults(nextData);
                 setSaved(true);
             },
         });
