@@ -71,7 +71,7 @@ class DocsTest extends TestCase
         $this->artisan('docs:sync', ['source' => ['javascript']]);
         $user = User::factory()->create();
 
-        $this->actingAs($user)->get('/docs/javascript/global_objects/array/map')
+        $this->actingAs($user)->get('/docs/javascript/global_objects/array/map?lang=en')
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Docs/Show')
                 ->where('page.title', 'Array.prototype.map()')
@@ -84,7 +84,7 @@ class DocsTest extends TestCase
 
         // Deuxième lecture : servie depuis le cache, sans nouvel appel réseau.
         Http::fake(fn () => throw new \RuntimeException('Pas de réseau attendu.'));
-        $this->actingAs($user)->get('/docs/javascript/global_objects/array/map')->assertOk();
+        $this->actingAs($user)->get('/docs/javascript/global_objects/array/map?lang=en')->assertOk();
         $this->assertSame(1, DocPage::count());
     }
 
@@ -94,7 +94,7 @@ class DocsTest extends TestCase
         $this->artisan('docs:sync', ['source' => ['javascript']]);
         Http::fake(['documents.devdocs.io/*' => Http::response('', 503)]);
 
-        $this->actingAs(User::factory()->create())->get('/docs/javascript/global_objects/array')
+        $this->actingAs(User::factory()->create())->get('/docs/javascript/global_objects/array?lang=en')
             ->assertInertia(fn (AssertableInertia $page) => $page->where('page', null)->where('error', fn ($error) => filled($error)));
     }
 

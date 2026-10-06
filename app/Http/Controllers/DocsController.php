@@ -7,6 +7,8 @@ use App\Services\Ai\AiClient;
 use App\Services\Ai\AiException;
 use App\Services\Docs\DocsAssistant;
 use App\Services\Docs\DocsLibrary;
+use App\Services\Docs\DocsTranslator;
+use App\Services\Docs\FrenchDocs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +36,7 @@ class DocsController extends Controller
             'sources' => $sources->values(),
             'results' => mb_strlen($query) >= 2 ? $this->library->search($query, $keys) : null,
             'ai' => $this->aiState($request),
+            'locale' => $request->user()->docs_locale ?: 'fr',
         ]);
     }
 
@@ -42,29 +45,77 @@ class DocsController extends Controller
         $model = DocSource::where('key', $source)->firstOrFail();
         abort_unless(preg_match('#^[\w\-./~:@%+]+$#u', $path) && ! str_contains($path, '..'), 404);
 
+        // Langue : ?lang=en|fr pour cette page, sinon la préférence du compte (français par défaut).
+        $want = in_array($request->query('lang'), ['fr', 'en'], true) ? $request->query('lang') : ($request->user()->docs_locale ?: 'fr');
+
         try {
-            $page = $this->library->page($model, $path);
+            $read = $this->library->read($model, $path, $want);
+            $page = $read['page'];
             $payload = [
                 'title' => $page->title,
                 'path' => $page->path,
                 'html' => $page->html,
                 'headings' => $this->library->headings($page),
+                'locale' => $read['locale'],
             ];
+            $french = $read['french'];
             $error = null;
         } catch (Throwable $exception) {
             report($exception);
-            $payload = null;
+            [$payload, $french] = [null, 'unknown'];
             $error = 'Cette page de documentation n’a pas pu être chargée. Vérifie ta connexion puis réessaie.';
         }
+
+        $english = $payload && $payload['locale'] === 'en' ? $page : null;
 
         return Inertia::render('Docs/Show', [
             'source' => $this->presentSource($model),
             'page' => $payload,
             'path' => $path,
             'error' => $error,
+            'want' => $want,
+            // official : traduction de la communauté · machine : traduite par l'IA · missing/none : anglais seulement
+            'french' => $french,
+            'translation' => $english && $want === 'fr' && in_array($french, ['missing', 'none'], true) ? [
+                'total' => count(app(DocsTranslator::class)->chunks($english)),
+                'done' => $english->translations()->count(),
+            ] : null,
             'originalUrl' => $this->originalUrl($model, $path),
+            'originalFrUrl' => rescue(fn () => app(FrenchDocs::class)->originalUrl($model, $path), null, report: false),
             'ai' => $this->aiState($request),
         ]);
+    }
+
+    /** Traduit un morceau d'une page anglaise en français (IA de l'utilisateur). */
+    public function translate(Request $request, DocsTranslator $translator): JsonResponse
+    {
+        $data = $request->validate([
+            'source' => ['required', 'string', 'max:40'],
+            'path' => ['required', 'string', 'max:500'],
+            'chunk' => ['required', 'integer', 'min:0', 'max:60'],
+        ]);
+        $source = DocSource::where('key', $data['source'])->firstOrFail();
+
+        try {
+            $english = $this->library->page($source, $data['path']);
+
+            return response()->json($translator->translateChunk($request->user(), $english, (int) $data['chunk']));
+        } catch (AiException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'La traduction a échoué. Réessaie dans un instant.'], 500);
+        }
+    }
+
+    /** Langue préférée de la documentation (français par défaut). */
+    public function locale(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['locale' => ['required', 'in:fr,en']]);
+        $request->user()->forceFill(['docs_locale' => $data['locale']])->save();
+
+        return back();
     }
 
     public function ask(Request $request, DocsAssistant $assistant): JsonResponse
@@ -121,6 +172,8 @@ class DocsController extends Controller
                 'version' => $source?->version,
                 'entries' => $source?->entries_count ?? 0,
                 'ready' => (bool) $source?->entries_count,
+                // Version française officielle disponible pour cette doc (sinon : traduction par l'IA).
+                'french' => filled($config['fr']['provider'] ?? null),
             ];
         })->values();
     }

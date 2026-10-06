@@ -8,7 +8,7 @@ import { followInternalLink } from '@/Components/Docs/links';
 
 // Documentation : recherche classique (gratuite, toujours disponible) et, si l'utilisateur
 // a ajouté sa clé, « Demander à l'IA » qui répond à partir des docs avec les sources.
-export default function Index({ query = '', source = null, sources = [], results = null, ai = {} }) {
+export default function Index({ query = '', source = null, sources = [], results = null, ai = {}, locale = 'fr' }) {
     const ready = sources.filter((item) => item.ready);
     const [mode, setMode] = useState(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'ia' ? 'ai' : 'search'));
     const [term, setTerm] = useState(query);
@@ -58,13 +58,16 @@ export default function Index({ query = '', source = null, sources = [], results
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 font-['Figtree',system-ui,sans-serif] text-[var(--dr-text)]">
                 <PageHead title="Documentation" subtitle="Les docs officielles de tes technologies, sans quitter DevRoad." />
 
-                <Segmented
-                    label="Mode"
-                    value={mode}
-                    onChange={setMode}
-                    className="w-fit"
-                    items={[{ key: 'search', label: 'Rechercher' }, { key: 'ai', label: ai.enabled ? 'Demander à l’IA' : 'Demander à l’IA ✦' }]}
-                />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Segmented
+                        label="Mode"
+                        value={mode}
+                        onChange={setMode}
+                        className="w-fit"
+                        items={[{ key: 'search', label: 'Rechercher' }, { key: 'ai', label: ai.enabled ? 'Demander à l’IA' : 'Demander à l’IA ✦' }]}
+                    />
+                    <LocaleSwitch locale={locale} />
+                </div>
 
                 {ready.length === 0 ? (
                     <NotReady />
@@ -78,6 +81,7 @@ export default function Index({ query = '', source = null, sources = [], results
                                     <button key={chip.key ?? 'all'} type="button" aria-pressed={active} onClick={() => chooseSource(chip.key)} className={'inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm transition-colors ' + ui.focus + ' ' + (active ? 'border-transparent bg-[var(--dr-text)] font-semibold text-[var(--dr-bg)]' : 'border-[var(--dr-border)] bg-[var(--dr-surface)] text-[var(--dr-text-2)] hover:text-[var(--dr-text)]')}>
                                         {chip.key && <TechTile technology={chip.technology} title={chip.name} size={20} />}
                                         {chip.name}
+                                        {chip.key && chip.french && <span className="rounded-md bg-[var(--dr-accent-soft)] px-1.5 text-[10px] font-bold tracking-wide text-[var(--dr-accent-text)]" title="Version française officielle">FR</span>}
                                     </button>
                                 );
                             })}
@@ -107,10 +111,23 @@ export default function Index({ query = '', source = null, sources = [], results
                 )}
 
                 <p className="m-0 pt-2 text-xs leading-5 text-[var(--dr-text-3)]">
-                    Contenus fournis par <a href="https://devdocs.io" target="_blank" rel="noopener noreferrer" className="underline">DevDocs</a> et la <a href="https://github.com/laravel/docs" target="_blank" rel="noopener noreferrer" className="underline">documentation officielle de Laravel</a>, sous la licence de chaque projet (mentionnée sur chaque page).
+                    Pages en français : traductions officielles de <a href="https://developer.mozilla.org/fr/" target="_blank" rel="noopener noreferrer" className="underline">MDN</a>, <a href="https://fr.react.dev" target="_blank" rel="noopener noreferrer" className="underline">fr.react.dev</a> et du <a href="https://www.php.net/manual/fr/" target="_blank" rel="noopener noreferrer" className="underline">manuel PHP</a>. Pages en anglais : <a href="https://devdocs.io" target="_blank" rel="noopener noreferrer" className="underline">DevDocs</a> et la <a href="https://github.com/laravel/docs" target="_blank" rel="noopener noreferrer" className="underline">documentation officielle de Laravel</a>. Chaque page indique sa licence.
                 </p>
             </div>
         </AppLayout>
+    );
+}
+
+/** Langue des pages : le français d'abord, l'anglais en option (préférence enregistrée sur le compte). */
+function LocaleSwitch({ locale }) {
+    return (
+        <Segmented
+            label="Langue des pages"
+            value={locale}
+            onChange={(next) => next !== locale && router.patch('/docs/locale', { locale: next }, { preserveScroll: true, preserveState: true })}
+            className="w-fit"
+            items={[{ key: 'fr', label: 'Français' }, { key: 'en', label: 'English' }]}
+        />
     );
 }
 
@@ -142,7 +159,7 @@ function Home({ sources, recent, onPick }) {
                                 <TechTile technology={item.technology} title={item.name} size={40} />
                                 <span className="flex min-w-0 flex-col">
                                     <span className="truncate text-[15px] font-semibold">{item.name}</span>
-                                    <span className="truncate text-xs text-[var(--dr-text-3)]">{item.entries.toLocaleString('fr-FR')} entrées{item.version ? ' · ' + item.version : ''}</span>
+                                    <span className="truncate text-xs text-[var(--dr-text-3)]">{item.french ? 'En français' : 'En anglais · traduction IA'} · {item.entries.toLocaleString('fr-FR')} entrées</span>
                                 </span>
                             </button>
                         </m.li>
@@ -187,7 +204,7 @@ function Results({ results, query, ai, onAsk }) {
                     <h2 id="dans-le-texte" className={ui.eyebrow + ' m-0'}>Dans le texte des pages</h2>
                     {results.pages.map((page) => (
                         <Link key={page.url} href={page.url} className={'flex flex-col gap-1 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] px-4 py-3 hover:border-[var(--dr-border-2)] ' + ui.focus}>
-                            <span className="text-[15px] font-semibold">{page.title} <span className="font-normal text-[var(--dr-text-3)]">· {page.source_name}</span></span>
+                            <span className="text-[15px] font-semibold">{page.title} <span className="font-normal text-[var(--dr-text-3)]">· {page.source_name}{page.locale === 'fr' ? ' · FR' : ' · EN'}</span></span>
                             <span className="line-clamp-2 text-sm leading-5 text-[var(--dr-text-2)]"><Highlight text={page.snippet} query={query} /></span>
                         </Link>
                     ))}

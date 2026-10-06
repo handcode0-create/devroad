@@ -135,10 +135,15 @@ class DocsLibrary
                 $rendered = $this->renderLaravel($slug, $bodies[$slug]);
                 // Titre complet de la page (« Eloquent: Relationships ») plutôt que l'intitulé court du sommaire.
                 $entries->push(['name' => $rendered['title'] ?? $page['title'], 'type' => $page['group'], 'path' => $slug, 'fragment' => null]);
-                DocPage::updateOrCreate(
-                    ['doc_source_id' => $source->id, 'path' => $slug],
+                $english = DocPage::updateOrCreate(
+                    ['doc_source_id' => $source->id, 'path' => $slug, 'locale' => 'en'],
                     ['title' => $rendered['title'] ?? $page['title'], 'html' => $rendered['html'], 'text' => $rendered['text']],
                 );
+                // Page anglaise modifiée : sa traduction automatique est périmée.
+                if ($english->wasChanged('html')) {
+                    $english->translations()->delete();
+                    $source->pages()->where('path', $slug)->where('locale', 'fr')->where('machine_translated', true)->delete();
+                }
                 foreach ($rendered['headings'] as $heading) {
                     if ($heading['level'] <= 3) {
                         $entries->push(['name' => $heading['text'], 'type' => $page['title'], 'path' => $slug, 'fragment' => $heading['id']]);
@@ -194,10 +199,55 @@ class DocsLibrary
 
     /* ───────────────────────── Lecture des pages ───────────────────────── */
 
+    /**
+     * Page dans la langue voulue. Le français d'abord : version officielle (MDN, React, PHP),
+     * sinon traduction par l'IA déjà faite, sinon la page anglaise (avec possibilité de la traduire).
+     *
+     * @return array{page: DocPage, locale: string, french: string}  french : official | machine | missing | none
+     */
+    public function read(DocSource $source, string $path, string $want = 'fr'): array
+    {
+        $path = trim($path, '/');
+        $french = app(FrenchDocs::class);
+        $status = $french->supports($source) ? 'unknown' : 'none';
+
+        $fr = $source->pages()->where('path', $path)->where('locale', 'fr')->first();
+        if ($fr && ! $fr->missing) {
+            $status = $fr->machine_translated ? 'machine' : 'official';
+        } elseif ($fr?->missing) {
+            $status = 'missing';
+        }
+
+        if ($want === 'fr' && $status === 'unknown') {
+            try {
+                $data = $french->fetch($source, $path);
+            } catch (\Throwable $exception) {
+                // Source française injoignable : on affiche l'anglais, sans noter la page comme absente.
+                report($exception);
+
+                return ['page' => $this->page($source, $path), 'locale' => 'en', 'french' => 'unavailable'];
+            }
+            $fr = DocPage::updateOrCreate(
+                ['doc_source_id' => $source->id, 'path' => $path, 'locale' => 'fr'],
+                $data
+                    ? ['title' => $data['title'] ?? Str::headline(basename($path)), 'html' => $data['html'], 'text' => $data['text'], 'missing' => false, 'machine_translated' => false]
+                    : ['title' => null, 'html' => '', 'text' => '', 'missing' => true, 'machine_translated' => false],
+            );
+            $status = $data ? 'official' : 'missing';
+        }
+
+        if ($want === 'fr' && in_array($status, ['official', 'machine'], true)) {
+            return ['page' => $fr, 'locale' => 'fr', 'french' => $status];
+        }
+
+        return ['page' => $this->page($source, $path), 'locale' => 'en', 'french' => $status];
+    }
+
+    /** Page anglaise (source d'origine), mise en cache. */
     public function page(DocSource $source, string $path): DocPage
     {
         $path = trim($path, '/');
-        $cached = $source->pages()->where('path', $path)->first();
+        $cached = $source->pages()->where('path', $path)->where('locale', 'en')->first();
         if ($cached) {
             return $cached;
         }
@@ -216,7 +266,7 @@ class DocsLibrary
             ?? $source->entries()->where('path', $path)->value('name');
 
         return DocPage::updateOrCreate(
-            ['doc_source_id' => $source->id, 'path' => $path],
+            ['doc_source_id' => $source->id, 'path' => $path, 'locale' => 'en'],
             ['title' => $rendered['title'] ?? $entryName ?? Str::headline(basename($path)), 'html' => $rendered['html'], 'text' => $rendered['text']],
         );
     }
@@ -318,9 +368,13 @@ class DocsLibrary
 
         $pages = DocPage::query()
             ->whereIn('doc_source_id', $sources->keys())
+            ->where('missing', false)
             ->whereRaw('lower(text) like ?', [$like])
+            // Le français d'abord.
+            ->orderByRaw("case when locale = 'fr' then 0 else 1 end")
             ->limit(8)
-            ->get(['id', 'doc_source_id', 'path', 'title', 'text']);
+            ->get(['id', 'doc_source_id', 'path', 'locale', 'title', 'text'])
+            ->unique(fn (DocPage $page) => $page->doc_source_id . ':' . $page->path);
 
         return [
             'entries' => $entries->map(fn (DocEntry $entry) => $this->presentEntry($entry, $sources[$entry->doc_source_id]))->values()->all(),
@@ -330,6 +384,7 @@ class DocsLibrary
                 'title' => $page->title,
                 'url' => '/docs/' . $sources[$page->doc_source_id]->key . '/' . $page->path,
                 'snippet' => $this->snippet($page->text, $q),
+                'locale' => $page->locale,
             ])->values()->all(),
         ];
     }
