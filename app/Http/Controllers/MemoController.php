@@ -59,7 +59,7 @@ class MemoController extends Controller
             ->through(fn (Memo $memo) => [
                 'id' => $memo->id,
                 'title' => $memo->title,
-                'excerpt' => Str::limit($memo->content, 140),
+                'excerpt' => Memo::excerptFrom($memo->content),
                 'is_favorite' => $memo->is_favorite,
                 'updated_at' => $memo->updated_at,
                 'tags' => $this->formatTags($memo),

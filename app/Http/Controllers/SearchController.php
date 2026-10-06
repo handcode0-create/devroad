@@ -80,7 +80,7 @@ class SearchController extends Controller
                     ->through(fn (Memo $m) => [
                         'id' => $m->id,
                         'title' => $m->title,
-                        'excerpt' => Str::limit($m->content, 140),
+                        'excerpt' => Memo::excerptFrom($m->content),
                         'is_favorite' => $m->is_favorite,
                         'tags' => $m->tags->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'slug' => $t->slug])->values(),
                     ])
