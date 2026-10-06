@@ -14,10 +14,12 @@ import {
     GraduationCap,
     UserRound,
     Palette,
+    Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import ThemePicker from '@/Components/Ui/ThemePicker';
+import AiSettings from '@/Components/Profile/AiSettings';
 import { PageHead } from '@/Components/Ui/Design';
 import AppLayout from '@/Layouts/AppLayout';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
@@ -57,6 +59,7 @@ export default function Edit({
     status,
     preferences = {},
     technologies = [],
+    aiSettings = null,
 }) {
     const { auth } = usePage().props;
     const user = auth?.user;
@@ -115,6 +118,7 @@ export default function Edit({
                     <SettingsAnchor href="#profil" label="Profil" icon={UserRound} />
                     <SettingsAnchor href="#preferences" label="Préférences" icon={Settings2} />
                     <SettingsAnchor href="#apparence" label="Apparence" icon={Palette} />
+                    <SettingsAnchor href="#assistant-ia" label="Assistant IA" icon={Sparkles} />
                     <SettingsAnchor href="#objectifs" label="Objectifs" icon={Target} />
                     <SettingsAnchor href="#aide" label="Aide & support" icon={CircleHelp} />
                 </nav>
@@ -271,6 +275,18 @@ export default function Edit({
                     <div className="mt-5 flex flex-col gap-4">
                         <ThemePicker preference={user?.theme ?? 'nuit'} columns="grid-cols-3 sm:grid-cols-5" />
                     </div>
+                </section>
+
+                <section
+                    id="assistant-ia"
+                    className="scroll-mt-24 rounded-3xl border border-[var(--dr-border)] bg-[var(--dr-surface)] p-5 sm:p-7"
+                >
+                    <SectionHeader
+                        icon={Sparkles}
+                        title="Assistant IA"
+                        description="Facultatif : ajoute ta propre clé pour poser tes questions à l’IA depuis la page Documentation."
+                    />
+                    <AiSettings settings={aiSettings} />
                 </section>
 
                 <section

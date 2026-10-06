@@ -12,6 +12,7 @@ const ICONS = {
     memo: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
     tools: 'M8 7l-5 5 5 5M16 7l5 5-5 5',
     box: 'M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12L4 7.5M12 12v9',
+    book: 'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 19V5M8 7h7M8 11h5',
     search: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-3.5-3.5',
     newMemo: 'M7 3h7l5 5v13H7zM14 3v5h5M13 12v6M10 15h6',
     user: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',
@@ -38,6 +39,7 @@ const SHEETS = {
         items: [
             { label: 'DevLab', hint: 'Éditeur de code dans le navigateur', href: '/devlab', icon: ICONS.tools },
             { label: 'Sandbox', hint: 'Projets dans un environnement isolé', href: '/sandbox', icon: ICONS.box },
+            { label: 'Documentation', hint: 'Docs officielles et assistant IA', href: '/docs', icon: ICONS.book },
             { label: 'Recherche', hint: 'Fiches, parcours et étapes', href: '/search', icon: ICONS.search },
             { label: 'Profil et compte', hint: 'Informations, mot de passe, déconnexion', href: '/profile', icon: ICONS.user },
         ],
@@ -64,7 +66,7 @@ export default function BottomNav() {
         { key: 'map', label: 'Parcours', href: '/roadmaps', icon: ICONS.map, active: starts('/roadmaps', '/steps') },
         { key: 'create', label: 'Créer', icon: ICONS.plus, create: true },
         { key: 'memo', label: 'Fiches', href: '/memos', icon: ICONS.memo, active: starts('/memos') },
-        { key: 'tools', label: 'Outils', icon: ICONS.tools, sheet: 'tools', active: starts('/devlab', '/sandbox', '/search', '/profile') },
+        { key: 'tools', label: 'Outils', icon: ICONS.tools, sheet: 'tools', active: starts('/devlab', '/sandbox', '/docs', '/search', '/profile') },
     ];
 
     const tabClass = (active) => 'relative flex h-[52px] w-[58px] flex-col items-center justify-center gap-[3px] rounded-[14px] text-[11px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--dr-accent)] '

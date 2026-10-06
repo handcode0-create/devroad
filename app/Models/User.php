@@ -37,6 +37,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        // Jamais envoyée au navigateur : seuls les 4 derniers caractères (ai_key_hint) le sont.
+        'ai_api_key',
     ];
 
     protected function casts(): array
@@ -49,7 +51,13 @@ class User extends Authenticatable
             'email_notifications' => 'boolean',
             'learning_reminders' => 'boolean',
             'light_mode' => 'boolean',
+            'ai_api_key' => 'encrypted',
         ];
+    }
+
+    public function hasAiAssistant(): bool
+    {
+        return filled($this->ai_provider) && filled($this->ai_api_key);
     }
 
     public function roadmaps(): HasMany

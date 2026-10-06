@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DocSource;
+use App\Services\Ai\AiClient;
+use App\Services\Ai\AiException;
+use App\Services\Docs\DocsAssistant;
+use App\Services\Docs\DocsLibrary;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
+use Throwable;
+
+class DocsController extends Controller
+{
+    public function __construct(private DocsLibrary $library)
+    {
+    }
+
+    public function index(Request $request): Response
+    {
+        $query = trim((string) $request->query('q', ''));
+        $source = (string) $request->query('source', '');
+        $sources = $this->sources();
+        $keys = $source !== '' && $sources->contains('key', $source) ? [$source] : [];
+
+        return Inertia::render('Docs/Index', [
+            'query' => $query,
+            'source' => $keys[0] ?? null,
+            'sources' => $sources->values(),
+            'results' => mb_strlen($query) >= 2 ? $this->library->search($query, $keys) : null,
+            'ai' => $this->aiState($request),
+        ]);
+    }
+
+    public function show(Request $request, string $source, string $path): Response
+    {
+        $model = DocSource::where('key', $source)->firstOrFail();
+        abort_unless(preg_match('#^[\w\-./~:@%+]+$#u', $path) && ! str_contains($path, '..'), 404);
+
+        try {
+            $page = $this->library->page($model, $path);
+            $payload = [
+                'title' => $page->title,
+                'path' => $page->path,
+                'html' => $page->html,
+                'headings' => $this->library->headings($page),
+            ];
+            $error = null;
+        } catch (Throwable $exception) {
+            report($exception);
+            $payload = null;
+            $error = 'Cette page de documentation n’a pas pu être chargée. Vérifie ta connexion puis réessaie.';
+        }
+
+        return Inertia::render('Docs/Show', [
+            'source' => $this->presentSource($model),
+            'page' => $payload,
+            'path' => $path,
+            'error' => $error,
+            'originalUrl' => $this->originalUrl($model, $path),
+            'ai' => $this->aiState($request),
+        ]);
+    }
+
+    public function ask(Request $request, DocsAssistant $assistant): JsonResponse
+    {
+        $data = $request->validate([
+            'question' => ['required', 'string', 'min:4', 'max:600'],
+            'sources' => ['nullable', 'array', 'max:12'],
+            'sources.*' => ['string', 'max:40'],
+        ], [
+            'question.min' => 'Ta question est un peu courte : précise ce que tu cherches.',
+            'question.max' => 'Ta question est trop longue (600 caractères au maximum).',
+        ]);
+
+        try {
+            return response()->json($assistant->ask($request->user(), $data['question'], $data['sources'] ?? []));
+        } catch (AiException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'L’assistant n’a pas pu répondre. Réessaie dans un instant.'], 500);
+        }
+    }
+
+    /** « Garder en fiche » : une réponse de l'IA ou un extrait devient une fiche mémo. */
+    public function saveMemo(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'min:3', 'max:255'],
+            'html' => ['required', 'string', 'max:60000'],
+        ]);
+
+        // Le HTML vient de nos propres réponses mais on le re-nettoie quand même.
+        $html = \App\Services\Docs\DocHtml::clean($data['html'], fn (string $href) => str_starts_with($href, '/docs/') ? $href : null)['html'];
+        $memo = $request->user()->memos()->create(['title' => Str::limit($data['title'], 250, ''), 'content' => $html]);
+        $memo->syncTagNames(['documentation']);
+
+        return back()
+            ->with('success', 'Fiche mémo créée.')
+            ->with('undo', ['label' => 'Ouvrir', 'method' => 'get', 'url' => route('memos.show', $memo)]);
+    }
+
+    private function sources()
+    {
+        $synced = DocSource::all()->keyBy('key');
+
+        return collect(config('devroad_docs.sources'))->map(function ($config, $key) use ($synced) {
+            $source = $synced[$key] ?? null;
+
+            return [
+                'key' => $key,
+                'name' => $source?->name ?? $config['name'],
+                'technology' => $config['technology'] ?? $key,
+                'version' => $source?->version,
+                'entries' => $source?->entries_count ?? 0,
+                'ready' => (bool) $source?->entries_count,
+            ];
+        })->values();
+    }
+
+    private function presentSource(DocSource $source): array
+    {
+        return [
+            'key' => $source->key,
+            'name' => $source->name,
+            'version' => $source->version,
+            'technology' => config("devroad_docs.sources.{$source->key}.technology", $source->key),
+            'attribution' => $source->attribution,
+            'provider' => $source->provider,
+        ];
+    }
+
+    private function originalUrl(DocSource $source, string $path): string
+    {
+        return $source->provider === 'laravel'
+            ? rtrim(config('devroad_docs.laravel.site_url'), '/') . '/' . $source->remote_slug . '/' . $path
+            : 'https://devdocs.io/' . $source->remote_slug . '/' . $path;
+    }
+
+    private function aiState(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            'enabled' => $user->hasAiAssistant(),
+            'provider' => $user->ai_provider ? app(AiClient::class)->name($user->ai_provider) : null,
+        ];
+    }
+}
