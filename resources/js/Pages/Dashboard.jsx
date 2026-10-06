@@ -22,7 +22,6 @@ export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, le
 
     const [search, setSearch] = useState("");
     const animationRef = useRef(null);
-    useGsapScrollReveal(animationRef, [recent_roadmaps?.length, safeStats.progress]);
 
     const safeStats = {
         roadmaps: Number(stats?.roadmaps ?? 0),
@@ -31,6 +30,10 @@ export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, le
         steps_completed: Number(stats?.steps_completed ?? 0),
         progress: Number(stats?.progress ?? 0),
     };
+
+    // Doit rester APRÈS la déclaration de safeStats : l'utiliser avant
+    // provoque « Cannot access before initialization » et un écran vide.
+    useGsapScrollReveal(animationRef, [recent_roadmaps?.length, safeStats.progress]);
 
     const firstName = user?.name?.trim()?.split(" ")[0] ?? "Développeur";
 
