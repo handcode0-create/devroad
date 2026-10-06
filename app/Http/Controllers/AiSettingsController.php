@@ -25,7 +25,8 @@ class AiSettingsController extends Controller
             'api_key.min' => 'Cette clé semble incomplète.',
         ]);
 
-        $key = trim((string) ($data['api_key'] ?? ''));
+        // Clé collée depuis un téléphone : espaces, retours à la ligne ou caractères invisibles retirés.
+        $key = preg_replace('/^Bearer\s+/i', '', preg_replace('/[\s\x{200B}-\x{200D}\x{FEFF}]+/u', '', (string) ($data['api_key'] ?? '')));
         if ($key === '' && (! $user->ai_api_key || $user->ai_provider !== $data['provider'])) {
             throw ValidationException::withMessages(['api_key' => 'Colle ta clé d’API pour ce fournisseur.']);
         }

@@ -64,8 +64,36 @@ class DocsAssistantTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->from('/profile')->put('/profile/ai', ['provider' => 'openai', 'api_key' => 'sk-wrong-key-000'])
-            ->assertSessionHasErrors(['api_key' => 'Clé refusée par OpenAI. Vérifie qu’elle est complète et toujours active.']);
+            ->assertSessionHasErrors(['api_key' => 'Clé refusée par OpenAI. Vérifie qu’elle est complète, qu’elle vient bien de OpenAI et qu’elle est toujours active.']);
         $this->assertNull($user->fresh()->ai_api_key);
+    }
+
+    public function test_un_compte_anthropic_sans_credit_donne_la_marche_a_suivre(): void
+    {
+        Http::fake(['api.anthropic.com/*' => Http::response(['type' => 'error', 'error' => ['type' => 'invalid_request_error', 'message' => 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.']], 400)]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from('/profile')->put('/profile/ai', ['provider' => 'anthropic', 'api_key' => 'sk-ant-api03-validkey'])
+            ->assertSessionHasErrors(['api_key' => 'Ton compte Anthropic n’a pas de crédit disponible. Ajoute du crédit dans la console Anthropic (Billing), ou choisis Google Gemini qui propose un quota gratuit.']);
+    }
+
+    public function test_une_cle_collee_avec_espaces_et_retours_a_la_ligne_est_nettoyee(): void
+    {
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [['text' => 'OK']]]]]])]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from('/profile')->put('/profile/ai', ['provider' => 'gemini', 'api_key' => "  AIzaSyAbc\u{200B}def 123\n"])->assertSessionHasNoErrors();
+
+        Http::assertSent(fn ($request) => $request->hasHeader('x-goog-api-key', 'AIzaSyAbcdef123'));
+        $this->assertSame('AIzaSyAbcdef123', $user->fresh()->ai_api_key);
+    }
+
+    public function test_un_modele_inconnu_est_explique(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response(['error' => ['message' => 'The model `gpt-9` does not exist or you do not have access to it.', 'code' => 'model_not_found']], 404)]);
+
+        $this->actingAs(User::factory()->create())->from('/profile')->put('/profile/ai', ['provider' => 'openai', 'model' => 'gpt-9', 'api_key' => 'sk-proj-abcdef123'])
+            ->assertSessionHasErrors(['api_key' => 'Le modèle « gpt-9 » n’est pas disponible chez OpenAI avec cette clé. Laisse le champ Modèle vide pour utiliser celui par défaut.']);
     }
 
     public function test_supprimer_la_cle_desactive_l_assistant(): void
@@ -107,7 +135,7 @@ class DocsAssistantTest extends TestCase
         $user = $this->userWithKey(['ai_provider' => 'gemini', 'ai_model' => 'gemini-2.5-flash']);
 
         $this->actingAs($user)->postJson('/docs/ask', ['question' => 'eloquent relationships'])
-            ->assertStatus(422)->assertJsonPath('message', fn ($message) => str_contains($message, 'Quota ou crédit épuisé chez Google Gemini'));
+            ->assertStatus(422)->assertJsonPath('message', fn ($message) => str_contains($message, 'Quota gratuit de Google Gemini atteint'));
     }
 
     public function test_garder_une_reponse_en_fiche_memo(): void

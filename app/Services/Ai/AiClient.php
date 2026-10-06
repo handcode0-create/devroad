@@ -6,6 +6,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Appel minimal aux API d'IA avec la clé de l'utilisateur (Anthropic, OpenAI, Google Gemini).
@@ -77,18 +79,38 @@ class AiClient
     }
 
     /** Message d'erreur compréhensible (jamais le corps brut, qui pourrait contenir des détails techniques). */
+    /**
+     * Message d'erreur compréhensible et actionnable. La réponse brute du fournisseur
+     * est consignée dans les logs (jamais la clé), et citée seulement quand le cas est inconnu.
+     */
     private function explain(string $provider, Response $response, string $model): string
     {
         $name = $this->name($provider);
-        $detail = strtolower((string) ($response->json('error.message') ?? $response->json('error.status') ?? ''));
+        $status = $response->status();
+        $message = (string) ($response->json('error.message') ?? $response->json('message') ?? '');
+        $code = strtolower((string) ($response->json('error.code') ?? $response->json('error.type') ?? $response->json('error.status') ?? ''));
+        $detail = strtolower($message);
+
+        Log::warning('Erreur du fournisseur d’IA', ['provider' => $provider, 'model' => $model, 'status' => $status, 'code' => $code, 'message' => Str::limit($message, 300)]);
+
+        $noCredit = str_contains($detail, 'credit balance') || str_contains($detail, 'insufficient credit') || $code === 'insufficient_quota'
+            || str_contains($detail, 'billing') || str_contains($detail, 'exceeded your current quota') || str_contains($detail, 'purchase credits');
+        $badKey = in_array($status, [401, 403], true) || in_array($code, ['authentication_error', 'invalid_api_key', 'permission_denied', 'permission_error'], true)
+            || str_contains($detail, 'api key not valid') || str_contains($detail, 'invalid x-api-key') || str_contains($detail, 'incorrect api key') || str_contains($detail, 'invalid api key');
+        $badModel = $status === 404 || $code === 'model_not_found' || $code === 'not_found_error'
+            || (str_contains($detail, 'model') && (str_contains($detail, 'not found') || str_contains($detail, 'does not exist') || str_contains($detail, 'not supported') || str_contains($detail, 'invalid model')));
+        $freeTierExhausted = $provider === 'gemini' && ($status === 429 || $code === 'resource_exhausted');
 
         return match (true) {
-            in_array($response->status(), [401, 403], true) || str_contains($detail, 'api key') => "Clé refusée par $name. Vérifie qu’elle est complète et toujours active.",
-            $response->status() === 404 || str_contains($detail, 'model') => "Le modèle « $model » n’est pas disponible chez $name avec cette clé. Choisis-en un autre.",
-            $response->status() === 429 || str_contains($detail, 'quota') || str_contains($detail, 'credit') => "Quota ou crédit épuisé chez $name. Vérifie ton compte, ou réessaie dans quelques minutes.",
-            $response->status() === 400 && str_contains($detail, 'billing') => "$name demande d’activer la facturation sur ce compte.",
-            $response->serverError() => "$name est momentanément indisponible. Réessaie dans un instant.",
-            default => "$name a refusé la demande (erreur {$response->status()}).",
+            $noCredit && $provider === 'anthropic' => 'Ton compte Anthropic n’a pas de crédit disponible. Ajoute du crédit dans la console Anthropic (Billing), ou choisis Google Gemini qui propose un quota gratuit.',
+            $noCredit && $provider === 'openai' => 'Ton compte OpenAI n’a pas de crédit disponible. Ajoute un moyen de paiement ou du crédit sur platform.openai.com (Billing), ou choisis Google Gemini qui propose un quota gratuit.',
+            $noCredit => "$name demande d’activer la facturation sur ce compte.",
+            $badKey => "Clé refusée par $name. Vérifie qu’elle est complète, qu’elle vient bien de $name et qu’elle est toujours active.",
+            $badModel => "Le modèle « $model » n’est pas disponible chez $name avec cette clé. Laisse le champ Modèle vide pour utiliser celui par défaut.",
+            $freeTierExhausted => 'Quota gratuit de Google Gemini atteint pour le moment. Réessaie un peu plus tard (il se renouvelle chaque jour).',
+            $status === 429 => "Trop de demandes envoyées à $name en peu de temps. Réessaie dans une minute.",
+            $status === 529 || $response->serverError() => "$name est momentanément surchargé ou indisponible. Réessaie dans un instant.",
+            default => "$name a refusé la demande (erreur $status)" . ($message !== '' ? ' : « ' . Str::limit($message, 160) . ' »' : '.'),
         };
     }
 
