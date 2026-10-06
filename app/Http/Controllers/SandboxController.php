@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Contracts\SandboxExecutor;
 use App\Exceptions\SandboxRuntimeUnavailable;
+use App\Models\SandboxProcess;
 use App\Models\SandboxProject;
 use App\Jobs\StartSandboxJob;
+use App\Services\Sandbox\SandboxProcessRecorder;
 use App\Services\Sandbox\SandboxTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -126,14 +128,24 @@ class SandboxController extends Controller
         ]);
     }
 
-    public function command(Request $request, SandboxProject $project, SandboxExecutor $executor): JsonResponse
-    {
+    public function command(
+        Request $request,
+        SandboxProject $project,
+        SandboxExecutor $executor,
+        SandboxProcessRecorder $recorder
+    ): JsonResponse {
         $this->authorize('run', $project);
 
         $validated = $request->validate([
             'command' => ['required', 'string', 'max:4000'],
             'timeout' => ['sometimes', 'integer', 'min:1', 'max:300'],
         ]);
+
+        $command = trim($validated['command']);
+        $instance = $project->activeInstance()->latest('id')->first();
+        $process = $instance
+            ? $recorder->begin($instance, strtok($command, " \t\n") ?: 'commande', $command)
+            : null;
 
         try {
             $result = $executor->executeCommand(
@@ -142,13 +154,52 @@ class SandboxController extends Controller
                 (int) ($validated['timeout'] ?? 120)
             );
         } catch (SandboxRuntimeUnavailable) {
+            $recorder->finish($process, null, null, 'Runtime Sandbox indisponible.');
+
             return $this->runtimeUnavailable();
+        } catch (\Throwable $exception) {
+            $recorder->finish($process, null, null, $exception->getMessage());
+
+            throw $exception;
         }
+
+        $exitCode = isset($result['exit_code']) ? (int) $result['exit_code'] : null;
+        $recorder->finish($process, $exitCode, (string) ($result['output'] ?? ''));
 
         return response()->json([
             'output' => $result['output'],
             'exit_code' => $result['exit_code'],
+            'process_id' => $process?->id,
         ]);
+    }
+
+    /**
+     * Historique des processus du Sandbox (installation, serveur, commandes),
+     * du plus récent au plus ancien.
+     */
+    public function processes(Request $request, SandboxProject $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        $processes = $project->processes()
+            ->latest('sandbox_processes.id')
+            ->limit(20)
+            ->get()
+            ->map(fn (SandboxProcess $process) => [
+                'id' => $process->id,
+                'name' => $process->name,
+                'command' => $process->command,
+                'port' => $process->port,
+                'status' => $process->status,
+                'exit_code' => $process->exit_code,
+                'started_at' => $process->started_at?->toIso8601String(),
+                'stopped_at' => $process->stopped_at?->toIso8601String(),
+                'duration_ms' => $process->metadata['duration_ms'] ?? null,
+                'output' => $process->metadata['output'] ?? null,
+                'error' => $process->metadata['error'] ?? null,
+            ]);
+
+        return response()->json(['processes' => $processes]);
     }
 
     public function destroy(Request $request, SandboxProject $project, SandboxExecutor $executor): JsonResponse

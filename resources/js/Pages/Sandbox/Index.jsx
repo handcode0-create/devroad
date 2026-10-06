@@ -1,7 +1,7 @@
 import { Head } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
-import React, { useState } from "react";
-import { Box, CircleStop, ExternalLink, LoaderCircle, Play, Plus, RotateCcw, SquareTerminal, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Box, ChevronDown, CircleStop, ExternalLink, History, LoaderCircle, Play, Plus, RefreshCw, RotateCcw, SquareTerminal, Trash2 } from "lucide-react";
 
 export default function Index({ projects = [], templates = {}, runtime_configured = false, runtime_message = "" }) {
     const [items, setItems] = useState(projects);
@@ -209,7 +209,7 @@ export default function Index({ projects = [], templates = {}, runtime_configure
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {items.map((project) => (
-                            <article key={project.id} className="rounded-2xl border border-white/[0.07] bg-[#0D1725] p-5">
+                            <article key={project.id} className="min-w-0 rounded-2xl border border-white/[0.07] bg-[#0D1725] p-5">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="truncate font-semibold">{project.name}</p>
@@ -256,6 +256,8 @@ export default function Index({ projects = [], templates = {}, runtime_configure
                                         Ouvrir le preview <ExternalLink size={13} />
                                     </a>
                                 )}
+
+                                <ProcessHistory project={project} />
                             </article>
                         ))}
                     </div>
@@ -402,6 +404,147 @@ function TerminalBox({ project }) {
                     Entrée
                 </button>
             </form>
+        </div>
+    );
+}
+
+const processStyles = {
+    running: { label: "En cours", dot: "bg-emerald-400", text: "text-emerald-300" },
+    completed: { label: "Terminé", dot: "bg-[#FF6A00]", text: "text-[#FFB078]" },
+    failed: { label: "Échec", dot: "bg-red-400", text: "text-red-300" },
+    stopped: { label: "Arrêté", dot: "bg-slate-600", text: "text-slate-500" },
+};
+
+function formatDuration(ms) {
+    if (ms === null || ms === undefined) return null;
+    if (ms < 1000) return ms + " ms";
+    const seconds = Math.round(ms / 1000);
+    if (seconds < 60) return seconds + " s";
+    return Math.floor(seconds / 60) + " min " + String(seconds % 60).padStart(2, "0") + " s";
+}
+
+function formatWhen(iso) {
+    if (!iso) return "";
+    const date = new Date(iso);
+    const diff = Math.round((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return "à l’instant";
+    if (diff < 3600) return "il y a " + Math.floor(diff / 60) + " min";
+    if (diff < 86400) return "il y a " + Math.floor(diff / 3600) + " h";
+    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+// Historique des processus du Sandbox (installation, serveur, commandes).
+// Chargé uniquement à l'ouverture pour limiter la consommation de données.
+function ProcessHistory({ project }) {
+    const [open, setOpen] = useState(false);
+    const [processes, setProcesses] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [expanded, setExpanded] = useState(null);
+
+    async function load() {
+        setLoading(true);
+        setError("");
+        try {
+            const response = await fetch("/sandbox/projects/" + project.id + "/processes", {
+                credentials: "same-origin",
+                headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message ?? "Historique indisponible.");
+            setProcesses(data.processes ?? []);
+        } catch (exception) {
+            setError(exception.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Recharge quand le Sandbox change d'état (démarrage, arrêt…) si le panneau est ouvert.
+    useEffect(() => {
+        if (open) load();
+    }, [open, project.status]);
+
+    return (
+        <div className="mt-4 min-w-0 border-t border-white/[0.06] pt-3">
+            <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={() => setOpen((value) => !value)}
+                    aria-expanded={open}
+                    className="inline-flex min-h-10 flex-1 items-center gap-2 rounded-lg text-left text-xs font-semibold text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF6A00]/60"
+                >
+                    <History size={14} className="text-[#FF8A3D]" />
+                    Historique
+                    {processes && <span className="text-slate-600">({processes.length})</span>}
+                    <ChevronDown size={14} className={"ml-auto transition " + (open ? "rotate-180" : "")} />
+                </button>
+                {open && (
+                    <button
+                        type="button"
+                        onClick={load}
+                        disabled={loading}
+                        aria-label="Actualiser l’historique"
+                        className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.05] hover:text-white disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                    </button>
+                )}
+            </div>
+
+            {open && (
+                <div className="mt-2 space-y-1.5">
+                    {error && <p className="text-xs text-red-300">{error}</p>}
+
+                    {!error && processes === null && loading && (
+                        <p className="flex items-center gap-2 py-2 text-xs text-slate-500"><LoaderCircle size={13} className="animate-spin" /> Chargement…</p>
+                    )}
+
+                    {!error && processes?.length === 0 && (
+                        <p className="py-2 text-xs text-slate-500">Aucun processus pour l’instant. Démarre le Sandbox pour voir l’installation et le serveur ici.</p>
+                    )}
+
+                    {processes?.map((process) => {
+                        const style = processStyles[process.status] ?? processStyles.stopped;
+                        const details = process.output || process.error;
+                        const isOpen = expanded === process.id;
+                        const meta = [
+                            process.port ? "port " + process.port : null,
+                            process.exit_code !== null && process.exit_code !== undefined ? "code " + process.exit_code : null,
+                            formatDuration(process.duration_ms),
+                            formatWhen(process.started_at),
+                        ].filter(Boolean);
+
+                        return (
+                            <div key={process.id} className="rounded-xl border border-white/[0.05] bg-[#08111F] px-3 py-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => details && setExpanded(isOpen ? null : process.id)}
+                                    disabled={!details}
+                                    aria-expanded={details ? isOpen : undefined}
+                                    className="flex w-full items-start gap-2.5 text-left disabled:cursor-default"
+                                >
+                                    <span className={"mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full " + style.dot + (process.status === "running" ? " animate-pulse motion-reduce:animate-none" : "")} />
+                                    <span className="min-w-0 flex-1">
+                                        <span className="flex items-center justify-between gap-2">
+                                            <span className="truncate text-xs font-semibold text-slate-200">{process.name}</span>
+                                            <span className={"shrink-0 text-[10px] font-bold uppercase tracking-[0.08em] " + style.text}>{style.label}</span>
+                                        </span>
+                                        <code className="mt-0.5 block truncate font-mono text-[11px] text-slate-500">{process.command}</code>
+                                        {meta.length > 0 && <span className="mt-1 block text-[10px] text-slate-600">{meta.join(" · ")}</span>}
+                                    </span>
+                                </button>
+
+                                {isOpen && details && (
+                                    <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/30 p-2.5 font-mono text-[11px] leading-5 text-slate-300">
+                                        {process.error ? "Erreur : " + process.error + (process.output ? "\n\n" + process.output : "") : process.output}
+                                    </pre>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }
