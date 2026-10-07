@@ -37,6 +37,21 @@ return [
         'php_url' => 'https://www.php.net/manual/fr',
     ],
 
+    /*
+     * Traduction française des pages anglaises (Laravel, Node.js, TypeScript, Tailwind, Git, PostgreSQL…).
+     * Un élève sans clé d'IA est servi avec la clé de DevRoad : chaque page n'est traduite qu'une
+     * fois, puis gardée en base pour tous les lecteurs. Sans clé DevRoad, seule la clé de
+     * l'utilisateur (Paramètres → Assistant IA) permet de traduire.
+     * Fournisseurs : anthropic | openai | gemini (Gemini Flash propose un quota gratuit).
+     */
+    'translation' => [
+        'provider' => env('DEVROAD_TRANSLATE_PROVIDER'),
+        'api_key' => env('DEVROAD_TRANSLATE_API_KEY'),
+        'model' => env('DEVROAD_TRANSLATE_MODEL'),
+        // Plafond de morceaux traduits par utilisateur et par jour avec la clé DevRoad (anti-abus).
+        'daily_chunks_per_user' => (int) env('DEVROAD_TRANSLATE_DAILY_CHUNKS', 150),
+    ],
+
     // Une source est re-synchronisée au déploiement si elle date de plus de N jours.
     'stale_after_days' => 7,
 

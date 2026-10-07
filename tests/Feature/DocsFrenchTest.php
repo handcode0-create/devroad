@@ -118,6 +118,109 @@ class DocsFrenchTest extends TestCase
             ->assertStatus(422)->assertJsonPath('message', 'Ajoute ta clé d’IA dans Paramètres → Assistant IA pour traduire cette page.');
     }
 
+    private function platformKey(int $dailyLimit = 150): void
+    {
+        config([
+            'devroad_docs.translation.provider' => 'anthropic',
+            'devroad_docs.translation.api_key' => 'sk-ant-platform-0000',
+            'devroad_docs.translation.daily_chunks_per_user' => $dailyLimit,
+        ]);
+    }
+
+    private function fakeTranslation(): void
+    {
+        Http::fake(['api.anthropic.com/*' => Http::response(['content' => [['type' => 'text', 'text' => '<h1>Routage</h1><p>Les routes.</p>']]])]);
+    }
+
+    public function test_un_eleve_sans_cle_est_traduit_par_la_cle_devroad(): void
+    {
+        $source = $this->source('laravel', 'laravel');
+        DocPage::create(['doc_source_id' => $source->id, 'path' => 'routing', 'locale' => 'en', 'title' => 'Routing', 'html' => '<p>Routes</p>', 'text' => '']);
+        $this->platformKey();
+        $this->fakeTranslation();
+        $student = User::factory()->create();
+
+        $this->actingAs($student)->get('/docs/laravel/routing')
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('ai.translate', 'platform')->where('ai.enabled', false)->where('translation.total', 1));
+
+        $this->actingAs($student)->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'routing', 'chunk' => 0])
+            ->assertOk()->assertJsonPath('done', true)->assertJsonPath('title', 'Routage');
+
+        Http::assertSent(fn ($request) => $request->hasHeader('x-api-key', 'sk-ant-platform-0000'));
+    }
+
+    public function test_sans_cle_devroad_ni_cle_utilisateur_la_traduction_n_est_pas_proposee(): void
+    {
+        $source = $this->source('laravel', 'laravel');
+        DocPage::create(['doc_source_id' => $source->id, 'path' => 'routing', 'locale' => 'en', 'title' => 'Routing', 'html' => '<p>Routes</p>', 'text' => '']);
+
+        $this->actingAs(User::factory()->create())->get('/docs/laravel/routing')
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('ai.translate', null));
+    }
+
+    public function test_la_cle_de_l_utilisateur_reste_prioritaire(): void
+    {
+        $this->platformKey();
+        $user = User::factory()->create();
+        $user->forceFill(['ai_provider' => 'anthropic', 'ai_api_key' => 'sk-ant-key-0000', 'ai_key_hint' => '0000'])->save();
+        $source = $this->source('laravel', 'laravel');
+        DocPage::create(['doc_source_id' => $source->id, 'path' => 'routing', 'locale' => 'en', 'title' => 'Routing', 'html' => '<p>Routes</p>', 'text' => '']);
+        $this->fakeTranslation();
+
+        $this->actingAs($user)->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'routing', 'chunk' => 0])->assertOk();
+
+        Http::assertSent(fn ($request) => $request->hasHeader('x-api-key', 'sk-ant-key-0000'));
+    }
+
+    public function test_la_traduction_offerte_est_plafonnee_par_jour_mais_le_cache_reste_gratuit(): void
+    {
+        $source = $this->source('laravel', 'laravel');
+        foreach (['a', 'b', 'c'] as $path) {
+            DocPage::create(['doc_source_id' => $source->id, 'path' => $path, 'locale' => 'en', 'title' => $path, 'html' => '<p>Routes</p>', 'text' => '']);
+        }
+        $this->platformKey(2);
+        $this->fakeTranslation();
+        $student = User::factory()->create();
+
+        $this->actingAs($student)->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'a', 'chunk' => 0])->assertOk();
+        $this->actingAs($student)->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'b', 'chunk' => 0])->assertOk();
+        $this->actingAs($student)->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'c', 'chunk' => 0])
+            ->assertStatus(422)->assertJsonPath('message', fn ($message) => str_contains($message, 'limite de traductions du jour'));
+        // Une page déjà traduite se relit sans compter.
+        $this->actingAs($student)->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'a', 'chunk' => 0])->assertOk();
+    }
+
+    public function test_une_panne_de_la_cle_devroad_ne_montre_pas_un_message_de_compte_a_l_eleve(): void
+    {
+        $source = $this->source('laravel', 'laravel');
+        DocPage::create(['doc_source_id' => $source->id, 'path' => 'routing', 'locale' => 'en', 'title' => 'Routing', 'html' => '<p>Routes</p>', 'text' => '']);
+        $this->platformKey();
+        Http::fake(['api.anthropic.com/*' => Http::response(['error' => ['message' => 'Your credit balance is too low']], 400)]);
+
+        $this->actingAs(User::factory()->create())->postJson('/docs/translate', ['source' => 'laravel', 'path' => 'routing', 'chunk' => 0])
+            ->assertStatus(422)->assertJsonPath('message', 'La traduction automatique est momentanément indisponible. Réessaie dans quelques minutes.');
+    }
+
+    public function test_la_commande_pre_traduit_les_pages_manquantes(): void
+    {
+        $source = $this->source('laravel', 'laravel');
+        $source->entries()->delete();
+        foreach (['routing', 'views'] as $i => $path) {
+            DocEntry::create(['doc_source_id' => $source->id, 'name' => $path, 'search_name' => $path, 'path' => $path, 'position' => $i]);
+            DocPage::create(['doc_source_id' => $source->id, 'path' => $path, 'locale' => 'en', 'title' => $path, 'html' => '<p>Routes</p>', 'text' => '']);
+        }
+        $this->fakeTranslation();
+
+        $this->artisan('docs:translate', ['source' => 'laravel'])->assertFailed(); // pas de clé DevRoad
+
+        $this->platformKey();
+        $this->artisan('docs:translate', ['source' => 'laravel', '--limit' => 1])->assertSuccessful();
+        $this->assertSame(1, DocPage::where('locale', 'fr')->count());
+
+        $this->artisan('docs:translate', ['source' => 'laravel'])->assertSuccessful();
+        $this->assertSame(2, DocPage::where('locale', 'fr')->count());
+    }
+
     public function test_react_en_francais_garde_les_ancres_et_les_encadres(): void
     {
         $this->source('react');

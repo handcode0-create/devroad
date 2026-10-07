@@ -215,6 +215,8 @@ class DocsController extends Controller
         return [
             'enabled' => $user->hasAiAssistant(),
             'provider' => $user->ai_provider ? app(AiClient::class)->name($user->ai_provider) : null,
+            // Traduction des pages anglaises : « user » (sa clé), « platform » (clé DevRoad, offerte) ou null.
+            'translate' => app(DocsTranslator::class)->mode($user),
         ];
     }
 }

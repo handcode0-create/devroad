@@ -81,9 +81,9 @@ export default function Show({ source, page, path, error, want = 'fr', french = 
                                 </div>
                             </header>
 
-                            <LanguageNotice locale={locale} want={want} french={french} ai={ai} translating={Boolean(translation && ai.enabled)} onEnglish={() => switchTo('en')} />
+                            <LanguageNotice locale={locale} want={want} french={french} ai={ai} translating={Boolean(translation && ai.translate)} onEnglish={() => switchTo('en')} />
 
-                            {translation && ai.enabled && locale === 'en' && want === 'fr'
+                            {translation && ai.translate && locale === 'en' && want === 'fr'
                                 ? <Translator source={source} path={path} translation={translation} ai={ai} english={page.html} />
                                 : <Content html={page.html} locale={locale} headings={headings} activeId={activeId} />}
 
@@ -96,7 +96,7 @@ export default function Show({ source, page, path, error, want = 'fr', french = 
                             </footer>
                         </article>
 
-                        {headings.length > 0 && !(translation && ai.enabled && locale === 'en' && want === 'fr') && (
+                        {headings.length > 0 && !(translation && ai.translate && locale === 'en' && want === 'fr') && (
                             <aside className="hidden lg:sticky lg:top-24 lg:block">
                                 <h2 className={ui.eyebrow + ' m-0 mb-3'}>Sur cette page</h2>
                                 <Toc headings={headings} activeId={activeId} />
@@ -150,7 +150,7 @@ function LanguageNotice({ locale, want, french, ai, translating, onEnglish }) {
         return (
             <div className="mb-6 flex flex-col gap-1 rounded-[14px] border border-[var(--dr-border)] bg-[var(--dr-surface)] px-4 py-3 text-sm">
                 <span className="font-semibold text-[var(--dr-text)]">{reason}</span>
-                {!ai.enabled && french !== 'unavailable' && (
+                {!ai.translate && french !== 'unavailable' && (
                     <span className="text-[var(--dr-text-2)]">
                         <Link href="/profile#assistant-ia" className="font-semibold text-[var(--dr-accent-text)] underline underline-offset-2">Active ton assistant IA</Link> pour la traduire en français, ou utilise la traduction de ton navigateur.
                     </span>
@@ -173,6 +173,12 @@ function Translator({ source, path, translation, ai, english }) {
     const cancelled = useRef(false);
 
     useEffect(() => () => { cancelled.current = true; }, []);
+
+    // Traduction offerte par DevRoad : elle démarre toute seule à l'ouverture de la page.
+    useEffect(() => {
+        if (ai.translate === 'platform') start();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     async function start() {
         setStatus('running');
@@ -214,10 +220,10 @@ function Translator({ source, path, translation, ai, english }) {
                         {status === 'running' ? `Traduction en cours… ${progress.done}/${progress.total}` : status === 'error' ? 'Traduction interrompue' : 'Pas encore de version française'}
                     </span>
                     {status !== 'idle' && <span className="h-1.5 overflow-hidden rounded-full bg-[var(--dr-field)]"><m.span className="block h-full rounded-full bg-[var(--dr-accent)]" animate={{ width: percent + '%' }} transition={softSpring} /></span>}
-                    {status === 'idle' && <span className="text-[13px] text-[var(--dr-text-2)]">{`Ton IA (${ai.provider}) la traduit en ${translation.total > 1 ? translation.total + ' passages' : 'un passage'} ; la traduction est ensuite gardée pour tous les lecteurs.`}</span>}
+                    {status === 'idle' && <span className="text-[13px] text-[var(--dr-text-2)]">{`${ai.translate === 'platform' ? 'DevRoad' : `Ton IA (${ai.provider})`} la traduit en ${translation.total > 1 ? translation.total + ' passages' : 'un passage'} ; la traduction est ensuite gardée pour tous les lecteurs.`}</span>}
                     {error && <span role="alert" className="text-[13px] text-[var(--dr-danger)]">{error}</span>}
                 </div>
-                {ai.enabled
+                {ai.translate
                     ? status !== 'running' && <button type="button" onClick={start} className={ui.primary + ' shrink-0'}><Svg d={SPARK} size={16} stroke={2.2} />{status === 'error' ? 'Reprendre' : progress.done > 0 ? 'Terminer la traduction' : 'Traduire en français'}</button>
                     : <Link href="/profile#assistant-ia" className={ui.primary + ' shrink-0'}>Ajouter ma clé</Link>}
             </section>

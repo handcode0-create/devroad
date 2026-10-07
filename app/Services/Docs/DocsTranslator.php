@@ -7,6 +7,9 @@ use App\Models\User;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiException;
 use DOMDocument;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Traduction en français, par l'IA de l'utilisateur, d'une page qui n'existe qu'en anglais.
@@ -21,6 +24,23 @@ class DocsTranslator
 
     public function __construct(private AiClient $ai)
     {
+    }
+
+    /** La clé DevRoad est-elle configurée (traduction offerte aux élèves sans clé) ? */
+    public function platformEnabled(): bool
+    {
+        return array_key_exists((string) config('devroad_docs.translation.provider'), AiClient::PROVIDERS)
+            && filled(config('devroad_docs.translation.api_key'));
+    }
+
+    /** « user » : sa propre clé · « platform » : la clé de DevRoad · null : impossible. */
+    public function mode(?User $user): ?string
+    {
+        if ($user?->hasAiAssistant()) {
+            return 'user';
+        }
+
+        return $this->platformEnabled() ? 'platform' : null;
     }
 
     /** @return array<int, string> */
@@ -67,7 +87,7 @@ class DocsTranslator
      *
      * @throws AiException
      */
-    public function translateChunk(User $user, DocPage $english, int $index): array
+    public function translateChunk(?User $user, DocPage $english, int $index): array
     {
         $chunks = $this->chunks($english);
         $total = count($chunks);
@@ -77,8 +97,12 @@ class DocsTranslator
 
         $cached = $english->translations()->where('chunk', $index)->value('html');
         if ($cached === null) {
-            if (! $user->hasAiAssistant()) {
+            $mode = $this->mode($user);
+            if ($mode === null) {
                 throw new AiException('Ajoute ta clé d’IA dans Paramètres → Assistant IA pour traduire cette page.');
+            }
+            if ($mode === 'platform') {
+                $this->reserveDailyChunk($user);
             }
 
             $system = <<<'TXT'
@@ -91,7 +115,7 @@ class DocsTranslator
             - Renvoie UNIQUEMENT le HTML traduit, sans bloc ``` ni commentaire.
             TXT;
 
-            $translated = $this->ai->complete($user->ai_provider, $user->ai_api_key, $user->ai_model, $system, $chunks[$index], 4000);
+            $translated = $this->complete($mode, $user, $system, $chunks[$index]);
             $translated = preg_replace('/^```(?:html)?\s*|\s*```$/', '', trim($translated));
             $result = DocHtml::clean($translated, fn (string $href) => str_starts_with($href, '/docs/') ? $href : null);
             // Le titre traduit (premier morceau) est conservé pour l'assemblage final.
@@ -109,6 +133,39 @@ class DocsTranslator
         }
 
         return ['chunk' => $index, 'total' => $total, 'html' => $cached, 'done' => $done, 'title' => $title];
+    }
+
+    /** @throws AiException */
+    private function complete(string $mode, ?User $user, string $system, string $chunk): string
+    {
+        if ($mode === 'user') {
+            return $this->ai->complete($user->ai_provider, $user->ai_api_key, $user->ai_model, $system, $chunk, 4000);
+        }
+
+        $config = config('devroad_docs.translation');
+
+        try {
+            return $this->ai->complete($config['provider'], $config['api_key'], $config['model'] ?: null, $system, $chunk, 4000);
+        } catch (AiException $exception) {
+            // Les messages du fournisseur parlent « de ton compte » : un élève n'y peut rien, l'équipe si.
+            Log::error('Traduction des docs : échec avec la clé DevRoad', ['message' => $exception->getMessage()]);
+
+            throw new AiException('La traduction automatique est momentanément indisponible. Réessaie dans quelques minutes.');
+        }
+    }
+
+    private function reserveDailyChunk(?User $user): void
+    {
+        $limit = (int) config('devroad_docs.translation.daily_chunks_per_user', 150);
+        $key = 'docs-translate:' . ($user?->id ?? 'cli') . ':' . now()->toDateString();
+        if ($user === null || $limit <= 0) {
+            return;
+        }
+
+        Cache::add($key, 0, now()->endOfDay());
+        if (Cache::increment($key) > $limit) {
+            throw new AiException('Tu as atteint la limite de traductions du jour. Reviens demain, ou ajoute ta clé d’IA dans Paramètres pour continuer.');
+        }
     }
 
     /** Tous les morceaux sont traduits : on enregistre la page française (traduction automatique). */
