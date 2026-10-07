@@ -15,6 +15,7 @@ import EditorTabs from "@/Components/DevLab/EditorTabs";
 import FileExplorer from "@/Components/DevLab/FileExplorer";
 import PreviewPane from "@/Components/DevLab/PreviewPane";
 import TerminalPanel from "@/Components/DevLab/TerminalPanel";
+import { useConfirm } from "@/Components/Ui/ConfirmProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const TERMINAL_HELP = {
@@ -106,6 +107,7 @@ function normalizeFiles(workspace) {
 }
 
 export default function CodeWorkspace({ workspace, stepId }) {
+    const confirm = useConfirm();
     const storageKey = "devroad:ide:" + stepId;
     const initialFiles = useMemo(() => normalizeFiles(workspace), [workspace]);
 
@@ -233,8 +235,13 @@ export default function CodeWorkspace({ workspace, stepId }) {
         pushTerminal("✓ Workspace sauvegardé localement.");
     }
 
-    function resetWorkspace() {
-        if (!window.confirm("Réinitialiser les fichiers de cette leçon ?")) {
+    async function resetWorkspace() {
+        const confirmed = await confirm({
+            title: "Réinitialiser les fichiers de cette leçon ?",
+            description: "Tes modifications seront perdues et les fichiers de départ seront restaurés.",
+            confirmLabel: "Réinitialiser",
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -384,13 +391,18 @@ export default function CodeWorkspace({ workspace, stepId }) {
         event.target.value = "";
     }
 
-    function deleteFile() {
+    async function deleteFile() {
         if (files.length <= 1) {
             pushTerminal("✕ Le dernier fichier ne peut pas être supprimé.");
             return;
         }
 
-        if (!window.confirm("Supprimer " + activeFile + " ?")) {
+        const confirmed = await confirm({
+            title: "Supprimer ce fichier ?",
+            description: "« " + activeFile + " » sera supprimé de ton espace de travail.",
+            confirmLabel: "Supprimer",
+        });
+        if (!confirmed) {
             return;
         }
 

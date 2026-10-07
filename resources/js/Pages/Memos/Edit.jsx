@@ -2,10 +2,12 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/Ui/PageHeader';
+import { useConfirm } from '@/Components/Ui/ConfirmProvider';
 import MemoForm from '@/Components/Memos/MemoForm';
 import { normalizeMemoContent } from '@/Components/Memos/MemoEditor';
 
 export default function Edit({ memo, folders = [] }) {
+    const confirm = useConfirm();
     const [saved, setSaved] = useState(false);
     const [existingAttachments, setExistingAttachments] = useState(memo.attachments ?? []);
     const [attachmentProcessingId, setAttachmentProcessingId] = useState(null);
@@ -23,8 +25,14 @@ export default function Edit({ memo, folders = [] }) {
         is_full_width: Boolean(memo.is_full_width),
     });
 
-    function deleteAttachment(attachment) {
-        if (attachmentProcessingId || !window.confirm('Supprimer « ' + attachment.name + ' » ?')) return;
+    async function deleteAttachment(attachment) {
+        if (attachmentProcessingId) return;
+        const confirmed = await confirm({
+            title: 'Supprimer cette pièce jointe ?',
+            description: '« ' + attachment.name + ' » sera définitivement supprimée de cette fiche.',
+            confirmLabel: 'Supprimer',
+        });
+        if (!confirmed) return;
         setAttachmentProcessingId(attachment.id);
         router.delete('/memos/attachments/' + attachment.id, {
             preserveScroll: true,

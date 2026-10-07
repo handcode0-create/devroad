@@ -1,8 +1,9 @@
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
+import useNavigationLoading from '@/hooks/useNavigationLoading';
 import BrandPanel, { Brand } from '@/Components/Auth/BrandPanel';
 import OnboardingSwipe from '@/Components/OnboardingSwipe';
 import LoadingOverlay from '@/Components/Ui/LoadingOverlay';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { reducedMotionPreferred } from '@/theme';
 
@@ -14,7 +15,7 @@ import { reducedMotionPreferred } from '@/theme';
 // (0 = /, 1 = /login, 2 = /register). Il active le balayage entre ces écrans
 // (OnboardingSwipe) et les trois points d'étape sur mobile.
 export default function AuthLayout({ title, subtitle, footer, swipeStep, children }) {
-    const [navigating, setNavigating] = useState(false);
+    const loading = useNavigationLoading();
     const contentRef = useRef(null);
 
     useLayoutEffect(() => {
@@ -42,16 +43,6 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
         }, root);
 
         return () => context.revert();
-    }, []);
-
-    useEffect(() => {
-        const removeStartListener = router.on('start', () => setNavigating(true));
-        const removeFinishListener = router.on('finish', () => setNavigating(false));
-
-        return () => {
-            removeStartListener();
-            removeFinishListener();
-        };
     }, []);
 
     const layout = (
@@ -104,7 +95,7 @@ export default function AuthLayout({ title, subtitle, footer, swipeStep, childre
 
     return (
         <>
-            <LoadingOverlay visible={navigating} label="Chargement..." />
+            <LoadingOverlay visible={loading.visible} label={loading.label} />
             {swipeStep === undefined ? (
         layout
     ) : (

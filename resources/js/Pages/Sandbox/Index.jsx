@@ -1,10 +1,12 @@
 import { Head } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
 import { appendTerminalOutput } from "@/Components/Sandbox/terminalText";
+import { useConfirm } from "@/Components/Ui/ConfirmProvider";
 import React, { useEffect, useState } from "react";
 import { Box, ChevronDown, CircleStop, ExternalLink, History, LoaderCircle, Play, Plus, RefreshCw, RotateCcw, SquareTerminal, Trash2 } from "lucide-react";
 
 export default function Index({ projects = [], templates = {}, runtime_configured = false, runtime_message = "" }) {
+    const confirm = useConfirm();
     const [items, setItems] = useState(projects);
     const [create, setCreate] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -146,7 +148,12 @@ export default function Index({ projects = [], templates = {}, runtime_configure
     }
 
     async function remove(project) {
-        if (!window.confirm("Supprimer « " + project.name + " » ?")) return;
+        const confirmed = await confirm({
+            title: "Supprimer « " + project.name + " » ?",
+            description: "Le projet et son environnement Daytona seront définitivement supprimés.",
+            confirmLabel: "Supprimer",
+        });
+        if (!confirmed) return;
 
         setLoading(true);
         setMessage("");

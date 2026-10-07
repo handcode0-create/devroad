@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import useGsapScrollReveal from "@/hooks/useGsapScrollReveal";
 import { ArrowLeft, Code2, Copy, FolderOpen, MoreVertical, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
 import DevLabWorkspace from "@/Components/DevLab/DevLabWorkspace";
+import { useConfirm } from "@/Components/Ui/ConfirmProvider";
 
 const API="/devlab/projects";
 
@@ -13,6 +14,7 @@ function requestError(error) {
 }
 
 export default function DevLabShell({ initialProjects=[], initialProjectId=null }) {
+ const confirm=useConfirm();
  const [projects,setProjects]=useState(initialProjects),[project,setProject]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState(""),[create,setCreate]=useState(false),[drawer,setDrawer]=useState(false);
  async function request(url,options={}){setError("");const method=(options.method||"GET").toLowerCase();const headers={Accept:"application/json","X-Requested-With":"XMLHttpRequest",...(options.headers??{})};if(["post","put","patch","delete"].includes(method)){const csrf=await axios.get("/devlab/projects/csrf-token",{headers:{Accept:"application/json"},withCredentials:true,withXSRFToken:true});headers["X-CSRF-TOKEN"]=csrf.data.token;}const response=await axios.request({url,method,data:options.body?JSON.parse(options.body):undefined,headers,withCredentials:true,withXSRFToken:true});return response.data}
  useEffect(()=>{void migrateLegacyWorkspaces()},[]);
@@ -66,7 +68,7 @@ export default function DevLabShell({ initialProjects=[], initialProjectId=null 
  }
  async function deleteFile(file){
   if(project.files.length<=1){setError("Un projet doit conserver au moins un fichier.");return false}
-  if(!window.confirm("Supprimer le fichier « "+file.path+" » ?")) return false;
+  if(!(await confirm({title:"Supprimer ce fichier ?",description:"« "+file.path+" » sera supprimé. Tu pourras l’annuler pendant 10 secondes.",confirmLabel:"Supprimer"}))) return false;
   try{
    const deleted=await request(API+"/"+project.id+"/files/"+file.id,{method:"DELETE"});
    setProject(p=>({...p,files:p.files.filter(f=>f.id!==file.id)}));
@@ -129,7 +131,7 @@ function inferLegacyTemplate(files){
  return "html";
 }
 
-function ProjectMenu({onRename,onDuplicate,onDelete}){const [open,setOpen]=useState(false);return <div className="relative"><button onClick={()=>setOpen(!open)} className="min-h-10 min-w-10 rounded-xl text-[var(--dr-text-3)] hover:bg-[var(--dr-hover)]" aria-label="Actions"><MoreVertical size={17}/></button>{open&&<div className="absolute left-0 top-11 z-50 w-44 rounded-xl border border-[var(--dr-border-2)] bg-[var(--dr-surface)] p-1.5 shadow-2xl"><Action icon={Pencil} text="Renommer" onClick={()=>{setOpen(false);const n=window.prompt("Nom du projet");if(n)onRename(n)}}/><Action icon={Copy} text="Dupliquer" onClick={()=>{setOpen(false);onDuplicate()}}/><Action danger icon={Trash2} text="Supprimer" onClick={()=>{setOpen(false);if(window.confirm("Supprimer ce projet ?"))onDelete()}}/></div>}</div>}
+function ProjectMenu({onRename,onDuplicate,onDelete}){const confirm=useConfirm();const [open,setOpen]=useState(false);return <div className="relative"><button onClick={()=>setOpen(!open)} className="min-h-10 min-w-10 rounded-xl text-[var(--dr-text-3)] hover:bg-[var(--dr-hover)]" aria-label="Actions"><MoreVertical size={17}/></button>{open&&<div className="absolute left-0 top-11 z-50 w-44 rounded-xl border border-[var(--dr-border-2)] bg-[var(--dr-surface)] p-1.5 shadow-2xl"><Action icon={Pencil} text="Renommer" onClick={()=>{setOpen(false);const n=window.prompt("Nom du projet");if(n)onRename(n)}}/><Action icon={Copy} text="Dupliquer" onClick={()=>{setOpen(false);onDuplicate()}}/><Action danger icon={Trash2} text="Supprimer" onClick={async()=>{setOpen(false);if(await confirm({title:"Supprimer ce projet ?",description:"Le projet et tous ses fichiers seront définitivement supprimés.",confirmLabel:"Supprimer le projet"}))onDelete()}}/></div>}</div>}
 function Action({icon:Icon,text,onClick,danger}){return <button onClick={onClick} className={"flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs "+(danger?"text-[var(--dr-danger)] hover:bg-red-500/10":"text-[var(--dr-text-2)] hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)]")}><Icon size={13}/>{text}</button>}
 
 function ProjectHome({projects,loading,onOpen,onCreate}) {

@@ -29,7 +29,9 @@ export default function ConfirmModal({
             <Dialog
                 as="div"
                 className="fixed inset-0 z-[80] flex items-center justify-center px-4 py-6"
-                onClose={onClose}
+                onClose={() => {
+                    if (!processing) onClose();
+                }}
             >
                 <TransitionChild
                     enter="ease-out duration-200"
@@ -88,6 +90,7 @@ export default function ConfirmModal({
                         <div className="flex justify-end gap-2 px-5 py-4">
                             <button
                                 type="button"
+                                data-autofocus
                                 onClick={onClose}
                                 disabled={processing}
                                 className="rounded-xl border border-[var(--dr-border)] bg-[var(--dr-hover)] theme-modal-action px-4 py-2.5 text-sm font-semibold text-[var(--dr-text-2)] transition hover:bg-[var(--dr-hover)] hover:text-[var(--dr-text)] disabled:opacity-50"

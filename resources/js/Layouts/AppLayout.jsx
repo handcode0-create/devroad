@@ -1,4 +1,5 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import useNavigationLoading from '@/hooks/useNavigationLoading';
 import Sidebar from '@/Components/Navigation/Sidebar';
 import BottomNav from '@/Components/Navigation/BottomNav';
 import DesktopTopBar from '@/Components/Navigation/DesktopTopBar';
@@ -12,8 +13,7 @@ import { reducedMotionPreferred } from '@/theme';
 
 export default function AppLayout({ children, mobileHeader = true }) {
     const { auth } = usePage().props;
-    const [navigating, setNavigating] = useState(false);
-    const [loadingLabel, setLoadingLabel] = useState('Chargement...');
+    const loading = useNavigationLoading();
     const contentRef = useRef(null);
     const currentUrl = usePage().url;
     const currentPath = currentUrl.split('?')[0];
@@ -63,38 +63,12 @@ export default function AppLayout({ children, mobileHeader = true }) {
         return () => context.revert();
     }, [currentPath]);
 
-    // Voile de chargement uniquement pour les vrais changements de page, et seulement
-    // s'ils durent : les filtres, la recherche instantanée ou un favori n'interrompent pas l'utilisateur.
-    useEffect(() => {
-        let timer = null;
-        const removeStartListener = router.on('start', (event) => {
-            const visit = event.detail?.visit ?? {};
-            const method = visit.method?.toUpperCase?.() ?? 'GET';
-            if (method === 'GET' && visit.preserveState) return;
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                setLoadingLabel(method === 'GET' ? 'Chargement...' : 'Enregistrement...');
-                setNavigating(true);
-            }, 220);
-        });
-        const removeFinishListener = router.on('finish', () => {
-            clearTimeout(timer);
-            setNavigating(false);
-        });
-
-        return () => {
-            clearTimeout(timer);
-            removeStartListener();
-            removeFinishListener();
-        };
-    }, []);
-
     return (
         <div className={[
             'min-h-[100dvh] overflow-x-clip bg-[var(--dr-bg)] text-[var(--dr-text)]',
             light ? 'theme-light' : '',
         ].join(' ')} data-theme={light ? 'light' : 'dark'}>
-            <LoadingOverlay visible={navigating} label={loadingLabel} />
+            <LoadingOverlay visible={loading.visible} label={loading.label} />
 
             <Sidebar user={user} />
 
