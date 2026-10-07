@@ -101,6 +101,33 @@ Les runtimes actuellement pris en charge dans l'architecture sont :
 
 L'architecture du runtime est extensible pour ajouter d'autres environnements par la suite.
 
+### Leçons riches
+
+Le contenu pédagogique détaillé vit dans `config/devroad_rich/<technologie>.php` (une leçon riche par étape, pour les 15 technologies) et enrichit les parcours générés. Pour appliquer ce contenu aux parcours déjà créés, sans perdre les statuts ni les exercices validés :
+
+```powershell
+php artisan devroad:sync-courses
+```
+
+### Documentation
+
+Une bibliothèque de documentation officielle est intégrée à l'application, avec recherche, navigation par catégories et entrées récentes.
+
+- **Français d'abord** : la version officielle en français est utilisée quand elle existe (MDN, React, PHP).
+- **Traduction automatique** : sinon, la page anglaise est traduite par IA, mise en cache et partagée entre élèves, avec un plafond de traduction par jour (`DEVROAD_TRANSLATE_DAILY_CHUNKS`).
+- **Assistant de documentation** : pose une question sur la page que tu lis.
+- Commandes : `php artisan docs:sync` (importer les sources) et `php artisan docs:translate` (traduire en lot).
+
+### Parcours professeur
+
+Un compte est `student` (par défaut) ou `teacher`. Un professeur crée des **groupes** avec un code à 8 caractères que les élèves saisissent pour rejoindre.
+
+- Le professeur suit la progression, la dernière activité, la leçon en cours et les élèves inactifs depuis 7 jours.
+- Il ne voit jamais l'email, les mémos, le code DevLab ni la clé IA d'un élève, et l'élève est informé du partage.
+- Pas de notes ni de certificats : DevRoad reste un outil d'apprentissage.
+
+Contrat backend détaillé : [docs/parcours-professeur.md](docs/parcours-professeur.md).
+
 ### Mémos
 
 Une leçon peut générer directement un mémo afin de conserver :
@@ -109,6 +136,8 @@ Une leçon peut générer directement un mémo afin de conserver :
 - des explications ;
 - des extraits de code ;
 - des points importants à retenir.
+
+Les mémos s'organisent en dossiers, avec favoris, pièces jointes et annulation des suppressions.
 
 ### Profil et préférences
 
@@ -119,8 +148,36 @@ Le profil permet notamment de gérer :
 - objectif quotidien ;
 - objectif hebdomadaire ;
 - notifications ;
-- rappels d'apprentissage ;
+- rappels d'apprentissage (voir ci-dessous) ;
+- thème de l'application (nuit et thèmes clairs) ;
+- assistant IA : chaque utilisateur peut renseigner sa propre clé, qui n'est jamais réaffichée en entier ;
 - aide et support.
+
+### Rappels d'apprentissage (PWA + notifications push)
+
+DevRoad est une **PWA installable** (manifest + service worker). L'élève choisit dans son profil l'heure et les jours de son rappel, active les notifications sur son appareil, et reçoit « C'est l'heure : N minutes pour avancer aujourd'hui », avec le son de notification de son téléphone.
+
+- Un rappel au maximum par jour, et aucun envoi plus de 2 h après l'heure choisie.
+- Le bouton **« Envoyer une notification de test »** vérifie qu'un appareil reçoit bien les rappels, sans attendre l'heure.
+- Sur iPhone, les notifications ne fonctionnent qu'après l'ajout de DevRoad à l'écran d'accueil.
+- Les notifications exigent HTTPS ou `localhost`.
+
+Mise en place :
+
+```powershell
+composer install                    # inclut minishlink/web-push
+php artisan migrate
+php artisan devroad:vapid-keys      # génère VAPID_PUBLIC_KEY et VAPID_PRIVATE_KEY
+php artisan schedule:work           # vérifie les rappels chaque minute
+```
+
+Variables : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (optionnelle) et `REMINDER_TIMEZONE` (par défaut `Africa/Abidjan`). **Ne commite jamais la clé privée.**
+
+> Sous Windows, si `devroad:vapid-keys` échoue avec « Unable to create the key », PHP ne trouve pas `openssl.cnf` : définis `OPENSSL_CONF` vers `<dossier PHP>\extras\ssl\openssl.cnf` avant de lancer la commande.
+
+### Sandbox
+
+Pour les projets complets (React/Vite, Next.js, Node.js, PHP, Laravel), l'exécution passe par un sandbox isolé (Daytona), jamais dans le processus PHP de DevRoad. Le sandbox fournit un terminal PTY, un historique de commandes et un aperçu. Il reste désactivé tant que `DEVROAD_SANDBOX_*` et `DAYTONA_*` ne sont pas configurés. Architecture : [docs/devroad-sandbox-architecture.md](docs/devroad-sandbox-architecture.md).
 
 ## Stack technique
 
@@ -128,11 +185,12 @@ Le profil permet notamment de gérer :
 
 - Laravel 12
 - PHP 8.2+
-- SQLite en développement / environnement configurable
+- SQLite, MySQL ou PostgreSQL selon l'environnement (PostgreSQL en production)
 - Eloquent
 - Form Requests
 - Policies
 - Inertia
+- minishlink/web-push (notifications push)
 
 ### Frontend
 
@@ -141,6 +199,8 @@ Le profil permet notamment de gérer :
 - Vite
 - Tailwind CSS
 - Lucide React
+- Framer Motion et GSAP (animations)
+- PWA (manifest + service worker)
 
 ### DevLab
 
@@ -270,17 +330,21 @@ routes/
 Le projet possède actuellement un socle fonctionnel couvrant :
 
 - authentification ;
-- gestion des profils ;
-- roadmaps ;
+- gestion des profils, thèmes et assistant IA ;
+- roadmaps et leçons riches ;
 - progression pédagogique ;
 - étapes verrouillées ;
 - exercices ;
 - mémos ;
 - recherche ;
+- documentation intégrée en français, avec assistant ;
+- parcours professeur (groupes, suivi de progression) ;
+- rappels d'apprentissage par notifications push (PWA) ;
 - DevLab ;
 - IDE navigateur ;
 - explorateur de fichiers ;
 - import de fichiers ;
+- sandbox Daytona avec terminal et historique de commandes ;
 - runtimes Node.js / PHP / Laravel selon l'environnement.
 
 La suite du développement porte notamment sur l'évolution de l'IDE vers une expérience mobile et desktop encore plus complète : coloration syntaxique avancée, gestion de projet multi-fichiers, console améliorée, preview Web et runtimes sandboxés pour la production.
@@ -346,6 +410,11 @@ LOG_CHANNEL=stderr
 LOG_LEVEL=error
 
 PORT=8080
+
+# Rappels d'apprentissage (notifications push)
+VAPID_PUBLIC_KEY=<généré par php artisan devroad:vapid-keys>
+VAPID_PRIVATE_KEY=<généré par php artisan devroad:vapid-keys>
+REMINDER_TIMEZONE=Africa/Abidjan
 ```
 
 **Ne mets jamais `APP_KEY`, un mot de passe PostgreSQL ou une clé privée dans Git.**
@@ -438,20 +507,18 @@ Les migrations Laravel existantes créent notamment les tables nécessaires à :
 
 ### Queues et scheduler
 
-Aucun job `ShouldQueue` ni tâche planifiée applicative n'est actuellement utilisé par DevRoad.
+Aucun job `ShouldQueue` n'est actuellement utilisé par DevRoad : un worker n'est pas nécessaire.
 
-Il n'est donc pas nécessaire de créer un worker ou un cron pour le premier déploiement.
+En revanche, les **rappels d'apprentissage** reposent sur une tâche planifiée (`devroad:send-reminders`, chaque minute). Sans scheduler, **aucun rappel ne part**. Créer un second service Railway à partir du même dépôt, avec les mêmes variables que le service web (dont la base de données et les clés VAPID), et la commande de démarrage :
 
-Si des jobs sont ajoutés plus tard, prévoir un service Railway séparé avec :
+```bash
+php artisan schedule:work
+```
+
+Si des jobs sont ajoutés plus tard, prévoir aussi un service séparé avec :
 
 ```bash
 php artisan queue:work
-```
-
-Si des tâches sont ajoutées au scheduler, prévoir un cron Railway exécutant :
-
-```bash
-php artisan schedule:run
 ```
 
 ### Uploads et stockage
@@ -476,7 +543,7 @@ Conséquence :
 
 C'est volontaire. Autoriser directement l'exécution de code utilisateur sur le serveur Laravel de production serait une faille critique.
 
-Pour activer un vrai DevLab cloud, il faudra une sandbox isolée par workspace/utilisateur, par exemple avec des conteneurs éphémères ou un service d'exécution dédié.
+Pour un vrai DevLab cloud, l'exécution passe par le **Sandbox** isolé (Daytona, voir plus haut), activé uniquement quand `DEVROAD_SANDBOX_*` et `DAYTONA_*` sont configurés.
 
 ### Tests locaux avant déploiement
 
@@ -538,6 +605,13 @@ Si Railway indique qu'aucun port n'est ouvert, vérifier que le processus utilis
 ```text
 0.0.0.0:$PORT
 ```
+
+### Tester les rappels sur Railway
+
+1. Vérifier que `VAPID_PUBLIC_KEY` et `VAPID_PRIVATE_KEY` sont dans le service web, et que le service `schedule:work` tourne.
+2. Ouvrir l'URL HTTPS, puis **Profil → Rappels d'apprentissage → Activer sur cet appareil**.
+3. Cliquer sur **Envoyer une notification de test** : elle arrive immédiatement.
+4. Pour tester le vrai rappel, régler une heure déjà passée aujourd'hui (dans les 2 dernières heures) : il part à la minute suivante. Pour retester le même jour, remettre `last_reminder_on` à `null`.
 
 ### Test sur téléphone
 
