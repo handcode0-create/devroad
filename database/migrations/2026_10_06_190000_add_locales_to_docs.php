@@ -13,15 +13,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('doc_pages', function (Blueprint $table) {
-            $table->dropUnique(['doc_source_id', 'path']);
-        });
-
-        Schema::table('doc_pages', function (Blueprint $table) {
             $table->string('locale', 5)->default('en');
             // Aucune traduction officielle : on ne la redemande pas à chaque visite.
             $table->boolean('missing')->default(false);
             $table->boolean('machine_translated')->default(false);
+            // Créé avant de retirer l'ancien : MySQL exige un index pour la clé
+            // étrangère doc_source_id, le nouveau (même préfixe) prend le relais.
             $table->unique(['doc_source_id', 'path', 'locale']);
+        });
+
+        Schema::table('doc_pages', function (Blueprint $table) {
+            $table->dropUnique(['doc_source_id', 'path']);
         });
 
         Schema::create('doc_translations', function (Blueprint $table) {
@@ -43,10 +45,10 @@ return new class extends Migration
     {
         Schema::table('users', fn (Blueprint $table) => $table->dropColumn('docs_locale'));
         Schema::dropIfExists('doc_translations');
+        Schema::table('doc_pages', fn (Blueprint $table) => $table->unique(['doc_source_id', 'path']));
         Schema::table('doc_pages', function (Blueprint $table) {
             $table->dropUnique(['doc_source_id', 'path', 'locale']);
             $table->dropColumn(['locale', 'missing', 'machine_translated']);
         });
-        Schema::table('doc_pages', fn (Blueprint $table) => $table->unique(['doc_source_id', 'path']));
     }
 };

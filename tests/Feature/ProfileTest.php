@@ -74,6 +74,8 @@ class ProfileTest extends TestCase
                 'preferred_technology' => 'laravel',
                 'email_notifications' => false,
                 'learning_reminders' => true,
+                'reminder_time' => '19:30',
+                'reminder_days' => [1, 3, 5],
                 'light_mode' => true,
             ]);
 
@@ -90,6 +92,8 @@ class ProfileTest extends TestCase
         $this->assertSame('laravel', $user->preferred_technology);
         $this->assertFalse($user->email_notifications);
         $this->assertTrue($user->learning_reminders);
+        $this->assertSame('19:30', $user->reminder_time);
+        $this->assertSame([1, 3, 5], $user->reminder_days);
         $this->assertTrue($user->light_mode);
     }
 
