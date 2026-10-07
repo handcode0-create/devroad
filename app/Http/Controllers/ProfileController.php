@@ -37,6 +37,8 @@ class ProfileController extends Controller
                 'preferred_technology' => $user->preferred_technology,
                 'email_notifications' => $user->email_notifications,
                 'learning_reminders' => $user->learning_reminders,
+                'reminder_time' => $user->reminder_time ?? '18:00',
+                'reminder_days' => $user->reminder_days ?? [1, 2, 3, 4, 5, 6, 7],
                 'light_mode' => $user->light_mode,
             ],
             // Assistant IA : jamais la clé elle-même, seulement ses 4 derniers caractères.
@@ -53,6 +55,7 @@ class ProfileController extends Controller
                     'keys_url' => $provider['keys_url'],
                 ])->values(),
             ],
+            'vapidPublicKey' => config('webpush.public_key'),
             'technologies' => collect(config('devroad.technologies', []))
                 ->map(fn ($label, $value) => [
                     'value' => $value,

@@ -1,24 +1,26 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\RoadmapController;
-use App\Http\Controllers\RoadmapStepController;
-use App\Http\Controllers\MemoController;
-use App\Http\Controllers\MemoFolderController;
-use App\Http\Controllers\MemoAttachmentController;
-use App\Http\Controllers\SearchController;
+use App\Http\Controllers\AiSettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DevLabController;
 use App\Http\Controllers\DevLabFileController;
 use App\Http\Controllers\DevLabProjectController;
-use App\Http\Controllers\SandboxController;
 use App\Http\Controllers\DocsController;
-use App\Http\Controllers\AiSettingsController;
-use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\GroupMembershipController;
+use App\Http\Controllers\MemoAttachmentController;
+use App\Http\Controllers\MemoController;
+use App\Http\Controllers\MemoFolderController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\RoadmapController;
+use App\Http\Controllers\RoadmapStepController;
+use App\Http\Controllers\SandboxController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TeacherController;
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -38,7 +40,7 @@ Route::get('/sitemap.xml', function () {
     $xml = '<?xml version="1.0" encoding="UTF-8"?>';
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
     foreach ($urls as $url) {
-        $xml .= '<url><loc>' . e($url) . '</loc></url>';
+        $xml .= '<url><loc>'.e($url).'</loc></url>';
     }
     $xml .= '</urlset>';
 
@@ -70,6 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
+    Route::post('/push-subscription', [PushSubscriptionController::class, 'store'])->name('push.store');
+    Route::post('/push-subscription/test', [PushSubscriptionController::class, 'test'])->middleware('throttle:6,1')->name('push.test');
+    Route::delete('/push-subscription',[PushSubscriptionController::class, 'destroy'])->name('push.destroy');
     Route::patch('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/devlab', DevLabController::class)->name('devlab');
@@ -91,7 +96,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('devlab/projects')->name('devlab.projects.')->group(function () {
         Route::get('/', [DevLabProjectController::class, 'index'])->name('index');
-        Route::get('/csrf-token', function (\Illuminate\Http\Request $request) {
+        Route::get('/csrf-token', function (Request $request) {
             return response()->json(
                 ['token' => $request->session()->token()],
                 200,
