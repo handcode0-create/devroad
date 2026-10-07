@@ -1,5 +1,6 @@
 import { Head } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
+import { appendTerminalOutput } from "@/Components/Sandbox/terminalText";
 import React, { useEffect, useState } from "react";
 import { Box, ChevronDown, CircleStop, ExternalLink, History, LoaderCircle, Play, Plus, RefreshCw, RotateCcw, SquareTerminal, Trash2 } from "lucide-react";
 
@@ -276,6 +277,7 @@ function TerminalBox({ project }) {
     const [value, setValue] = useState("");
     const [output, setOutput] = useState("");
     const [status, setStatus] = useState("connexion");
+    const [attempt, setAttempt] = useState(0);
     const socketRef = React.useRef(null);
     const outputRef = React.useRef(null);
 
@@ -283,6 +285,7 @@ function TerminalBox({ project }) {
         let cancelled = false;
 
         async function connect() {
+            setStatus("connexion");
             try {
                 const response = await fetch("/sandbox/projects/" + project.id + "/terminal", {
                     method: "POST",
@@ -313,19 +316,19 @@ function TerminalBox({ project }) {
                             return;
                         }
                         if (message.type === "error") {
-                            setOutput((current) => current + "\n[DevRoad] " + message.message + "\n");
+                            setOutput((current) => appendTerminalOutput(current, "\n[DevRoad] " + message.message + "\n"));
                             setStatus("erreur");
                             return;
                         }
                     } catch {
                         // Daytona PTY output is raw terminal data.
                     }
-                    setOutput((current) => current + event.data);
+                    setOutput((current) => appendTerminalOutput(current, event.data));
                 };
             } catch (error) {
                 if (!cancelled) {
                     setStatus("indisponible");
-                    setOutput((current) => current + "\n[DevRoad] " + error.message + "\n");
+                    setOutput((current) => appendTerminalOutput(current, "\n[DevRoad] " + error.message + "\n"));
                 }
             }
         }
@@ -337,7 +340,7 @@ function TerminalBox({ project }) {
             socketRef.current?.close();
             socketRef.current = null;
         };
-    }, [project.id]);
+    }, [project.id, attempt]);
 
     React.useEffect(() => {
         if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
@@ -370,9 +373,21 @@ function TerminalBox({ project }) {
                     <SquareTerminal size={14} className="text-[var(--dr-accent-text)]" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--dr-text-3)]">Terminal PTY</span>
                 </div>
-                <span className={"text-[10px] font-semibold " + (status === "connecté" ? "text-[var(--dr-success)]" : "text-[var(--dr-text-3)]")}>
-                    {status}
-                </span>
+                <div className="flex items-center gap-2">
+                    {status !== "connecté" && status !== "connexion" && (
+                        <button
+                            type="button"
+                            onClick={() => setAttempt((count) => count + 1)}
+                            className="inline-flex items-center gap-1 rounded-md bg-[var(--dr-hover)] px-2 py-1 text-[10px] font-semibold text-[var(--dr-text-2)]"
+                        >
+                            <RefreshCw size={10} />
+                            Reconnecter
+                        </button>
+                    )}
+                    <span className={"text-[10px] font-semibold " + (status === "connecté" ? "text-[var(--dr-success)]" : "text-[var(--dr-text-3)]")}>
+                        {status}
+                    </span>
+                </div>
             </div>
 
             <pre
