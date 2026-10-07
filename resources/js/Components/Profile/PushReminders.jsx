@@ -91,6 +91,20 @@ export default function PushReminders({ time, days, onTimeChange, onDaysChange, 
         }
     }
 
+    async function sendTest() {
+        setBusy(true);
+        setMessage('');
+        try {
+            const res = await call('POST', '/push-subscription/test', {});
+            const body = await res.json().catch(() => ({}));
+            setMessage(res.ok ? 'Notification envoyée : regarde ton appareil.' : (body.message || 'Envoi impossible.'));
+        } catch {
+            setMessage('Envoi impossible : vérifie ta connexion.');
+        } finally {
+            setBusy(false);
+        }
+    }
+
     function toggleDay(value) {
         const next = days.includes(value) ? days.filter((d) => d !== value) : [...days, value].sort();
         if (next.length > 0) onDaysChange(next);
@@ -138,7 +152,17 @@ export default function PushReminders({ time, days, onTimeChange, onDaysChange, 
                     >
                         {enabled ? 'Couper sur cet appareil' : 'Activer sur cet appareil'}
                     </button>
-                    {message && <span className="text-xs font-semibold text-[var(--dr-accent-text)]">{message}</span>}
+                    {enabled && (
+                        <button
+                            type="button"
+                            disabled={busy}
+                            onClick={sendTest}
+                            className="rounded-xl border border-[var(--dr-border)] px-4 py-2 text-sm font-bold disabled:opacity-50"
+                        >
+                            Envoyer une notification de test
+                        </button>
+                    )}
+                    {message &&<span className="text-xs font-semibold text-[var(--dr-accent-text)]">{message}</span>}
                 </div>
             ) : (
                 <p className="text-xs text-[var(--dr-muted,inherit)]">

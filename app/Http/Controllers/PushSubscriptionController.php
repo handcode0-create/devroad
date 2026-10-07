@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PushSubscription;
+use App\Services\PushNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,6 +30,33 @@ class PushSubscriptionController extends Controller
         );
 
         return response()->json(['ok' => true]);
+    }
+
+    /** Notification immédiate pour vérifier que l'appareil reçoit bien les rappels. */
+    public function test(Request $request, PushNotifier $notifier): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $notifier->configured()) {
+            return response()->json(['message' => 'Les notifications ne sont pas encore configurées sur le serveur.'], 503);
+        }
+
+        if (! $user->pushSubscriptions()->exists()) {
+            return response()->json(['message' => 'Aucun appareil activé : clique d’abord sur « Activer sur cet appareil ».'], 422);
+        }
+
+        $delivered = $notifier->send(
+            $user,
+            'DevRoad',
+            'Test réussi : tes rappels arriveront comme ceci.',
+            route('dashboard', [], false),
+        );
+
+        if ($delivered === 0) {
+            return response()->json(['message' => 'Envoi échoué : réactive les notifications sur cet appareil et réessaie.'], 502);
+        }
+
+        return response()->json(['ok' => true, 'delivered' => $delivered]);
     }
 
     public function destroy(Request $request): JsonResponse
