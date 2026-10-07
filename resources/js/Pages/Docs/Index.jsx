@@ -8,7 +8,7 @@ import { followInternalLink } from '@/Components/Docs/links';
 
 // Documentation : recherche classique (gratuite, toujours disponible) et, si l'utilisateur
 // a ajouté sa clé, « Demander à l'IA » qui répond à partir des docs avec les sources.
-export default function Index({ query = '', source = null, sources = [], results = null, ai = {}, locale = 'fr' }) {
+export default function Index({ query = '', source = null, sources = [], results = null, browse = null, ai = {}, locale = 'fr' }) {
     const ready = sources.filter((item) => item.ready);
     const [mode, setMode] = useState(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'ia' ? 'ai' : 'search'));
     const [term, setTerm] = useState(query);
@@ -99,7 +99,7 @@ export default function Index({ query = '', source = null, sources = [], results
                                         </label>
                                     </form>
 
-                                    {results ? <Results results={results} query={query} ai={ai} onAsk={() => setMode('ai')} /> : <Home sources={ready} recent={recent} onPick={chooseSource} />}
+                                    {results ? <Results results={results} query={query} ai={ai} onAsk={() => setMode('ai')} /> : browse && source ? <Browse browse={browse} source={source} name={ready.find((item) => item.key === source)?.name} /> : <Home sources={ready} recent={recent} onPick={chooseSource} />}
                                 </m.div>
                             ) : (
                                 <m.div key="ai" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={softSpring}>
@@ -128,6 +128,53 @@ function LocaleSwitch({ locale }) {
             className="w-fit"
             items={[{ key: 'fr', label: 'Français' }, { key: 'en', label: 'English' }]}
         />
+    );
+}
+
+/** Contenu d'une doc à parcourir : catégories (types) à gauche, entrées de la catégorie choisie à droite. */
+function Browse({ browse, source, name }) {
+    const { types, current, entries, total } = browse;
+
+    function pick(type) {
+        router.get('/docs', { source, type }, { preserveState: true, preserveScroll: true, replace: true, only: ['browse', 'source'] });
+    }
+
+    if (types.length === 0) {
+        return <p className="m-0 text-sm text-[var(--dr-text-2)]">Cette documentation ne contient pas encore d’entrées.</p>;
+    }
+
+    const currentType = types.find((type) => type.key === current);
+
+    return (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <nav aria-label={`Catégories ${name ?? ''}`} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 dr-scrollbar-none sm:mx-0 sm:max-h-[60vh] sm:w-60 sm:shrink-0 sm:flex-col sm:gap-1 sm:overflow-y-auto sm:overflow-x-visible sm:px-0 sm:pb-0">
+                <h2 className={ui.eyebrow + ' m-0 hidden sm:block sm:px-2 sm:pb-1'}>Catégories</h2>
+                {types.map((type) => {
+                    const active = type.key === current;
+                    return (
+                        <button key={type.key} type="button" aria-current={active ? 'true' : undefined} onClick={() => pick(type.key)} className={'flex shrink-0 items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors ' + ui.focus + ' ' + (active ? 'bg-[var(--dr-accent-soft)] font-semibold text-[var(--dr-accent-text)]' : 'text-[var(--dr-text-2)] hover:bg-[var(--dr-field)] hover:text-[var(--dr-text)]')}>
+                            <span className="truncate">{type.name}</span>
+                            <span className="text-xs text-[var(--dr-text-3)]">{type.count}</span>
+                        </button>
+                    );
+                })}
+            </nav>
+
+            <section aria-label={currentType?.name} className="flex min-w-0 flex-1 flex-col gap-2">
+                <h2 className={ui.eyebrow + ' m-0'}>{currentType?.name} · {total.toLocaleString('fr-FR')} entrée{total > 1 ? 's' : ''}</h2>
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {entries.map((entry) => (
+                        <li key={entry.id}>
+                            <Link href={entry.url} className={'group flex items-center gap-3 rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-surface)] px-4 py-3 transition-colors hover:border-[var(--dr-border-2)] ' + ui.focus}>
+                                <span className="min-w-0 flex-1 truncate font-['JetBrains_Mono',ui-monospace,monospace] text-[14px] font-medium text-[var(--dr-text)]">{entry.name}</span>
+                                <Svg d={ICON.chevronRight} size={16} className="shrink-0 text-[var(--dr-text-3)] transition-transform group-hover:translate-x-0.5" />
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+                {total > entries.length && <p className="m-0 text-xs text-[var(--dr-text-3)]">Les {entries.length} premières entrées sur {total.toLocaleString('fr-FR')} : utilise la recherche pour trouver la suivante.</p>}
+            </section>
+        </div>
     );
 }
 

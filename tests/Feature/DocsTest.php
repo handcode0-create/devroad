@@ -65,6 +65,28 @@ class DocsTest extends TestCase
                 ->where('results.entries.0.url', '/docs/javascript/global_objects/array/map'));
     }
 
+    public function test_choisir_une_doc_sans_recherche_liste_ses_categories_et_ses_entrees(): void
+    {
+        $this->fakeDevDocs();
+        $this->artisan('docs:sync', ['source' => ['javascript']])->assertSuccessful();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/docs?source=javascript')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Docs/Index')
+                ->where('results', null)
+                ->has('browse.types')
+                ->where('browse.total', fn ($total) => $total >= 1)
+                ->has('browse.entries.0.url'));
+
+        // Une recherche remplace la vue « parcourir ».
+        $this->actingAs($user)->get('/docs?source=javascript&q=map')
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('browse', null));
+
+        // Sans doc choisie : pas de vue « parcourir ».
+        $this->actingAs($user)->get('/docs')->assertInertia(fn (AssertableInertia $page) => $page->where('browse', null));
+    }
+
     public function test_une_page_est_telechargee_nettoyee_puis_mise_en_cache(): void
     {
         $this->fakeDevDocs();

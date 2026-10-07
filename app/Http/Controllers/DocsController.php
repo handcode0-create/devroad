@@ -35,6 +35,10 @@ class DocsController extends Controller
             'source' => $keys[0] ?? null,
             'sources' => $sources->values(),
             'results' => mb_strlen($query) >= 2 ? $this->library->search($query, $keys) : null,
+            // Doc choisie, rien cherché : on affiche son contenu à parcourir (catégories + entrées).
+            'browse' => $keys !== [] && mb_strlen($query) < 2
+                ? $this->browseSource($keys[0], $request->query('type'))
+                : null,
             'ai' => $this->aiState($request),
             'locale' => $request->user()->docs_locale ?: 'fr',
         ]);
@@ -156,6 +160,13 @@ class DocsController extends Controller
         return back()
             ->with('success', 'Fiche mémo créée.')
             ->with('undo', ['label' => 'Ouvrir', 'method' => 'get', 'url' => route('memos.show', $memo)]);
+    }
+
+    private function browseSource(string $key, mixed $type): ?array
+    {
+        $source = DocSource::where('key', $key)->first();
+
+        return $source ? $this->library->browse($source, is_string($type) ? $type : null) : null;
     }
 
     private function sources()

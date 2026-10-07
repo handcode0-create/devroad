@@ -18,6 +18,9 @@ use RuntimeException;
  */
 class DocsLibrary
 {
+    /** Clé de la catégorie « Divers » (entrées sans type). */
+    public const NO_TYPE = '__none';
+
     private ?array $manifest = null;
 
     /* ───────────────────────── Synchronisation ───────────────────────── */
@@ -387,6 +390,46 @@ class DocsLibrary
                 'locale' => $page->locale,
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Parcourir une documentation sans rien chercher : les catégories (type) avec leur
+     * nombre d'entrées, et les entrées de la catégorie choisie (la première par défaut).
+     * Pour Laravel on ne liste que les pages, pas chaque titre de section.
+     */
+    public function browse(DocSource $source, ?string $type = null, int $limit = 300): array
+    {
+        $base = fn () => DocEntry::query()
+            ->where('doc_source_id', $source->id)
+            ->when($source->provider === 'laravel', fn ($query) => $query->whereNull('fragment'));
+
+        $types = $base()
+            ->selectRaw('type, count(*) as total, min(position) as first_position')
+            ->groupBy('type')
+            ->orderBy('first_position')
+            ->get()
+            ->map(fn ($row) => [
+                'key' => $row->type ?? self::NO_TYPE,
+                'name' => $row->type ?? 'Divers',
+                'count' => (int) $row->total,
+            ])
+            ->values();
+
+        $current = $types->firstWhere('key', $type) ?? $types->first();
+        if (! $current) {
+            return ['types' => [], 'current' => null, 'entries' => [], 'total' => 0];
+        }
+
+        $entries = $base()
+            ->when($current['key'] === self::NO_TYPE, fn ($query) => $query->whereNull('type'), fn ($query) => $query->where('type', $current['key']))
+            ->orderBy('position')
+            ->limit($limit)
+            ->get()
+            ->map(fn (DocEntry $entry) => $this->presentEntry($entry, $source))
+            ->values()
+            ->all();
+
+        return ['types' => $types->all(), 'current' => $current['key'], 'entries' => $entries, 'total' => $current['count']];
     }
 
     public function presentEntry(DocEntry $entry, DocSource $source): array
