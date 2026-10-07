@@ -253,6 +253,9 @@ class SandboxProjectTest extends TestCase
                 && $request->data()['cpu'] === 2
                 && $request->data()['memory'] === 4
                 && $request->data()['disk'] === 8
+                && $request->data()['buildInfo']['dockerfileContent'] === 'FROM node:22-bookworm'
+                && ! array_key_exists('image', $request->data())
+                && ! array_key_exists('snapshot', $request->data())
                 && ! array_key_exists('resources', $request->data());
         });
     }

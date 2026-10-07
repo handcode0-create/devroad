@@ -158,7 +158,9 @@ class DaytonaSandboxExecutor implements SandboxExecutor
 
         $sandbox = $this->api()->post('/sandbox', [
             'name' => $this->providerName($project),
-            'image' => $definition['image'],
+            // L'API REST n'a pas de champ « image » (il est ignoré et Daytona retombe sur son snapshot
+            // par défaut, qui interdit cpu/memory/disk) : l'image du template passe par une construction.
+            'buildInfo' => ['dockerfileContent' => 'FROM ' . $definition['image']],
             'target' => config('sandbox.default_region'),
             'public' => false,
             'cpu' => (int) ($resources['cpu'] ?? 1),
@@ -374,7 +376,7 @@ class DaytonaSandboxExecutor implements SandboxExecutor
                 return $sandbox;
             }
 
-            if ($state === 'error') {
+            if (in_array($state, ['error', 'build_failed'], true)) {
                 throw new RuntimeException(
                     'Daytona a placé le Sandbox en erreur : ' . $this->sandboxError($sandbox)
                 );
