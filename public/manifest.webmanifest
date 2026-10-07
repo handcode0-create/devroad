@@ -1,0 +1,13 @@
+{
+  "name": "DevRoad",
+  "short_name": "DevRoad",
+  "description": "Apprenez, planifiez et construisez vos projets de développement.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#08111F",
+  "theme_color": "#08111F",
+  "icons": [
+    { "src": "/icondevroad.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}

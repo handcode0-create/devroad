@@ -31,6 +31,8 @@ class User extends Authenticatable
         'preferred_technology',
         'email_notifications',
         'learning_reminders',
+        'reminder_time',
+        'reminder_days',
         'light_mode',
         'theme',
         'docs_locale',
@@ -52,9 +54,15 @@ class User extends Authenticatable
             'weekly_goal_sessions' => 'integer',
             'email_notifications' => 'boolean',
             'learning_reminders' => 'boolean',
+            'reminder_days' => 'array',
             'light_mode' => 'boolean',
             'ai_api_key' => 'encrypted',
         ];
+    }
+
+    public function pushSubscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
     }
 
     public const ROLE_STUDENT = 'student';

@@ -28,6 +28,7 @@
         <meta name="description" content="DevRoad — apprenez, planifiez et construisez vos projets de développement.">
         <link rel="icon" type="image/png" href="/icondevroad.png">
         <link rel="apple-touch-icon" href="/icondevroad.png">
+        <link rel="manifest" href="/manifest.webmanifest">
 
         <title inertia>{{ config('app.name', 'DevRoad') }}</title>
 

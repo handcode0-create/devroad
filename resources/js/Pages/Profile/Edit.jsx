@@ -20,6 +20,7 @@ import { useState } from 'react';
 
 import ThemePicker from '@/Components/Ui/ThemePicker';
 import AiSettings from '@/Components/Profile/AiSettings';
+import PushReminders from '@/Components/Profile/PushReminders';
 import { PageHead } from '@/Components/Ui/Design';
 import AppLayout from '@/Layouts/AppLayout';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
@@ -60,6 +61,7 @@ export default function Edit({
     preferences = {},
     technologies = [],
     aiSettings = null,
+    vapidPublicKey = null,
 }) {
     const { auth } = usePage().props;
     const user = auth?.user;
@@ -77,6 +79,8 @@ export default function Edit({
         preferred_technology: preferences.preferred_technology ?? '',
         email_notifications: preferences.email_notifications ?? true,
         learning_reminders: preferences.learning_reminders ?? true,
+        reminder_time: preferences.reminder_time ?? '18:00',
+        reminder_days: preferences.reminder_days ?? [1, 2, 3, 4, 5, 6, 7],
     });
 
     const [openFaq, setOpenFaq] = useState(0);
@@ -244,6 +248,16 @@ export default function Edit({
                                 onChange={(value) => setData('learning_reminders', value)}
                             />
                         </div>
+
+                        {data.learning_reminders && (
+                            <PushReminders
+                                time={data.reminder_time}
+                                days={data.reminder_days}
+                                onTimeChange={(value) => setData('reminder_time', value)}
+                                onDaysChange={(value) => setData('reminder_days', value)}
+                                vapidPublicKey={vapidPublicKey}
+                            />
+                        )}
 
                         <div className="flex flex-wrap items-center gap-3">
                             <button

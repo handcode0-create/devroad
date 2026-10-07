@@ -25,6 +25,9 @@ class UpdateProfilePreferencesRequest extends FormRequest
             ],
             'email_notifications' => ['boolean'],
             'learning_reminders' => ['boolean'],
+            'reminder_time' => ['required', 'date_format:H:i'],
+            'reminder_days' => ['required', 'array', 'min:1'],
+            'reminder_days.*' => ['integer', 'between:1,7', 'distinct'],
             'light_mode' => ['boolean'],
         ];
     }
