@@ -246,4 +246,26 @@ class DashboardTest extends TestCase
                 ->where('recent_memos.0.tag', 'laravel')
                 ->where('recent_memos.2.title', 'Moyenne'));
     }
+
+    public function test_le_catalogue_de_cours_ne_contient_que_les_cours_de_l_utilisateur_en_cours_d_abord(): void
+    {
+        $user = User::factory()->create();
+        $autre = User::factory()->create();
+
+        $laravel = $user->roadmaps()->create(['title' => 'Laravel', 'technology' => 'laravel']);
+        $laravel->steps()->create(['title' => 'Termine', 'position' => 1, 'status' => 'completed']);
+        $laravel->steps()->create(['title' => 'A faire', 'position' => 2, 'status' => 'todo', 'difficulty_level' => 'beginner', 'estimated_minutes' => 90]);
+        $laravel->steps()->create(['title' => 'En cours', 'position' => 3, 'status' => 'in_progress']);
+
+        $autre->roadmaps()->create(['title' => 'Prive'])->steps()->create(['title' => 'Secret', 'position' => 1]);
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('courses', 3)
+                ->where('courses.0.title', 'En cours')
+                ->where('courses.1.title', 'A faire')
+                ->where('courses.1.technology', 'laravel')
+                ->where('courses.1.estimated_minutes', 90)
+                ->where('courses.2.title', 'Termine'));
+    }
 }
