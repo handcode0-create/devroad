@@ -43,7 +43,10 @@ class OnboardingController extends Controller
             return redirect()->route('onboarding.level');
         }
 
-        $categories = $this->assessmentCategories($profile->level);
+        $categories = $this->shuffleOptions(
+            $this->assessmentCategories($profile->level),
+            (int) $request->user()->id
+        );
 
         return Inertia::render('Auth/Onboarding', [
             'academicLevels' => config('devroad_onboarding.academic_levels'),
@@ -157,6 +160,27 @@ class OnboardingController extends Controller
         $profile->save();
 
         return redirect()->route('app.splash')->with('onboarding_completed', true);
+    }
+
+    /**
+     * Mélange l'ordre des choix de chaque question pour que la bonne réponse ne soit
+     * pas toujours en première position. L'ordre est stable pour un même utilisateur
+     * (graine = utilisateur + question) afin de ne pas changer au rechargement.
+     */
+    private function shuffleOptions(array $categories, int $seed): array
+    {
+        foreach ($categories as $ckey => $category) {
+            foreach ($category['questions'] ?? [] as $qkey => $question) {
+                $options = array_values($question['options'] ?? []);
+
+                usort($options, fn (array $a, array $b) => md5($seed.'|'.$question['id'].'|'.$a['id'])
+                    <=> md5($seed.'|'.$question['id'].'|'.$b['id']));
+
+                $categories[$ckey]['questions'][$qkey]['options'] = $options;
+            }
+        }
+
+        return $categories;
     }
 
     private function assessmentCategories(string $level): array
