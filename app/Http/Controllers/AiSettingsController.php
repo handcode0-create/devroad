@@ -31,7 +31,9 @@ class AiSettingsController extends Controller
             throw ValidationException::withMessages(['api_key' => 'Colle ta clé d’API pour ce fournisseur.']);
         }
         $key = $key !== '' ? $key : $user->ai_api_key;
-        $model = ($data['model'] ?? null) ?: AiClient::PROVIDERS[$data['provider']]['default_model'];
+        // Modèle laissé vide : on prend automatiquement celui que la clé permet d'utiliser.
+        $model = ($data['model'] ?? null)
+            ?: ($ai->resolveModel($data['provider'], $key) ?? AiClient::PROVIDERS[$data['provider']]['default_model']);
 
         // Vérification réelle (très courte) avant d'enregistrer.
         try {
