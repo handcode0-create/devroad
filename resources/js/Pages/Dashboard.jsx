@@ -2,7 +2,7 @@ import { Head, Link, usePage } from "@inertiajs/react";
 import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import AppLayout from "@/Layouts/AppLayout";
-import CourseCatalog from "@/Components/Courses/CourseCatalog";
+import CourseCatalog, { SuggestedCourses } from "@/Components/Courses/CourseCatalog";
 import { m, softSpring } from "@/Components/Ui/Motion";
 import { reducedMotionPreferred } from "@/theme";
 
@@ -55,7 +55,7 @@ function todayLabel() {
 
 const clamp = (value) => Math.min(100, Math.max(0, Math.round(Number(value ?? 0)) || 0));
 
-export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, recent_memos = [], courses = [] }) {
+export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, recent_memos = [], courses = [], suggested_courses = [] }) {
     const { auth } = usePage().props;
     const user = auth?.user;
     const firstName = user?.name?.trim()?.split(" ")[0] ?? "développeur";
@@ -110,6 +110,8 @@ export default function Dashboard({ stats, recent_roadmaps, continue_roadmap, re
                         </section>
 
                         <CourseCatalog courses={Array.isArray(courses) ? courses : []} />
+
+                        <SuggestedCourses courses={Array.isArray(suggested_courses) ? suggested_courses : []} hasOwn={Array.isArray(courses) && courses.length > 0} />
 
                         {roadmaps.length > 0 && <section data-anim="block" aria-label="Parcours récents" className="hidden flex-col gap-2.5 lg:flex">
                             <SectionTitle title="Parcours récents" href="/roadmaps" />

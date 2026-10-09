@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Roadmap;
 use App\Models\RoadmapStep;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -119,8 +120,14 @@ class DashboardController extends Controller
             ])
             ->values();
 
+        $suggestions = $this->suggestedCourses(
+            $user->roadmaps()->pluck('technology')->filter()->unique()->all(),
+            (array) ($user->learningProfile?->technologies ?? [])
+        );
+
         return Inertia::render('Dashboard', [
             'courses' => $courses,
+            'suggested_courses' => $suggestions,
             'stats' => [
                 'roadmaps' => $user->roadmaps()->count(),
                 'memos' => $user->memos()->count(),
@@ -155,5 +162,50 @@ class DashboardController extends Controller
                 'assessment_scores' => $user->learningProfile->assessment_scores ?? null,
             ] : null,
         ]);
+    }
+
+    /**
+     * Cours proposés directement sur l'accueil : un par technologie du catalogue que
+     * l'utilisateur n'a pas encore démarrée, ses technologies choisies à l'onboarding d'abord.
+     */
+    private function suggestedCourses(array $startedTechnologies, array $preferred): array
+    {
+        $catalog = config('devroad_courses', []);
+        $labels = config('devroad.technologies', []);
+
+        $keys = collect(array_keys($catalog))
+            ->reject(fn (string $key) => in_array($key, $startedTechnologies, true))
+            ->sortBy(fn (string $key) => in_array($key, $preferred, true) ? 0 : 1)
+            ->values();
+
+        return $keys->take(12)->map(function (string $key) use ($catalog, $labels) {
+            $stats = Cache::remember("dashboard.course-stats.{$key}", 3600, function () use ($key, $catalog) {
+                $minutes = 0;
+                $level = null;
+                $files = glob(resource_path("courses/{$key}/*.md")) ?: [];
+                sort($files);
+
+                foreach ($files as $file) {
+                    $head = (string) file_get_contents($file, false, null, 0, 400);
+                    $minutes += preg_match('/^minutes:\s*(\d+)/m', $head, $m) ? (int) $m[1] : 0;
+                    $level ??= preg_match('/^level:\s*(\w+)/m', $head, $l) ? $l[1] : null;
+                }
+
+                return [
+                    'minutes' => $minutes,
+                    'level' => $level ?? 'beginner',
+                    'chapters' => max(count($files), count($catalog[$key]['lessons'] ?? [])),
+                ];
+            });
+
+            return [
+                'technology' => $key,
+                'title' => 'Apprendre '.($labels[$key] ?? ($catalog[$key]['title'] ?? ucfirst($key))),
+                'description' => $catalog[$key]['description'] ?? null,
+                'level' => $stats['level'],
+                'minutes' => $stats['minutes'],
+                'chapters' => $stats['chapters'],
+            ];
+        })->all();
     }
 }

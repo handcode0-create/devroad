@@ -188,3 +188,71 @@ export default function CourseCatalog({ courses = [] }) {
         </section>
     );
 }
+
+
+// Cours suggérés : un cours complet par technologie pas encore démarrée.
+// Un clic crée le parcours correspondant (avec tous ses chapitres) et l'ouvre.
+export function SuggestedCourses({ courses = [], hasOwn = false }) {
+    const [visible, setVisible] = useState(PAGE_SIZE);
+
+    if (!courses.length) return null;
+
+    const shown = courses.slice(0, visible);
+    const remaining = courses.length - shown.length;
+
+    return (
+        <section data-anim="block" aria-labelledby="cours-suggeres" className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+                <h2 id="cours-suggeres" className="m-0 font-['Manrope',sans-serif] text-[22px] font-extrabold tracking-[-0.02em] text-[var(--dr-text)]">
+                    {hasOwn ? 'Cours à découvrir' : 'Cours pour toi'}
+                </h2>
+                <p className="m-0 text-[14px] text-[var(--dr-text-2)]">Choisis un cours : il s&apos;ajoute à tes parcours avec tous ses chapitres.</p>
+            </div>
+
+            <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
+                {shown.map((course, index) => {
+                    const level = LEVELS[course.level] ?? LEVELS.beginner;
+                    const duration = formatDuration(course.minutes);
+                    const label = techLabel(course.technology);
+                    return (
+                        <m.li
+                            key={course.technology}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0, transition: { ...softSpring, delay: Math.min(index, 6) * 0.04 } }}
+                            className="min-w-0"
+                        >
+                            <m.article whileTap={{ scale: 0.985 }} className={ui.card + ' relative flex items-center gap-4 p-4 transition-colors hover:border-[var(--dr-border-2)] has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-[var(--dr-accent)]'}>
+                                <TechTile technology={course.technology} title={label} size={88} />
+                                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                                    <span className="truncate text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--dr-accent-text)]">{label} · Cours</span>
+                                    <h3 className="m-0 text-[17px] font-bold leading-[1.3] tracking-[-0.01em] text-[var(--dr-text)] [overflow-wrap:anywhere]">
+                                        <Link
+                                            href="/roadmaps"
+                                            method="post"
+                                            as="button"
+                                            data={{ title: course.title, technology: course.technology }}
+                                            className={'rounded-sm bg-transparent p-0 text-left font-bold outline-none after:absolute after:inset-0 after:rounded-[18px] after:content-[\'\'] ' + ui.focus}
+                                        >
+                                            {course.title}
+                                        </Link>
+                                    </h3>
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[14px] text-[var(--dr-text-2)]">
+                                        <span className="inline-flex items-center gap-1.5"><LevelBars bars={level.bars} />{level.label}</span>
+                                        {duration && <span className="inline-flex items-center gap-1.5"><Svg d={['M12 7v5l3 2', 'M12 3a9 9 0 100 18 9 9 0 000-18z']} size={16} />{duration}</span>}
+                                        <span>{course.chapters} chapitres</span>
+                                    </div>
+                                </div>
+                            </m.article>
+                        </m.li>
+                    );
+                })}
+            </ul>
+
+            {remaining > 0 && (
+                <button type="button" onClick={() => setVisible((value) => value + PAGE_SIZE)} className={ui.secondary + ' w-full'}>
+                    Voir plus de cours ({remaining})
+                </button>
+            )}
+        </section>
+    );
+}

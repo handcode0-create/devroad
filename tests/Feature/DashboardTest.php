@@ -268,4 +268,28 @@ class DashboardTest extends TestCase
                 ->where('courses.1.estimated_minutes', 90)
                 ->where('courses.2.title', 'Termine'));
     }
+
+    public function test_l_accueil_suggere_des_cours_meme_sans_parcours(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('courses', 0)
+                ->where('suggested_courses.0.chapters', fn ($n) => $n >= 7)
+                ->has('suggested_courses.0.title')
+                ->has('suggested_courses.0.technology'));
+    }
+
+    public function test_les_suggestions_excluent_les_technologies_deja_demarrees(): void
+    {
+        $user = User::factory()->create();
+        $user->roadmaps()->create(['title' => 'Laravel', 'technology' => 'laravel']);
+
+        $technologies = collect(
+            $this->actingAs($user)->get(route('dashboard'))->viewData('page')['props']['suggested_courses']
+        )->pluck('technology');
+
+        $this->assertNotContains('laravel', $technologies);
+    }
 }
