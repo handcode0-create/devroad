@@ -6,6 +6,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Ai\AiException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -42,6 +43,9 @@ class AiSettingsController extends Controller
             // Un repli automatique a trouvé un modèle qui fonctionne : c'est celui qu'on enregistre.
             $model = $ai->lastModel ?? $model;
         } catch (AiException $exception) {
+            // Trace de l'échec (jamais la clé) pour repérer d'éventuels abus.
+            Log::notice('Échec de validation de clé d’IA', ['user_id' => $user->id, 'provider' => $data['provider'], 'ip' => $request->ip()]);
+
             throw ValidationException::withMessages(['api_key' => $exception->getMessage()]);
         }
 

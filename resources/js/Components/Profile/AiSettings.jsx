@@ -99,7 +99,7 @@ export default function AiSettings({ settings }) {
                             </span>
                             {form.errors.api_key
                                 ? <span role="alert" className="text-sm text-[var(--dr-danger)]">{form.errors.api_key}</span>
-                                : <span id="ai-key-help" className="text-[13px] leading-5 text-[var(--dr-text-3)]">Testée avant d’être enregistrée, puis chiffrée. Elle ne sera plus jamais affichée en entier.</span>}
+                                : <span id="ai-key-help" className="text-[13px] leading-5 text-[var(--dr-text-3)]">Testée avant d’être enregistrée, puis chiffrée. Elle ne sera plus jamais affichée en entier. Conseil : crée une clé réservée à DevRoad avec un plafond de dépense chez ton fournisseur, et supprime-la ici ou chez lui si tu veux la révoquer.</span>}
                         </label>
 
                         <label className="flex flex-col gap-2">
