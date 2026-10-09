@@ -94,7 +94,33 @@ class DashboardController extends Controller
                     : null,
             ]);
 
+        // Catalogue de cours de l'accueil : les étapes (cours) de l'utilisateur,
+        // en cours d'abord, puis à démarrer, puis terminés.
+        $courses = RoadmapStep::query()
+            ->with('roadmap:id,title,technology,user_id,updated_at')
+            ->whereHas('roadmap', fn ($query) => $query->where('user_id', $user->id))
+            ->orderByRaw(
+                'case status when ? then 0 when ? then 1 when ? then 2 else 3 end',
+                [RoadmapStep::IN_PROGRESS, RoadmapStep::TODO, RoadmapStep::BLOCKED]
+            )
+            ->orderByDesc('last_viewed_at')
+            ->orderBy('roadmap_id')
+            ->orderBy('position')
+            ->limit(60)
+            ->get(['id', 'roadmap_id', 'title', 'status', 'difficulty_level', 'estimated_minutes', 'position'])
+            ->map(fn (RoadmapStep $step) => [
+                'id' => $step->id,
+                'title' => $step->title,
+                'status' => $step->status,
+                'difficulty_level' => $step->difficulty_level,
+                'estimated_minutes' => $step->estimated_minutes,
+                'technology' => $step->roadmap?->technology,
+                'roadmap_title' => $step->roadmap?->title,
+            ])
+            ->values();
+
         return Inertia::render('Dashboard', [
+            'courses' => $courses,
             'stats' => [
                 'roadmaps' => $user->roadmaps()->count(),
                 'memos' => $user->memos()->count(),

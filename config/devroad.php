@@ -24,6 +24,14 @@ return [
         'docker' => 'Docker',
         'mysql' => 'MySQL',
         'postgresql' => 'PostgreSQL',
+        'python' => 'Python',
+        'django' => 'Django',
+        'fastapi' => 'FastAPI',
+        'flutter' => 'Flutter',
+        'supabase' => 'Supabase',
+        'prisma' => 'Prisma',
+        'svelte' => 'Svelte',
+        'java' => 'Java',
     ],
 
     'catalog' => [
@@ -145,6 +153,70 @@ return [
                 ['label' => 'Documentation PostgreSQL', 'url' => 'https://www.postgresql.org/docs/'],
                 ['label' => 'Tutorial SQL', 'url' => 'https://www.postgresql.org/docs/current/tutorial.html'],
                 ['label' => 'PostgreSQL Wiki', 'url' => 'https://wiki.postgresql.org/'],
+            ],
+        ],
+        'python' => [
+            'description' => 'Langage polyvalent et lisible pour le web, la data, l’automatisation et les scripts.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://docs.python.org/fr/3/'],
+                ['label' => 'Tutoriel Python', 'url' => 'https://docs.python.org/fr/3/tutorial/'],
+                ['label' => 'PyPI', 'url' => 'https://pypi.org/'],
+            ],
+        ],
+        'django' => [
+            'description' => 'Framework web Python complet avec ORM, administration, authentification et sécurité intégrés.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://docs.djangoproject.com/fr/5.1/'],
+                ['label' => 'Tutoriel Django', 'url' => 'https://docs.djangoproject.com/fr/5.1/intro/tutorial01/'],
+                ['label' => 'Django REST Framework', 'url' => 'https://www.django-rest-framework.org/'],
+            ],
+        ],
+        'fastapi' => [
+            'description' => 'Framework Python moderne pour construire des APIs rapides, typées et documentées automatiquement.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://fastapi.tiangolo.com/'],
+                ['label' => 'Tutoriel FastAPI', 'url' => 'https://fastapi.tiangolo.com/tutorial/'],
+                ['label' => 'Pydantic', 'url' => 'https://docs.pydantic.dev/'],
+            ],
+        ],
+        'flutter' => [
+            'description' => 'Framework de Google pour créer des applications mobiles, web et desktop avec Dart.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://docs.flutter.dev/'],
+                ['label' => 'Dart', 'url' => 'https://dart.dev/guides'],
+                ['label' => 'Riverpod', 'url' => 'https://riverpod.dev/'],
+            ],
+        ],
+        'supabase' => [
+            'description' => 'Plateforme back-end open source basée sur Postgres : base de données, authentification, stockage et fonctions.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://supabase.com/docs'],
+                ['label' => 'Guide Row Level Security', 'url' => 'https://supabase.com/docs/guides/database/postgres/row-level-security'],
+                ['label' => 'supabase-js', 'url' => 'https://supabase.com/docs/reference/javascript'],
+            ],
+        ],
+        'prisma' => [
+            'description' => 'ORM TypeScript moderne avec schéma déclaratif, migrations et client typé.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://www.prisma.io/docs'],
+                ['label' => 'Schéma Prisma', 'url' => 'https://www.prisma.io/docs/orm/prisma-schema'],
+                ['label' => 'Prisma Client', 'url' => 'https://www.prisma.io/docs/orm/prisma-client'],
+            ],
+        ],
+        'svelte' => [
+            'description' => 'Framework d’interface qui compile les composants en JavaScript léger, avec SvelteKit pour les applications complètes.',
+            'resources' => [
+                ['label' => 'Documentation Svelte', 'url' => 'https://svelte.dev/docs/svelte'],
+                ['label' => 'Documentation SvelteKit', 'url' => 'https://svelte.dev/docs/kit'],
+                ['label' => 'Tutoriel interactif', 'url' => 'https://svelte.dev/tutorial'],
+            ],
+        ],
+        'java' => [
+            'description' => 'Langage typé et robuste, très utilisé pour les applications d’entreprise, Android et les back-ends.',
+            'resources' => [
+                ['label' => 'Documentation Oracle', 'url' => 'https://docs.oracle.com/en/java/'],
+                ['label' => 'Spring Boot', 'url' => 'https://spring.io/projects/spring-boot'],
+                ['label' => 'JUnit 5', 'url' => 'https://junit.org/junit5/docs/current/user-guide/'],
             ],
         ],
     ],

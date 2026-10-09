@@ -4,6 +4,7 @@ import { AnimatePresence, m, softSpring } from "@/Components/Ui/Motion";
 import { ICON, MotionLink, ProgressBar, Svg, TechTile, ui } from "@/Components/Ui/Design";
 
 import AppLayout from "@/Layouts/AppLayout";
+import CourseContent from "@/Components/Learning/CourseContent";
 import CodeWorkspace from "@/Components/Learning/CodeWorkspace";
 import { useEffect, useState } from "react";
 
@@ -392,59 +393,6 @@ function CopyButton({ text }) {
         <button type="button" onClick={copy} className={"ml-auto inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-[var(--dr-text-2)] hover:bg-[var(--dr-surface)] hover:text-[var(--dr-text)] " + ui.focus} aria-live="polite">
             <Svg d={copied ? ICON.check : ICON.copy} size={14} stroke={copied ? 2.8 : 2} />{copied ? "Copié" : "Copier"}
         </button>
-    );
-}
-
-function CourseContent({ content }) {
-    const blocks = content.split(/\n\s*\n/);
-
-    return (
-        <div className="min-w-0 space-y-4 break-words text-[15px] leading-[1.75] text-[var(--dr-text-2)] [overflow-wrap:anywhere]">
-            {blocks.map((block, index) => {
-                const text = block.trim();
-
-                if (!text) return null;
-
-                if (text.startsWith("## ")) {
-                    return (
-                        <h3
-                            key={index}
-                            className="m-0 pt-3 font-['Manrope',sans-serif] text-lg font-extrabold tracking-[-0.01em] text-[var(--dr-text)]"
-                        >
-                            {text.slice(3)}
-                        </h3>
-                    );
-                }
-
-                if (text.startsWith("### ")) {
-                    return (
-                        <h4
-                            key={index}
-                            className="m-0 pt-1 text-base font-semibold text-[var(--dr-text)]"
-                        >
-                            {text.slice(4)}
-                        </h4>
-                    );
-                }
-
-                if (text.startsWith("- ")) {
-                    return (
-                        <ul
-                            key={index}
-                            className="m-0 list-disc space-y-2 pl-5 marker:text-[var(--dr-accent)]"
-                        >
-                            {text.split("\n").map((item, itemIndex) => (
-                                <li key={itemIndex}>
-                                    {item.replace(/^- /, "")}
-                                </li>
-                            ))}
-                        </ul>
-                    );
-                }
-
-                return <p key={index} className="m-0">{text}</p>;
-            })}
-        </div>
     );
 }
 

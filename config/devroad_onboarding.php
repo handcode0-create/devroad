@@ -28,6 +28,14 @@ return [
         'docker' => 'Docker',
         'mysql' => 'MySQL',
         'postgresql' => 'PostgreSQL',
+        'python' => 'Python',
+        'django' => 'Django',
+        'fastapi' => 'FastAPI',
+        'flutter' => 'Flutter',
+        'supabase' => 'Supabase',
+        'prisma' => 'Prisma',
+        'svelte' => 'Svelte',
+        'java' => 'Java',
     ],
 
     'goals' => [

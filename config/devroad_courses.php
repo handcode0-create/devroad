@@ -679,4 +679,133 @@ Tests',
             ],
             'code' => ['CREATE DATABASE devroad;', 'CREATE TABLE users (id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);', 'SELECT * FROM users WHERE id = 1;', 'SELECT u.name, o.total FROM users u JOIN orders o ON o.user_id = u.id;', 'CREATE INDEX idx_orders_created_at ON orders(created_at);', 'BEGIN;\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nCOMMIT;', 'CREATE TABLE events (payload JSONB NOT NULL);'],
         ],
+        'python' => [
+            'title' => 'Python',
+            'description' => 'Parcours Python des fondamentaux jusqu’aux scripts, tests et projets structurés.',
+            'lessons' => [
+                ['Premiers pas avec Python', 'Installer Python, lancer un script et comprendre variables et types.', 'Écrire et exécuter ses premiers scripts.', 'Python est un langage lisible, interprété, utilisé pour le web, la data et l’automatisation.'],
+                ['Structures de contrôle et fonctions', 'Conditions, boucles et fonctions.', 'Structurer un programme avec des fonctions claires.', 'L’indentation délimite les blocs. Les fonctions regroupent la logique réutilisable.'],
+                ['Listes, dictionnaires et compréhensions', 'Manipuler les collections de données.', 'Transformer des données avec des structures idiomatiques.', 'Listes, tuples, ensembles et dictionnaires couvrent la plupart des besoins de stockage en mémoire.'],
+                ['Fichiers, modules et environnements virtuels', 'Lire et écrire des fichiers, organiser le code et isoler les dépendances.', 'Gérer un projet avec venv et pip.', 'Les modules découpent le code ; venv isole les dépendances de chaque projet.'],
+                ['Programmation orientée objet', 'Classes, héritage et dataclasses.', 'Modéliser un domaine métier avec des classes.', 'Les classes regroupent état et comportement ; les dataclasses réduisent le code répétitif.'],
+                ['Erreurs, tests et qualité', 'Exceptions, pytest, typage et lint.', 'Écrire du code fiable et testé.', 'Les exceptions gèrent les cas d’erreur ; pytest et les annotations de type verrouillent le comportement.'],
+                ['Projet final Python', 'Construire un outil en ligne de commande complet.', 'Assembler fichiers, objets, tests et packaging.', 'Projet conseillé : gestionnaire de tâches en CLI avec persistance JSON et tests.'],
+            ],
+            'code' => ['print("Bonjour DevRoad")', 'def saluer(nom):
+    return f"Bonjour {nom}"', 'carres = [n * n for n in range(10)]', 'from pathlib import Path
+Path("notes.txt").write_text("DevRoad")', 'class Tache:
+    def __init__(self, titre):
+        self.titre = titre', 'def test_addition():
+    assert 1 + 1 == 2', 'import argparse
+parser = argparse.ArgumentParser()'],
+        ],
+        'django' => [
+            'title' => 'Django',
+            'description' => 'Parcours Django pour construire des applications web complètes avec Python.',
+            'lessons' => [
+                ['Découvrir Django', 'Comprendre le framework, le modèle MTV et le cycle d’une requête.', 'Créer un projet Django et lancer le serveur.', 'Django est un framework Python « batteries included » : ORM, admin, authentification et sécurité intégrés.'],
+                ['Projets, apps et URLs', 'Structurer un projet en apps et router les requêtes.', 'Définir des URLs et des vues simples.', 'Un projet contient plusieurs apps ; urls.py relie une URL à une vue.'],
+                ['Templates et vues', 'Afficher des pages avec le moteur de templates.', 'Construire des pages dynamiques réutilisables.', 'Les templates héritent d’un gabarit de base et affichent le contexte fourni par la vue.'],
+                ['Modèles, ORM et migrations', 'Modéliser les données et interroger la base.', 'Créer des modèles, migrer et requêter.', 'L’ORM traduit les modèles Python en tables SQL ; les migrations versionnent le schéma.'],
+                ['Formulaires, authentification et admin', 'Valider les saisies et protéger l’accès.', 'Gérer inscription, connexion et back-office.', 'Django fournit les formulaires, l’authentification et un admin prêt à l’emploi.'],
+                ['API REST et sécurité', 'Exposer une API avec Django REST Framework.', 'Sécuriser et tester une API.', 'DRF sérialise les modèles ; CSRF, permissions et validation protègent l’application.'],
+                ['Projet final Django', 'Construire une application complète et la déployer.', 'Assembler modèles, vues, auth, API et tests.', 'Projet conseillé : application de suivi d’apprentissage avec comptes, CRUD, API et tests.'],
+            ],
+            'code' => ['django-admin startproject devroad', 'path("", views.accueil, name="accueil")', '{% extends "base.html" %}', 'class Cours(models.Model):
+    titre = models.CharField(max_length=120)', 'class CoursForm(forms.ModelForm):
+    class Meta:
+        model = Cours
+        fields = ["titre"]', 'class CoursSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cours
+        fields = "__all__"', 'python manage.py test'],
+        ],
+        'fastapi' => [
+            'title' => 'FastAPI',
+            'description' => 'Parcours FastAPI pour construire des APIs Python rapides, typées et documentées.',
+            'lessons' => [
+                ['Découvrir FastAPI', 'Comprendre FastAPI, ASGI et la documentation automatique.', 'Lancer une première API.', 'FastAPI s’appuie sur les annotations de type Python pour valider les données et générer la documentation OpenAPI.'],
+                ['Routes, paramètres et réponses', 'Path, query, body et codes HTTP.', 'Concevoir des endpoints clairs.', 'Les paramètres sont déclarés dans la signature de la fonction.'],
+                ['Validation avec Pydantic', 'Modèles de requête et de réponse.', 'Valider et sérialiser les données.', 'Pydantic valide les entrées et filtre les sorties grâce aux modèles typés.'],
+                ['Base de données avec SQLAlchemy', 'Persister les données et gérer les sessions.', 'Brancher une base relationnelle.', 'Une dépendance fournit la session de base de données à chaque requête.'],
+                ['Authentification et sécurité', 'JWT, hachage de mots de passe et permissions.', 'Protéger les routes.', 'Les mots de passe sont hachés ; les routes sensibles exigent un jeton valide.'],
+                ['Asynchrone, tests et déploiement', 'async/await, TestClient et conteneurisation.', 'Tester et déployer une API.', 'Les routes async évitent de bloquer le serveur ; TestClient permet des tests rapides.'],
+                ['Projet final FastAPI', 'Construire une API complète et testée.', 'Assembler validation, base, authentification et tests.', 'Projet conseillé : API de gestion de roadmaps avec comptes, CRUD, JWT et tests.'],
+            ],
+            'code' => ['from fastapi import FastAPI
+app = FastAPI()', '@app.get("/cours/{cours_id}")
+def lire(cours_id: int):
+    return {"id": cours_id}', 'class CoursIn(BaseModel):
+    titre: str', 'engine = create_engine("sqlite:///devroad.db")', 'oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")', 'client = TestClient(app)', 'uvicorn main:app --reload'],
+        ],
+        'flutter' => [
+            'title' => 'Flutter',
+            'description' => 'Parcours Flutter et Dart pour créer des applications mobiles multiplateformes.',
+            'lessons' => [
+                ['Découvrir Flutter et Dart', 'Comprendre Flutter, Dart et les widgets.', 'Lancer une première application.', 'Flutter dessine l’interface avec des widgets ; Dart est un langage typé, compilé en natif.'],
+                ['Widgets et mise en page', 'Row, Column, Stack, Container et listes.', 'Construire des écrans adaptatifs.', 'Tout est widget : la mise en page se compose en imbriquant des widgets.'],
+                ['State et interactions', 'StatefulWidget, setState et événements.', 'Gérer l’état local d’un écran.', 'Quand l’état change, Flutter reconstruit les widgets concernés.'],
+                ['Navigation et formulaires', 'Routes, passage de données et validation.', 'Construire un parcours multi-écrans.', 'Navigator et GoRouter gèrent la navigation ; Form valide les champs.'],
+                ['Données, API et Riverpod', 'Appels HTTP, JSON et gestion d’état globale.', 'Afficher des données distantes proprement.', 'Riverpod expose l’état et les dépendances de façon testable.'],
+                ['Thème, animations et tests', 'Thèmes Material 3, animations et tests de widgets.', 'Soigner l’expérience et verrouiller le comportement.', 'Un thème centralisé garantit la cohérence ; les tests de widgets détectent les régressions.'],
+                ['Projet final Flutter', 'Construire une application mobile complète.', 'Assembler navigation, état, API et tests.', 'Projet conseillé : application de suivi de missions avec liste, détail, formulaire et API.'],
+            ],
+            'code' => ['void main() => runApp(const MyApp());', 'Column(children: [Text("DevRoad")])', 'setState(() { compteur++; });', 'Navigator.push(context, MaterialPageRoute(builder: (_) => Detail()));', 'final cours = FutureProvider((ref) => fetchCours());', 'ThemeData(useMaterial3: true)', 'flutter test'],
+        ],
+        'supabase' => [
+            'title' => 'Supabase',
+            'description' => 'Parcours Supabase pour construire un back-end complet : base Postgres, authentification, sécurité par ligne, stockage et fonctions.',
+            'lessons' => [
+                ['Découvrir Supabase', 'Comprendre ce que Supabase fournit et créer un premier projet.', 'Connecter une application à Supabase.', 'Supabase assemble Postgres, authentification, stockage, temps réel et fonctions serveur derrière une API.'],
+                ['Tables et SQL', 'Créer des tables et interroger les données.', 'Modéliser et lire des données avec supabase-js.', 'Les tables sont de vraies tables Postgres, interrogeables en SQL ou avec le client JavaScript.'],
+                ['Authentification', 'Inscription, connexion et sessions.', 'Protéger une application avec Supabase Auth.', 'Supabase Auth gère les utilisateurs, les sessions et les fournisseurs de connexion.'],
+                ['Row Level Security', 'Politiques d’accès au niveau des lignes.', 'Garantir que chaque utilisateur voit seulement ses données.', 'Les politiques RLS appliquent les règles d’accès directement dans la base.'],
+                ['Storage et Realtime', 'Fichiers et mises à jour en direct.', 'Stocker des fichiers et réagir aux changements.', 'Storage gère les fichiers avec des règles d’accès ; Realtime diffuse les changements de la base.'],
+                ['Edge Functions et API', 'Logique serveur et intégrations.', 'Écrire une fonction sécurisée et l’appeler.', 'Les Edge Functions exécutent du code serveur proche des utilisateurs, par exemple pour des webhooks.'],
+                ['Projet final Supabase', 'Construire un produit complet.', 'Assembler base, auth, RLS, fichiers et fonctions.', 'Projet conseillé : boutique de cours avec paiement Mobile Money et webhook signé.'],
+            ],
+            'code' => ['createClient(url, anonKey)', 'const { data } = await supabase.from(\'cours\').select(\'*\')', 'await supabase.auth.signInWithPassword({ email, password })', 'create policy "lecture" on cours for select using (auth.uid() = user_id);', 'await supabase.storage.from(\'avatars\').upload(path, file)', 'Deno.serve(async (req) => new Response(\'ok\'))', 'supabase db push'],
+        ],
+        'prisma' => [
+            'title' => 'Prisma',
+            'description' => 'Parcours Prisma pour modéliser, migrer et interroger une base de données avec TypeScript.',
+            'lessons' => [
+                ['Découvrir Prisma', 'Comprendre l’ORM et installer Prisma.', 'Connecter Prisma à une base.', 'Prisma génère un client typé à partir d’un schéma déclaratif.'],
+                ['Schéma et modèles', 'Décrire modèles, champs et enums.', 'Écrire un schema.prisma clair.', 'Le schéma est la source de vérité pour la base et les types.'],
+                ['Migrations', 'Faire évoluer la base proprement.', 'Créer et appliquer des migrations.', 'prisma migrate versionne chaque changement du schéma.'],
+                ['Requêtes CRUD avec Prisma Client', 'Créer, lire, modifier et supprimer.', 'Manipuler les données avec le client typé.', 'Le client expose findMany, create, update et delete avec filtres et tri.'],
+                ['Relations et requêtes avancées', 'Relations, include, transactions et agrégations.', 'Interroger des données liées efficacement.', 'include et select contrôlent les données chargées ; les transactions garantissent la cohérence.'],
+                ['Prisma avec Next.js et tests', 'Utiliser Prisma dans une application et le tester.', 'Intégrer Prisma proprement dans Next.js.', 'Un client unique évite d’ouvrir trop de connexions en développement.'],
+                ['Projet final Prisma', 'Concevoir la couche de données d’une application.', 'Assembler schéma, migrations, requêtes et tests.', 'Projet conseillé : gestion de stock pour un maquis.'],
+            ],
+            'code' => ['npx prisma init', "model User {\n  id    Int    @id @default(autoincrement())\n  email String @unique\n}", 'npx prisma migrate dev --name init', 'const users = await prisma.user.findMany()', 'await prisma.user.findMany({ include: { posts: true } })', 'export const prisma = new PrismaClient()', 'npx prisma studio'],
+        ],
+        'svelte' => [
+            'title' => 'Svelte',
+            'description' => 'Parcours Svelte et SvelteKit pour créer des interfaces réactives et des applications complètes.',
+            'lessons' => [
+                ['Découvrir Svelte', 'Comprendre le compilateur Svelte et créer un projet.', 'Écrire un premier composant.', 'Svelte compile les composants en JavaScript léger, sans runtime lourd.'],
+                ['Composants et réactivité', 'État, valeurs dérivées et props.', 'Utiliser les runes $state, $derived et $props.', 'La réactivité est déclarée avec des runes simples.'],
+                ['Templates, événements et bindings', 'Blocs if/each, événements et bind.', 'Construire des interfaces interactives.', 'Les blocs de template et les bindings réduisent le code répétitif.'],
+                ['Stores et état partagé', 'Partager de l’état entre composants.', 'Choisir entre props, contexte et stores.', 'L’état partagé se place là où il est réellement nécessaire.'],
+                ['SvelteKit : routes et chargement des données', 'Routage par fichiers et fonctions load.', 'Charger les données côté serveur.', 'Les routes sont des dossiers ; load prépare les données avant l’affichage.'],
+                ['Formulaires, actions et déploiement', 'Form actions, validation et mise en ligne.', 'Soumettre des formulaires et déployer.', 'Les actions traitent les formulaires côté serveur avec amélioration progressive.'],
+                ['Projet final Svelte', 'Construire une application SvelteKit complète.', 'Assembler composants, routes, données et déploiement.', 'Projet conseillé : application de suivi avec formulaires et liste filtrable.'],
+            ],
+            'code' => ['npx sv create devroad', 'let compteur = $state(0);', '{#each cours as c}<li>{c.titre}</li>{/each}', '<input bind:value={nom} />', 'export const load = async () => ({ cours });', 'export const actions = { default: async ({ request }) => {} };', 'npm run build'],
+        ],
+        'java' => [
+            'title' => 'Java',
+            'description' => 'Parcours Java des fondamentaux à Spring Boot pour construire des applications robustes.',
+            'lessons' => [
+                ['Premiers pas avec Java', 'Installer le JDK, compiler et exécuter un programme.', 'Écrire un premier programme Java.', 'Java est un langage typé, compilé en bytecode et exécuté par la JVM.'],
+                ['Structures de contrôle et méthodes', 'Conditions, boucles et méthodes.', 'Structurer un programme en méthodes.', 'Les méthodes regroupent la logique ; les structures de contrôle orientent le flux.'],
+                ['Classes et objets', 'Classes, encapsulation, héritage et interfaces.', 'Modéliser un domaine avec des objets.', 'Les classes regroupent état et comportement ; les records simplifient les données.'],
+                ['Collections et Streams', 'List, Map, Set et Stream API.', 'Transformer des collections proprement.', 'Les collections stockent les données ; les streams les transforment de façon déclarative.'],
+                ['Exceptions, fichiers et tests', 'Exceptions, fichiers et JUnit.', 'Écrire du code fiable et testé.', 'Les exceptions gèrent les erreurs ; JUnit verrouille le comportement.'],
+                ['Introduction à Spring Boot', 'Créer une API REST avec Spring Boot.', 'Exposer des endpoints avec Spring.', 'Spring Boot configure automatiquement une application web prête à l’emploi.'],
+                ['Projet final Java', 'Construire une application complète.', 'Assembler objets, collections, tests et API.', 'Projet conseillé : API de gestion de tâches avec tests.'],
+            ],
+            'code' => ['public static void main(String[] args) { System.out.println("Bonjour DevRoad"); }', 'static int carre(int n) { return n * n; }', 'record Cours(String titre, int minutes) {}', 'list.stream().filter(c -> c.minutes() > 60).toList()', '@Test void additionne() { assertEquals(2, 1 + 1); }', '@RestController class CoursController {}', 'mvn test'],
+        ],
 ];
