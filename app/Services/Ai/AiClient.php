@@ -91,32 +91,78 @@ class AiClient
     }
 
     /**
-     * Cherche, parmi les modèles de la clé, un modèle Gemini « flash » stable qui sait générer du texte.
-     * Le résultat est mis en cache une heure (par clé hachée) pour ne pas interroger Google à chaque appel.
+     * Choisit automatiquement le modèle à utiliser d'après la liste réellement proposée par la clé.
+     * Retourne le modèle par défaut s'il est disponible, sinon le meilleur équivalent ;
+     * null si la liste est inaccessible (l'appelant garde alors le modèle par défaut).
      */
-    private function geminiFallbackModel(string $apiKey, string $failedModel): ?string
+    public function resolveModel(string $provider, string $apiKey): ?string
     {
-        return Cache::remember('ai.gemini.fallback.'.hash('sha256', $apiKey).'.'.$failedModel, 3600, function () use ($apiKey, $failedModel) {
-            try {
-                $response = $this->http()->withHeaders(['x-goog-api-key' => $apiKey])
-                    ->get('https://generativelanguage.googleapis.com/v1beta/models', ['pageSize' => 100]);
-            } catch (\Throwable) {
+        $default = self::PROVIDERS[$provider]['default_model'] ?? null;
+
+        return Cache::remember('ai.model.'.$provider.'.'.hash('sha256', $apiKey), 3600, function () use ($provider, $apiKey, $default) {
+            $models = $this->availableModels($provider, $apiKey);
+
+            if ($models === null || $models === []) {
                 return null;
             }
 
-            if ($response->failed()) {
-                return null;
+            if ($default !== null && in_array($default, $models, true)) {
+                return $default;
             }
 
-            $models = collect($response->json('models', []))
+            $candidates = match ($provider) {
+                'gemini' => collect($models)
+                    ->filter(fn ($name) => preg_match('/^gemini-[\d.]+-flash(-lite)?$/', $name) === 1)
+                    ->sortByDesc(fn ($name) => (float) preg_replace('/^gemini-([\d.]+).*/', '$1', $name) * 10 + (str_contains($name, 'lite') ? 0 : 1)),
+                'openai' => collect($models)
+                    ->filter(fn ($name) => preg_match('/^(gpt-5-mini|gpt-4\.1-mini|gpt-4o-mini|gpt-5-nano)$/', $name) === 1),
+                'anthropic' => collect($models)
+                    ->filter(fn ($name) => str_starts_with($name, 'claude-') && str_contains($name, 'haiku'))
+                    ->sortDesc(),
+                default => collect(),
+            };
+
+            return $candidates->values()->first() ?? $models[0];
+        });
+    }
+
+    /** Modèles de texte accessibles avec cette clé (null si le fournisseur ne répond pas). */
+    private function availableModels(string $provider, string $apiKey): ?array
+    {
+        try {
+            $response = match ($provider) {
+                'gemini' => $this->http()->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->get('https://generativelanguage.googleapis.com/v1beta/models', ['pageSize' => 200]),
+                'openai' => $this->http()->withToken($apiKey)->get('https://api.openai.com/v1/models'),
+                'anthropic' => $this->http()->withHeaders(['x-api-key' => $apiKey, 'anthropic-version' => '2023-06-01'])
+                    ->get('https://api.anthropic.com/v1/models', ['limit' => 100]),
+                default => null,
+            };
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($response === null || $response->failed()) {
+            return null;
+        }
+
+        return match ($provider) {
+            'gemini' => collect($response->json('models', []))
                 ->filter(fn ($model) => in_array('generateContent', $model['supportedGenerationMethods'] ?? [], true))
                 ->map(fn ($model) => preg_replace('#^models/#', '', (string) ($model['name'] ?? '')))
-                ->filter(fn ($name) => preg_match('/^gemini-[\d.]+-flash(-lite)?$/', $name) === 1 && $name !== $failedModel)
-                ->sortByDesc(fn ($name) => (float) preg_replace('/^gemini-([\d.]+).*/', '$1', $name) * 10 + (str_contains($name, 'lite') ? 0 : 1))
-                ->values();
+                ->filter(fn ($name) => str_starts_with($name, 'gemini-') && ! preg_match('/(embedding|tts|image|live|audio|exp|preview)/', $name))
+                ->values()->all(),
+            'openai', 'anthropic' => collect($response->json('data', []))->pluck('id')->filter()->values()->all(),
+            default => null,
+        };
+    }
 
-            return $models->first();
-        });
+    /** Modèle Gemini de repli quand celui demandé est introuvable pour cette clé. */
+    private function geminiFallbackModel(string $apiKey, string $failedModel): ?string
+    {
+        $model = $this->resolveModel('gemini', $apiKey);
+
+        return $model !== null && $model !== $failedModel ? $model : null;
     }
 
     /** Client HTTP commun : délai, et bundle de certificats optionnel (AI_CA_BUNDLE) pour les PHP locaux mal configurés. */

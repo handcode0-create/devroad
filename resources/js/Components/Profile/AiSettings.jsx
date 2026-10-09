@@ -103,8 +103,8 @@ export default function AiSettings({ settings }) {
                         </label>
 
                         <label className="flex flex-col gap-2">
-                            <span className="text-sm font-semibold text-[var(--dr-text)]">Modèle <span className="font-normal text-[var(--dr-text-3)]">(facultatif)</span></span>
-                            <input data-dr-native list={`ai-models-${provider?.key}`} value={form.data.model} onChange={(event) => form.setData('model', event.target.value)} placeholder={provider?.default_model} className={ui.field + ' text-sm'} />
+                            <span className="text-sm font-semibold text-[var(--dr-text)]">Modèle <span className="font-normal text-[var(--dr-text-3)]">(facultatif : laisse vide pour utiliser celui de ta clé)</span></span>
+                            <input data-dr-native list={`ai-models-${provider?.key}`} value={form.data.model} onChange={(event) => form.setData('model', event.target.value)} placeholder="Automatique : choisi selon ta clé" className={ui.field + ' text-sm'} />
                             <datalist id={`ai-models-${provider?.key}`}>{provider?.models.map((model) => <option key={model} value={model} />)}</datalist>
                             {form.errors.model && <span role="alert" className="text-sm text-[var(--dr-danger)]">{form.errors.model}</span>}
                         </label>
