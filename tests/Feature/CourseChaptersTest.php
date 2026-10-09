@@ -34,18 +34,26 @@ class CourseChaptersTest extends TestCase
         $this->assertSame('beginner', $roadmap->steps->first()->difficulty_level);
     }
 
-    public function test_une_technologie_sans_chapitres_garde_son_contenu(): void
+    public function test_toutes_les_technologies_ont_des_chapitres_longs_avec_quiz(): void
     {
         $user = User::factory()->create();
+        $generator = app(RoadmapGenerator::class);
 
-        $roadmap = app(RoadmapGenerator::class)->create(
-            $user,
-            ['title' => 'React', 'technology' => 'react'],
-            'react'
-        );
+        foreach (['react', 'nextjs', 'javascript', 'typescript', 'php', 'html', 'css', 'tailwind', 'node', 'git', 'github', 'docker', 'mysql', 'postgresql'] as $tech) {
+            $roadmap = $generator->create($user, ['title' => $tech, 'technology' => $tech], $tech);
 
-        $this->assertNotEmpty($roadmap->steps->first()->content);
-        $this->assertStringNotContainsString(':::quiz', $roadmap->steps->first()->content);
+            $this->assertCount(7, $roadmap->steps, $tech);
+
+            foreach ($roadmap->steps as $step) {
+                $words = count(preg_split('/\s+/u', trim((string) $step->content)));
+
+                $this->assertGreaterThan(1500, $words, "[{$tech}] « {$step->title} » est trop court ({$words} mots).");
+                $this->assertStringContainsString(':::quiz', $step->content, "[{$tech}] « {$step->title} » n'a pas de quiz.");
+            }
+
+            $this->assertSame(360, $roadmap->steps->last()->estimated_minutes, $tech);
+            $this->assertSame('professional', $roadmap->steps->last()->difficulty_level, $tech);
+        }
     }
 
     public function test_la_synchronisation_conserve_le_statut_des_etapes(): void
