@@ -14,6 +14,10 @@ export const TECHNOLOGIES = [
     { value: "docker", label: "Docker" },
     { value: "mysql", label: "MySQL" },
     { value: "postgresql", label: "PostgreSQL" },
+    { value: "python", label: "Python" },
+    { value: "django", label: "Django" },
+    { value: "fastapi", label: "FastAPI" },
+    { value: "flutter", label: "Flutter" },
 ];
 
 const technologyLogos = {

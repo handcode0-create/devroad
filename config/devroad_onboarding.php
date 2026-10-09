@@ -28,6 +28,10 @@ return [
         'docker' => 'Docker',
         'mysql' => 'MySQL',
         'postgresql' => 'PostgreSQL',
+        'python' => 'Python',
+        'django' => 'Django',
+        'fastapi' => 'FastAPI',
+        'flutter' => 'Flutter',
     ],
 
     'goals' => [

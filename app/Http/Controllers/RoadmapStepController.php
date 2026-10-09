@@ -401,6 +401,22 @@ class RoadmapStepController extends Controller
                 'starter' => "CREATE TABLE courses (id BIGSERIAL PRIMARY KEY);\n",
                 'preview' => false,
             ],
+            'python' => [
+                'language' => 'python',
+                'label' => 'Python',
+                'filename' => $workspaceFile ?: 'main.py',
+                'run_command' => 'run',
+                'starter' => "print('Bonjour DevRoad')\n",
+                'preview' => false,
+            ],
+            'dart' => [
+                'language' => 'dart',
+                'label' => 'Flutter / Dart',
+                'filename' => $workspaceFile ?: 'lib/main.dart',
+                'run_command' => 'run',
+                'starter' => "void main() {\n  print('Bonjour DevRoad');\n}\n",
+                'preview' => false,
+            ],
             default => null,
         };
 
@@ -465,6 +481,8 @@ class RoadmapStepController extends Controller
             'docker' => ['docker'],
             'mysql' => ['mysql'],
             'postgresql' => ['postgresql'],
+            'python', 'django', 'fastapi' => ['python'],
+            'flutter' => ['dart'],
             default => [],
         };
     }

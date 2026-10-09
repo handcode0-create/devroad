@@ -363,6 +363,8 @@ class RoadmapGenerator
                 'typescript' => 'typescript',
                 'tailwind' => 'tailwind',
                 'git', 'github', 'docker', 'mysql', 'postgresql' => $technology,
+                'python', 'django', 'fastapi' => 'python',
+                'flutter' => 'dart',
                 default => null,
             };
         }
@@ -386,6 +388,8 @@ class RoadmapGenerator
                 'github' => '.github/workflows/ci.yml',
                 'docker' => 'Dockerfile',
                 'mysql', 'postgresql' => 'schema.sql',
+                'python' => 'main.py',
+                'dart' => 'lib/main.dart',
                 default => null,
             };
         }

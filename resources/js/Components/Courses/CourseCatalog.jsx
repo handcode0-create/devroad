@@ -24,6 +24,7 @@ const TECH_LABELS = {
     laravel: 'Laravel', nextjs: 'Next.js', react: 'React', javascript: 'JavaScript', typescript: 'TypeScript',
     php: 'PHP', html: 'HTML', css: 'CSS', tailwind: 'Tailwind CSS', node: 'Node.js', git: 'Git',
     github: 'GitHub', docker: 'Docker', mysql: 'MySQL', postgresql: 'PostgreSQL',
+    python: 'Python', django: 'Django', fastapi: 'FastAPI', flutter: 'Flutter',
 };
 
 const techKey = (course) => String(course.technology ?? '').toLowerCase().trim() || 'autre';

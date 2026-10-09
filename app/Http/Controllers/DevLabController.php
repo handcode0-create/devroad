@@ -124,6 +124,8 @@ class DevLabController extends Controller
             'docker' => ['label' => 'Docker', 'filename' => 'Dockerfile', 'preview' => false],
             'mysql' => ['label' => 'MySQL', 'filename' => 'schema.sql', 'preview' => false],
             'postgresql' => ['label' => 'PostgreSQL', 'filename' => 'schema.sql', 'preview' => false],
+            'python' => ['label' => 'Python', 'filename' => 'main.py', 'preview' => false],
+            'dart' => ['label' => 'Flutter / Dart', 'filename' => 'lib/main.dart', 'preview' => false],
         ];
         $key = $workspaceLanguage ?? $technology;
         $profile = $profiles[$key] ?? null;

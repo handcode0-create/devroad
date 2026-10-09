@@ -17,6 +17,10 @@ const LANGUAGES = [
     ['docker', 'Docker'],
     ['mysql', 'MySQL'],
     ['postgresql', 'PostgreSQL'],
+    ['python', 'Python'],
+    ['django', 'Django'],
+    ['fastapi', 'FastAPI'],
+    ['flutter', 'Flutter'],
 ];
 
 export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enregistrer', cancelHref, mode = 'create' }) {

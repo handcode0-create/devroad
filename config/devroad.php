@@ -24,6 +24,10 @@ return [
         'docker' => 'Docker',
         'mysql' => 'MySQL',
         'postgresql' => 'PostgreSQL',
+        'python' => 'Python',
+        'django' => 'Django',
+        'fastapi' => 'FastAPI',
+        'flutter' => 'Flutter',
     ],
 
     'catalog' => [
@@ -145,6 +149,38 @@ return [
                 ['label' => 'Documentation PostgreSQL', 'url' => 'https://www.postgresql.org/docs/'],
                 ['label' => 'Tutorial SQL', 'url' => 'https://www.postgresql.org/docs/current/tutorial.html'],
                 ['label' => 'PostgreSQL Wiki', 'url' => 'https://wiki.postgresql.org/'],
+            ],
+        ],
+        'python' => [
+            'description' => 'Langage polyvalent et lisible pour le web, la data, l’automatisation et les scripts.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://docs.python.org/fr/3/'],
+                ['label' => 'Tutoriel Python', 'url' => 'https://docs.python.org/fr/3/tutorial/'],
+                ['label' => 'PyPI', 'url' => 'https://pypi.org/'],
+            ],
+        ],
+        'django' => [
+            'description' => 'Framework web Python complet avec ORM, administration, authentification et sécurité intégrés.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://docs.djangoproject.com/fr/5.1/'],
+                ['label' => 'Tutoriel Django', 'url' => 'https://docs.djangoproject.com/fr/5.1/intro/tutorial01/'],
+                ['label' => 'Django REST Framework', 'url' => 'https://www.django-rest-framework.org/'],
+            ],
+        ],
+        'fastapi' => [
+            'description' => 'Framework Python moderne pour construire des APIs rapides, typées et documentées automatiquement.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://fastapi.tiangolo.com/'],
+                ['label' => 'Tutoriel FastAPI', 'url' => 'https://fastapi.tiangolo.com/tutorial/'],
+                ['label' => 'Pydantic', 'url' => 'https://docs.pydantic.dev/'],
+            ],
+        ],
+        'flutter' => [
+            'description' => 'Framework de Google pour créer des applications mobiles, web et desktop avec Dart.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://docs.flutter.dev/'],
+                ['label' => 'Dart', 'url' => 'https://dart.dev/guides'],
+                ['label' => 'Riverpod', 'url' => 'https://riverpod.dev/'],
             ],
         ],
     ],

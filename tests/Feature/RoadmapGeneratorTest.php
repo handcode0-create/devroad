@@ -19,7 +19,7 @@ class RoadmapGeneratorTest extends TestCase
 
         $technologies = [
             'laravel', 'react', 'javascript', 'typescript', 'php', 'html', 'css',
-            'tailwind', 'node', 'git', 'github', 'docker', 'mysql', 'postgresql',
+            'tailwind', 'node', 'git', 'github', 'docker', 'mysql', 'postgresql', 'python', 'django', 'fastapi', 'flutter',
         ];
 
         foreach ($technologies as $technology) {
