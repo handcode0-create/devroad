@@ -32,6 +32,10 @@ return [
         'django' => 'Django',
         'fastapi' => 'FastAPI',
         'flutter' => 'Flutter',
+        'supabase' => 'Supabase',
+        'prisma' => 'Prisma',
+        'svelte' => 'Svelte',
+        'java' => 'Java',
     ],
 
     'goals' => [

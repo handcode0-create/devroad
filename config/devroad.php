@@ -28,6 +28,10 @@ return [
         'django' => 'Django',
         'fastapi' => 'FastAPI',
         'flutter' => 'Flutter',
+        'supabase' => 'Supabase',
+        'prisma' => 'Prisma',
+        'svelte' => 'Svelte',
+        'java' => 'Java',
     ],
 
     'catalog' => [
@@ -181,6 +185,38 @@ return [
                 ['label' => 'Documentation officielle', 'url' => 'https://docs.flutter.dev/'],
                 ['label' => 'Dart', 'url' => 'https://dart.dev/guides'],
                 ['label' => 'Riverpod', 'url' => 'https://riverpod.dev/'],
+            ],
+        ],
+        'supabase' => [
+            'description' => 'Plateforme back-end open source basée sur Postgres : base de données, authentification, stockage et fonctions.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://supabase.com/docs'],
+                ['label' => 'Guide Row Level Security', 'url' => 'https://supabase.com/docs/guides/database/postgres/row-level-security'],
+                ['label' => 'supabase-js', 'url' => 'https://supabase.com/docs/reference/javascript'],
+            ],
+        ],
+        'prisma' => [
+            'description' => 'ORM TypeScript moderne avec schéma déclaratif, migrations et client typé.',
+            'resources' => [
+                ['label' => 'Documentation officielle', 'url' => 'https://www.prisma.io/docs'],
+                ['label' => 'Schéma Prisma', 'url' => 'https://www.prisma.io/docs/orm/prisma-schema'],
+                ['label' => 'Prisma Client', 'url' => 'https://www.prisma.io/docs/orm/prisma-client'],
+            ],
+        ],
+        'svelte' => [
+            'description' => 'Framework d’interface qui compile les composants en JavaScript léger, avec SvelteKit pour les applications complètes.',
+            'resources' => [
+                ['label' => 'Documentation Svelte', 'url' => 'https://svelte.dev/docs/svelte'],
+                ['label' => 'Documentation SvelteKit', 'url' => 'https://svelte.dev/docs/kit'],
+                ['label' => 'Tutoriel interactif', 'url' => 'https://svelte.dev/tutorial'],
+            ],
+        ],
+        'java' => [
+            'description' => 'Langage typé et robuste, très utilisé pour les applications d’entreprise, Android et les back-ends.',
+            'resources' => [
+                ['label' => 'Documentation Oracle', 'url' => 'https://docs.oracle.com/en/java/'],
+                ['label' => 'Spring Boot', 'url' => 'https://spring.io/projects/spring-boot'],
+                ['label' => 'JUnit 5', 'url' => 'https://junit.org/junit5/docs/current/user-guide/'],
             ],
         ],
     ],

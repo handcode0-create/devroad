@@ -21,6 +21,10 @@ const LANGUAGES = [
     ['django', 'Django'],
     ['fastapi', 'FastAPI'],
     ['flutter', 'Flutter'],
+    ['supabase', 'Supabase'],
+    ['prisma', 'Prisma'],
+    ['svelte', 'Svelte'],
+    ['java', 'Java'],
 ];
 
 export default function CourseForm({ form, roadmap, onSubmit, submitLabel = 'Enregistrer', cancelHref, mode = 'create' }) {

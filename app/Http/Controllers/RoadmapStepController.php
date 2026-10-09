@@ -409,6 +409,14 @@ class RoadmapStepController extends Controller
                 'starter' => "print('Bonjour DevRoad')\n",
                 'preview' => false,
             ],
+            'java' => [
+                'language' => 'java',
+                'label' => 'Java',
+                'filename' => $workspaceFile ?: 'Main.java',
+                'run_command' => 'run',
+                'starter' => "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Bonjour DevRoad\");\n    }\n}\n",
+                'preview' => false,
+            ],
             'dart' => [
                 'language' => 'dart',
                 'label' => 'Flutter / Dart',
@@ -483,6 +491,10 @@ class RoadmapStepController extends Controller
             'postgresql' => ['postgresql'],
             'python', 'django', 'fastapi' => ['python'],
             'flutter' => ['dart'],
+            'supabase' => ['postgresql'],
+            'prisma' => ['typescript'],
+            'svelte' => ['javascript'],
+            'java' => ['java'],
             default => [],
         };
     }

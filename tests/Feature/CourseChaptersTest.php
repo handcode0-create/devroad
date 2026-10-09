@@ -39,7 +39,7 @@ class CourseChaptersTest extends TestCase
         $user = User::factory()->create();
         $generator = app(RoadmapGenerator::class);
 
-        foreach (['react', 'nextjs', 'javascript', 'typescript', 'php', 'html', 'css', 'tailwind', 'node', 'git', 'github', 'docker', 'mysql', 'postgresql', 'python', 'django', 'fastapi', 'flutter'] as $tech) {
+        foreach (['react', 'nextjs', 'javascript', 'typescript', 'php', 'html', 'css', 'tailwind', 'node', 'git', 'github', 'docker', 'mysql', 'postgresql', 'python', 'django', 'fastapi', 'flutter', 'supabase', 'prisma', 'svelte', 'java'] as $tech) {
             $roadmap = $generator->create($user, ['title' => $tech, 'technology' => $tech], $tech);
 
             $this->assertCount(7, $roadmap->steps, $tech);

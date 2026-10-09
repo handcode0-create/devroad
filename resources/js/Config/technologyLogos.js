@@ -18,6 +18,10 @@ export const TECHNOLOGIES = [
     { value: "django", label: "Django" },
     { value: "fastapi", label: "FastAPI" },
     { value: "flutter", label: "Flutter" },
+    { value: "supabase", label: "Supabase" },
+    { value: "prisma", label: "Prisma" },
+    { value: "svelte", label: "Svelte" },
+    { value: "java", label: "Java" },
 ];
 
 const technologyLogos = {

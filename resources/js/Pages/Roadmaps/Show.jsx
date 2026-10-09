@@ -9,6 +9,7 @@ const TECH_LABELS = {
     html: 'HTML', css: 'CSS', tailwind: 'Tailwind CSS', node: 'Node.js', git: 'Git', github: 'GitHub', docker: 'Docker',
     mysql: 'MySQL', postgresql: 'PostgreSQL',
     python: 'Python', django: 'Django', fastapi: 'FastAPI', flutter: 'Flutter',
+    supabase: 'Supabase', prisma: 'Prisma', svelte: 'Svelte', java: 'Java',
 };
 const LEVELS = { beginner: 'Débutant', intermediate: 'Intermédiaire', professional: 'Professionnel', licence: 'Licence', engineering: 'Cycle ingénieur' };
 

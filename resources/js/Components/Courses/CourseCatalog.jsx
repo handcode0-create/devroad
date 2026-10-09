@@ -25,6 +25,7 @@ const TECH_LABELS = {
     php: 'PHP', html: 'HTML', css: 'CSS', tailwind: 'Tailwind CSS', node: 'Node.js', git: 'Git',
     github: 'GitHub', docker: 'Docker', mysql: 'MySQL', postgresql: 'PostgreSQL',
     python: 'Python', django: 'Django', fastapi: 'FastAPI', flutter: 'Flutter',
+    supabase: 'Supabase', prisma: 'Prisma', svelte: 'Svelte', java: 'Java',
 };
 
 const techKey = (course) => String(course.technology ?? '').toLowerCase().trim() || 'autre';

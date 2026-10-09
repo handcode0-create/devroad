@@ -365,6 +365,10 @@ class RoadmapGenerator
                 'git', 'github', 'docker', 'mysql', 'postgresql' => $technology,
                 'python', 'django', 'fastapi' => 'python',
                 'flutter' => 'dart',
+                'supabase' => 'postgresql',
+                'prisma' => 'typescript',
+                'svelte' => 'javascript',
+                'java' => 'java',
                 default => null,
             };
         }
@@ -390,6 +394,7 @@ class RoadmapGenerator
                 'mysql', 'postgresql' => 'schema.sql',
                 'python' => 'main.py',
                 'dart' => 'lib/main.dart',
+                'java' => 'Main.java',
                 default => null,
             };
         }
