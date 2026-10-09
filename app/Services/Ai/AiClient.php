@@ -20,8 +20,11 @@ class AiClient
     public const PROVIDERS = [
         'anthropic' => ['name' => 'Anthropic (Claude)', 'default_model' => 'claude-haiku-4-5', 'models' => ['claude-haiku-4-5', 'claude-sonnet-5-5'], 'keys_url' => 'https://console.anthropic.com/settings/keys'],
         'openai' => ['name' => 'OpenAI', 'default_model' => 'gpt-5-mini', 'models' => ['gpt-5-mini', 'gpt-5-nano', 'gpt-4.1-mini'], 'keys_url' => 'https://platform.openai.com/api-keys'],
-        'gemini' => ['name' => 'Google Gemini', 'default_model' => 'gemini-2.5-flash', 'models' => ['gemini-2.5-flash', 'gemini-2.5-flash-lite'], 'keys_url' => 'https://aistudio.google.com/apikey'],
+        'gemini' => ['name' => 'Google Gemini', 'default_model' => 'gemini-3.5-flash-lite', 'models' => ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite'], 'keys_url' => 'https://aistudio.google.com/apikey'],
     ];
+
+    /** Modèle réellement utilisé lors du dernier appel réussi quand un repli a eu lieu. */
+    public ?string $lastModel = null;
 
     /**
      * @throws AiException
@@ -66,10 +69,16 @@ class AiClient
         // Gemini : si le modèle demandé n'existe pas pour cette clé, on retombe sur un modèle
         // réellement proposé par le compte (liste officielle des modèles de la clé).
         if ($response->failed() && $provider === 'gemini' && $response->status() === 404 && $allowFallback) {
-            $alternative = $this->geminiFallbackModel($apiKey, $model);
+            foreach ($this->geminiFallbackModels($apiKey, $model) as $alternative) {
+                try {
+                    $text = $this->complete($provider, $apiKey, $alternative, $system, $prompt, $maxTokens, $allowEmpty, false);
+                } catch (AiException) {
+                    continue;
+                }
 
-            if ($alternative !== null) {
-                return $this->complete($provider, $apiKey, $alternative, $system, $prompt, $maxTokens, $allowEmpty, false);
+                $this->lastModel = $alternative;
+
+                return $text;
             }
         }
 
@@ -157,12 +166,22 @@ class AiClient
         };
     }
 
-    /** Modèle Gemini de repli quand celui demandé est introuvable pour cette clé. */
-    private function geminiFallbackModel(string $apiKey, string $failedModel): ?string
-    {
-        $model = $this->resolveModel('gemini', $apiKey);
+    /**
+     * Modèles Gemini actuels recommandés par Google pour les nouveaux projets (les séries 2.x sont
+     * réservées aux comptes qui les utilisaient déjà ou arrêtées : gemini-2.0-flash est fermé).
+     */
+    private const GEMINI_CURRENT = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite'];
 
-        return $model !== null && $model !== $failedModel ? $model : null;
+    /** Modèles Gemini à essayer, dans l'ordre, quand celui demandé est introuvable pour cette clé. */
+    private function geminiFallbackModels(string $apiKey, string $failedModel): array
+    {
+        $listed = $this->resolveModel('gemini', $apiKey);
+
+        return collect([$listed, ...self::GEMINI_CURRENT])
+            ->filter(fn ($model) => $model && $model !== $failedModel)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /** Client HTTP commun : délai, et bundle de certificats optionnel (AI_CA_BUNDLE) pour les PHP locaux mal configurés. */

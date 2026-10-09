@@ -47,7 +47,7 @@ class AiClientConnectionTest extends TestCase
 
             if ($request->method() === 'GET') {
                 return Http::response(['models' => [
-                    ['name' => 'models/gemini-2.0-flash', 'supportedGenerationMethods' => ['generateContent']],
+                    ['name' => 'models/gemini-3.8-flash', 'supportedGenerationMethods' => ['generateContent']],
                     ['name' => 'models/gemini-embedding-001', 'supportedGenerationMethods' => ['embedContent']],
                 ]]);
             }
@@ -55,9 +55,30 @@ class AiClientConnectionTest extends TestCase
             return Http::response(['candidates' => [['content' => ['parts' => [['text' => 'Salut']]]]]]);
         });
 
-        $text = app(AiClient::class)->complete('gemini', 'cle-test', null, 'sys', 'prompt');
+        $text = app(AiClient::class)->complete('gemini', 'cle-test', 'gemini-2.5-flash', 'sys', 'prompt');
 
         $this->assertSame('Salut', $text);
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'gemini-2.0-flash:generateContent'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'gemini-3.8-flash:generateContent'));
+    }
+
+    public function test_gemini_essaie_les_modeles_actuels_quand_la_liste_des_modeles_est_inaccessible(): void
+    {
+        Http::fake(function ($request) {
+            if ($request->method() === 'GET') {
+                return Http::response(['error' => ['message' => 'denied']], 403);
+            }
+
+            if (str_contains($request->url(), 'gemini-2.5-flash:generateContent')) {
+                return Http::response(['error' => ['code' => 404, 'message' => 'models/gemini-2.5-flash is not found', 'status' => 'NOT_FOUND']], 404);
+            }
+
+            return Http::response(['candidates' => [['content' => ['parts' => [['text' => 'Salut']]]]]]);
+        });
+
+        $client = app(AiClient::class);
+        $text = $client->complete('gemini', 'cle-sans-liste', 'gemini-2.5-flash', 'sys', 'prompt');
+
+        $this->assertSame('Salut', $text);
+        $this->assertSame('gemini-3.5-flash-lite', $client->lastModel);
     }
 }
