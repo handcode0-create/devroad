@@ -4,14 +4,15 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Vite;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * En-têtes de sécurité HTTP appliqués à toutes les réponses web.
  *
  * La CSP est désactivée en environnement local : le serveur Vite (HMR) charge des scripts depuis
- * un autre port. Les scripts inline restent autorisés car l'aperçu DevLab (iframe srcdoc) hérite
- * de la politique de la page ; cet iframe est de toute façon isolé (sandbox + CSP propre).
+ * un autre port. Les scripts inline sont refusés, sauf ceux portant le nonce de la requête.
+ * L'aperçu du code utilisateur passe par /preview (CSP et sandbox propres).
  */
 class SecurityHeaders
 {
@@ -49,7 +50,7 @@ class SecurityHeaders
     {
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline'",
+            "script-src 'self' 'nonce-".Vite::cspNonce()."'",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
             "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
             "img-src 'self' data: blob: https:",

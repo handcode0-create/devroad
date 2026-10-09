@@ -1,18 +1,25 @@
-const PREVIEW_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob: https:; font-src data: https:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
-
-function secureSrcDoc(srcDoc) {
-    const meta = "<meta http-equiv=\"Content-Security-Policy\" content=\"" + PREVIEW_CSP + "\">";
-
-    if (/<head[^>]*>/i.test(srcDoc)) {
-        return srcDoc.replace(/<head[^>]*>/i, (tag) => tag + meta);
-    }
-
-    return meta + srcDoc;
-}
-
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { Eye, Play, X } from "lucide-react";
 
 export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose }) {
+    const [src, setSrc] = useState(null);
+    const [failed, setFailed] = useState(false);
+    const latest = useRef(srcDoc);
+    latest.current = srcDoc;
+
+    // Le HTML est déposé côté serveur puis servi depuis /preview, avec sa propre CSP.
+    useEffect(() => {
+        let active = true;
+        setSrc(null);
+        setFailed(false);
+        axios.post(route('preview.store'), { html: String(latest.current ?? '') })
+            .then((response) => { if (active) setSrc(response.data.url); })
+            .catch(() => { if (active) setFailed(true); });
+
+        return () => { active = false; };
+    }, [previewVersion]);
+
     return (
         <div className="bg-[var(--dr-bg)] p-2">
             <div className="mb-2 flex items-center justify-between px-2">
@@ -46,13 +53,19 @@ export default function PreviewPane({ previewVersion, srcDoc, onRefresh, onClose
                 </div>
             </div>
 
-            <iframe
-                key={previewVersion}
-                title="Prévisualisation DevRoad"
-                sandbox="allow-scripts"
-                srcDoc={secureSrcDoc(srcDoc)}
-                className="h-[420px] w-full rounded-2xl border border-[var(--dr-border)] bg-white"
-            />
+            {failed ? (
+                <div className="flex h-[420px] w-full items-center justify-center rounded-2xl border border-[var(--dr-border)] bg-[var(--dr-field)] px-4 text-center text-sm text-[var(--dr-text-2)]">
+                    Impossible de charger l'aperçu. Réessaie avec « Actualiser ».
+                </div>
+            ) : (
+                <iframe
+                    key={previewVersion}
+                    title="Prévisualisation DevRoad"
+                    sandbox="allow-scripts"
+                    src={src ?? 'about:blank'}
+                    className="h-[420px] w-full rounded-2xl border border-[var(--dr-border)] bg-white"
+                />
+            )}
         </div>
     );
 }

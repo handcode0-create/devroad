@@ -10,6 +10,7 @@ use App\Http\Controllers\GroupMembershipController;
 use App\Http\Controllers\MemoAttachmentController;
 use App\Http\Controllers\MemoController;
 use App\Http\Controllers\MemoFolderController;
+use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RoadmapController;
@@ -77,6 +78,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/push-subscription',[PushSubscriptionController::class, 'destroy'])->name('push.destroy');
     Route::patch('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/preview', [PreviewController::class, 'store'])->middleware('throttle:60,1')->name('preview.store');
+    Route::get('/preview/{token}', [PreviewController::class, 'show'])->where('token', '[A-Za-z0-9]{40}')->name('preview.show');
     Route::get('/devlab', DevLabController::class)->name('devlab');
     Route::get('/sandbox', [SandboxController::class, 'index'])->name('sandbox');
 

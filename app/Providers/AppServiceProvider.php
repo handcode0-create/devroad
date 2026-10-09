@@ -29,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+        Vite::useCspNonce(); // nonce pour les scripts : la CSP n'autorise plus les scripts inline arbitraires
 
         // En production, tout passe par HTTPS (liens générés, cookies, assets).
         if ($this->app->environment('production')) {

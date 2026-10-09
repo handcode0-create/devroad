@@ -10,7 +10,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         {{-- Current Laravel CSRF token for AJAX clients. --}}
         <meta name="theme-color" content="#08111F">
-        <script>
+        <script nonce="{{ Vite::cspNonce() }}">
             // Thème « Automatique » et « Réduire les animations », résolus avant l'affichage (pas de flash).
             (function () {
                 var root = document.documentElement;
@@ -40,7 +40,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @routes
+        @routes(null, Vite::cspNonce())
         @viteReactRefresh
         @vite('resources/js/app.jsx')
         @inertiaHead

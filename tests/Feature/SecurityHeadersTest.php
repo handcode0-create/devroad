@@ -34,6 +34,8 @@ class SecurityHeadersTest extends TestCase
         $this->assertStringContainsString("object-src 'none'", $csp);
         $this->assertStringContainsString("frame-ancestors 'self'", $csp);
         $this->assertStringContainsString("base-uri 'self'", $csp);
+        $this->assertMatchesRegularExpression("/script-src 'self' 'nonce-[A-Za-z0-9+\/=_-]+'(;|$)/", $csp);
+        $this->assertStringNotContainsString("script-src 'self' 'unsafe-inline'", $csp);
     }
 
     public function test_les_formulaires_d_authentification_sont_limites(): void
