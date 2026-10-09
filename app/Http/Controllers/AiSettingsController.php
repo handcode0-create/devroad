@@ -37,7 +37,10 @@ class AiSettingsController extends Controller
 
         // Vérification réelle (très courte) avant d'enregistrer.
         try {
+            $ai->lastModel = null;
             $ai->complete($data['provider'], $key, $model, 'Réponds uniquement par OK.', 'Test de connexion DevRoad.', 16, allowEmpty: true);
+            // Un repli automatique a trouvé un modèle qui fonctionne : c'est celui qu'on enregistre.
+            $model = $ai->lastModel ?? $model;
         } catch (AiException $exception) {
             throw ValidationException::withMessages(['api_key' => $exception->getMessage()]);
         }
