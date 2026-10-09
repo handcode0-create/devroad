@@ -153,19 +153,84 @@ class RoadmapGenerator
         $base = config("devroad_course_enrichment.{$technology}", []);
         $rich = config("devroad_rich.{$technology}", []);
 
-        if (! is_array($rich) || $rich === []) {
-            return $base;
+        if (is_array($rich) && $rich !== []) {
+            foreach (($rich['lessons'] ?? []) as $title => $fields) {
+                $base['lessons'][$title] = array_replace($base['lessons'][$title] ?? [], $fields);
+            }
+
+            if (! empty($rich['sources'])) {
+                $base['sources'] = $rich['sources'];
+            }
         }
 
-        foreach (($rich['lessons'] ?? []) as $title => $fields) {
+        // Les chapitres rédigés en Markdown ont la priorité sur tout le reste.
+        foreach ($this->loadChapters($technology) as $title => $fields) {
             $base['lessons'][$title] = array_replace($base['lessons'][$title] ?? [], $fields);
         }
 
-        if (! empty($rich['sources'])) {
-            $base['sources'] = $rich['sources'];
+        return $base;
+    }
+
+    /**
+     * Chapitres longs rédigés en Markdown : resources/courses/{technologie}/NN-slug.md.
+     *
+     * En-tête facultatif entre deux lignes « --- » (title, minutes, level). Sans « title »,
+     * le premier titre « # » du fichier désigne la leçon du catalogue à remplacer.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function loadChapters(string $technology): array
+    {
+        $directory = resource_path("courses/{$technology}");
+
+        if (! preg_match('/^[a-z0-9_-]+$/', $technology) || ! is_dir($directory)) {
+            return [];
         }
 
-        return $base;
+        $files = glob($directory . '/*.md') ?: [];
+        sort($files);
+
+        $chapters = [];
+
+        foreach ($files as $file) {
+            $raw = str_replace("\r\n", "\n", (string) file_get_contents($file));
+            $meta = [];
+
+            if (preg_match('/\A---\n(.*?)\n---\n/s', $raw, $match)) {
+                $raw = substr($raw, strlen($match[0]));
+
+                foreach (explode("\n", $match[1]) as $line) {
+                    if (preg_match('/^(\w+):\s*(.+)$/', trim($line), $pair)) {
+                        $meta[$pair[1]] = trim($pair[2], " \"'");
+                    }
+                }
+            }
+
+            $body = ltrim($raw);
+
+            if (empty($meta['title']) && preg_match('/\A# (.+)\n/', $body, $heading)) {
+                $meta['title'] = trim($heading[1]);
+                $body = ltrim(substr($body, strlen($heading[0])));
+            }
+
+            if (empty($meta['title']) || trim($body) === '') {
+                continue;
+            }
+
+            $fields = ['content' => rtrim($body)];
+
+            if (isset($meta['minutes']) && ctype_digit($meta['minutes'])) {
+                $fields['estimated_minutes'] = (int) $meta['minutes'];
+            }
+
+            if (isset($meta['level']) && in_array($meta['level'], ['beginner', 'intermediate', 'professional'], true)) {
+                $fields['difficulty_level'] = $meta['level'];
+            }
+
+            $chapters[$meta['title']] = $fields;
+        }
+
+        return $chapters;
     }
 
     private function buildStepPayload(

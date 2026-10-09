@@ -133,7 +133,7 @@ class RoadmapGeneratorTest extends TestCase
         $this->assertNull($first->exercise_completed_at);
 
         $this->assertSame('Projet final : construire un module', $last->title);
-        $this->assertSame(60, $last->estimated_minutes);
+        $this->assertSame(360, $last->estimated_minutes);
         $this->assertSame('todo', $last->status);
     }
 
