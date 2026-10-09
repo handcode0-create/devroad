@@ -4,6 +4,7 @@ namespace App\Services\Ai;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +31,7 @@ class AiClient
 
         try {
             $response = match ($provider) {
-                'anthropic' => Http::timeout(60)->withHeaders([
+                'anthropic' => $this->http()->withHeaders([
                     'x-api-key' => $apiKey,
                     'anthropic-version' => '2023-06-01',
                 ])->post('https://api.anthropic.com/v1/messages', [
@@ -39,14 +40,14 @@ class AiClient
                     'system' => $system,
                     'messages' => [['role' => 'user', 'content' => $prompt]],
                 ]),
-                'openai' => Http::timeout(60)->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', array_filter([
+                'openai' => $this->http()->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', array_filter([
                     'model' => $model,
                     'messages' => [['role' => 'system', 'content' => $system], ['role' => 'user', 'content' => $prompt]],
                     // Les modèles de raisonnement comptent leur réflexion dans ce budget.
                     'max_completion_tokens' => $maxTokens * 3,
                     'reasoning_effort' => preg_match('/^(gpt-5|o\d)/', $model) ? 'low' : null,
                 ])),
-                'gemini' => Http::timeout(60)->withHeaders(['x-goog-api-key' => $apiKey])
+                'gemini' => $this->http()->withHeaders(['x-goog-api-key' => $apiKey])
                     ->post('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent', [
                         'systemInstruction' => ['parts' => [['text' => $system]]],
                         'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
@@ -54,8 +55,8 @@ class AiClient
                     ]),
                 default => throw new AiException('Fournisseur d’IA inconnu.'),
             };
-        } catch (ConnectionException) {
-            throw new AiException('Impossible de joindre ' . $this->name($provider) . '. Vérifie ta connexion puis réessaie.');
+        } catch (ConnectionException $exception) {
+            throw new AiException($this->explainConnection($provider, $exception));
         } catch (RequestException $exception) {
             // Certains intermédiaires (proxy) font lever l'erreur au lieu de renvoyer la réponse.
             $response = $exception->response;
@@ -76,6 +77,41 @@ class AiClient
         }
 
         return trim($text);
+    }
+
+    /** Client HTTP commun : délai, et bundle de certificats optionnel (AI_CA_BUNDLE) pour les PHP locaux mal configurés. */
+    private function http(): PendingRequest
+    {
+        $request = Http::timeout(60);
+        $bundle = config('devroad.ai_ca_bundle');
+
+        if (is_string($bundle) && $bundle !== '' && is_file($bundle)) {
+            $request = $request->withOptions(['verify' => $bundle]);
+        }
+
+        return $request;
+    }
+
+    /**
+     * Diagnostic d'un échec de connexion : la cause réelle (certificat, DNS, délai…) est
+     * consignée dans les logs et résumée en une action concrète pour l'utilisateur.
+     */
+    private function explainConnection(string $provider, ConnectionException $exception): string
+    {
+        $name = $this->name($provider);
+        $detail = $exception->getMessage();
+
+        Log::warning('Connexion au fournisseur d’IA impossible', ['provider' => $provider, 'message' => Str::limit($detail, 300)]);
+
+        return match (true) {
+            str_contains($detail, 'cURL error 60') || str_contains($detail, 'cURL error 77') || stripos($detail, 'SSL certificate') !== false
+                => "Ton PHP local ne reconnaît pas le certificat de $name (erreur SSL). Télécharge https://curl.se/ca/cacert.pem, enregistre-le (ex. C:\\xampp\\php\\extras\\ssl\\cacert.pem), puis renseigne-le dans php.ini (curl.cainfo et openssl.cafile) ou dans le fichier .env avec AI_CA_BUNDLE=chemin\\cacert.pem, et redémarre le serveur.",
+            str_contains($detail, 'cURL error 6') || stripos($detail, 'resolve host') !== false
+                => "Ton ordinateur ne parvient pas à résoudre l'adresse de $name (DNS). Vérifie ta connexion Internet ou ton VPN, puis réessaie.",
+            str_contains($detail, 'cURL error 28') || stripos($detail, 'timed out') !== false
+                => "$name met trop de temps à répondre. Vérifie ta connexion (ou ton pare-feu / antivirus), puis réessaie.",
+            default => 'Impossible de joindre '.$name.'. Vérifie ta connexion puis réessaie. Détail technique : '.Str::limit($detail, 140),
+        };
     }
 
     /** Message d'erreur compréhensible (jamais le corps brut, qui pourrait contenir des détails techniques). */

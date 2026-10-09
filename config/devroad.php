@@ -1,6 +1,10 @@
 <?php
 
 return [
+
+    // Chemin d'un cacert.pem pour les appels aux fournisseurs d'IA (PHP local sans certificats).
+    'ai_ca_bundle' => env('AI_CA_BUNDLE'),
+
     'devlab' => [
         'execution_mode' => env('DEVROAD_EXECUTION_MODE', 'host'),
         'allow_host_runtime' => env('DEVROAD_ALLOW_HOST_RUNTIME', true),
