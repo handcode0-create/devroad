@@ -965,6 +965,16 @@ html .theme-light input[data-dr-native]::placeholder {
     border-radius: 6px;
     padding: 0.12em 0.4em;
 }
+/* Le code en ligne ne se coupe pas après un tiret (--invokable) ; s'il est plus
+   large que la colonne, il défile dans sa propre boîte. */
+.dr-doc :not(pre) > code {
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    vertical-align: bottom;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
 .dr-doc pre {
     background: var(--dr-field);
     border: 1px solid var(--dr-border);
