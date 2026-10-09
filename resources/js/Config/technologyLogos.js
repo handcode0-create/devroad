@@ -63,6 +63,17 @@ const technologyLogos = {
 
     postgresql: "/assets/postgresql.png",
     postgres: "/assets/postgresql.png",
+
+    python: "/assets/python.svg",
+    django: "/assets/django.svg",
+    fastapi: "/assets/fastapi.svg",
+    flutter: "/assets/flutter.svg",
+    dart: "/assets/flutter.svg",
+    supabase: "/assets/supabase.svg",
+    prisma: "/assets/prisma.svg",
+    svelte: "/assets/svelte.svg",
+    sveltekit: "/assets/svelte.svg",
+    java: "/assets/java.svg",
 };
 
 export default technologyLogos;
