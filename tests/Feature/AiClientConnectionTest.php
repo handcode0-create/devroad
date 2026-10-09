@@ -37,4 +37,27 @@ class AiClientConnectionTest extends TestCase
     {
         $this->assertStringContainsString('trop de temps', $this->messageFor('cURL error 28: Operation timed out'));
     }
+
+    public function test_gemini_retombe_sur_un_modele_disponible_quand_le_modele_est_introuvable(): void
+    {
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'gemini-2.5-flash:generateContent')) {
+                return Http::response(['error' => ['code' => 404, 'message' => 'models/gemini-2.5-flash is not found', 'status' => 'NOT_FOUND']], 404);
+            }
+
+            if ($request->method() === 'GET') {
+                return Http::response(['models' => [
+                    ['name' => 'models/gemini-2.0-flash', 'supportedGenerationMethods' => ['generateContent']],
+                    ['name' => 'models/gemini-embedding-001', 'supportedGenerationMethods' => ['embedContent']],
+                ]]);
+            }
+
+            return Http::response(['candidates' => [['content' => ['parts' => [['text' => 'Salut']]]]]]);
+        });
+
+        $text = app(AiClient::class)->complete('gemini', 'cle-test', null, 'sys', 'prompt');
+
+        $this->assertSame('Salut', $text);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'gemini-2.0-flash:generateContent'));
+    }
 }

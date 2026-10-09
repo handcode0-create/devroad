@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -25,7 +26,7 @@ class AiClient
     /**
      * @throws AiException
      */
-    public function complete(string $provider, string $apiKey, ?string $model, string $system, string $prompt, int $maxTokens = 1800, bool $allowEmpty = false): string
+    public function complete(string $provider, string $apiKey, ?string $model, string $system, string $prompt, int $maxTokens = 1800, bool $allowEmpty = false, bool $allowFallback = true): string
     {
         $model = $model ?: (self::PROVIDERS[$provider]['default_model'] ?? null);
 
@@ -62,6 +63,16 @@ class AiClient
             $response = $exception->response;
         }
 
+        // Gemini : si le modèle demandé n'existe pas pour cette clé, on retombe sur un modèle
+        // réellement proposé par le compte (liste officielle des modèles de la clé).
+        if ($response->failed() && $provider === 'gemini' && $response->status() === 404 && $allowFallback) {
+            $alternative = $this->geminiFallbackModel($apiKey, $model);
+
+            if ($alternative !== null) {
+                return $this->complete($provider, $apiKey, $alternative, $system, $prompt, $maxTokens, $allowEmpty, false);
+            }
+        }
+
         if ($response->failed()) {
             throw new AiException($this->explain($provider, $response, $model));
         }
@@ -77,6 +88,35 @@ class AiClient
         }
 
         return trim($text);
+    }
+
+    /**
+     * Cherche, parmi les modèles de la clé, un modèle Gemini « flash » stable qui sait générer du texte.
+     * Le résultat est mis en cache une heure (par clé hachée) pour ne pas interroger Google à chaque appel.
+     */
+    private function geminiFallbackModel(string $apiKey, string $failedModel): ?string
+    {
+        return Cache::remember('ai.gemini.fallback.'.hash('sha256', $apiKey).'.'.$failedModel, 3600, function () use ($apiKey, $failedModel) {
+            try {
+                $response = $this->http()->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->get('https://generativelanguage.googleapis.com/v1beta/models', ['pageSize' => 100]);
+            } catch (\Throwable) {
+                return null;
+            }
+
+            if ($response->failed()) {
+                return null;
+            }
+
+            $models = collect($response->json('models', []))
+                ->filter(fn ($model) => in_array('generateContent', $model['supportedGenerationMethods'] ?? [], true))
+                ->map(fn ($model) => preg_replace('#^models/#', '', (string) ($model['name'] ?? '')))
+                ->filter(fn ($name) => preg_match('/^gemini-[\d.]+-flash(-lite)?$/', $name) === 1 && $name !== $failedModel)
+                ->sortByDesc(fn ($name) => (float) preg_replace('/^gemini-([\d.]+).*/', '$1', $name) * 10 + (str_contains($name, 'lite') ? 0 : 1))
+                ->values();
+
+            return $models->first();
+        });
     }
 
     /** Client HTTP commun : délai, et bundle de certificats optionnel (AI_CA_BUNDLE) pour les PHP locaux mal configurés. */
