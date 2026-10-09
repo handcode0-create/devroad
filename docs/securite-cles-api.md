@@ -20,3 +20,12 @@
 4. Une fois la commande terminée, retirer l'ancienne valeur de `APP_PREVIOUS_KEYS`.
 
 Attention : la rotation invalide aussi les sessions et cookies chiffrés existants (les utilisateurs devront se reconnecter).
+
+## Sécurité HTTP (en-têtes et limitations)
+
+- `SecurityHeaders` (middleware web) envoie : `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`,
+  `Referrer-Policy`, `Permissions-Policy` (caméra, micro, géolocalisation… coupés), `Cross-Origin-Opener-Policy`,
+  `Strict-Transport-Security` (en HTTPS) et une `Content-Security-Policy` (hors environnement local).
+- En production : liens et assets forcés en HTTPS, cookie de session `Secure` par défaut.
+- Limitation de débit : inscription, connexion, mot de passe oublié/réinitialisation, confirmation et changement de mot de passe.
+- À vérifier côté Railway : `APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY` définie, HTTPS actif sur le domaine.
