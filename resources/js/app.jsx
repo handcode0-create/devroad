@@ -6,6 +6,9 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { MotionProvider } from '@/Components/Ui/Motion';
 import { ConfirmProvider } from '@/Components/Ui/ConfirmProvider';
+import { registerServiceWorker } from './pwa';
+
+registerServiceWorker();
 
 const appName = import.meta.env.VITE_APP_NAME || 'DevRoad';
 

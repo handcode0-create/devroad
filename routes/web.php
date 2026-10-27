@@ -37,7 +37,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/sitemap.xml', function () {
-    $urls = [route('home')];
+    $urls = [route('home'), route('install')];
     $xml = '<?xml version="1.0" encoding="UTF-8"?>';
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
     foreach ($urls as $url) {
@@ -60,6 +60,14 @@ Route::get('/robots.txt', function () {
         ['Content-Type' => 'text/plain; charset=UTF-8']
     );
 })->name('robots');
+
+// Page publique d'installation de la PWA (lien et QR code partagés hors Play Store).
+// Le QR code pointe vers cette même page avec ?ref=qr pour mesurer les scans.
+Route::get('/installer', function () {
+    return Inertia::render('Install', [
+        'installUrl' => route('install', ['ref' => 'qr']),
+    ]);
+})->name('install');
 
 Route::get('/app/splash', function () {
     return Inertia::render('Auth/AppSplash');

@@ -1,13 +1,25 @@
 {
+  "id": "/",
   "name": "DevRoad",
   "short_name": "DevRoad",
-  "description": "Apprenez, planifiez et construisez vos projets de développement.",
-  "start_url": "/dashboard",
+  "description": "Roadmaps, fiches mémo et cours pour apprendre le développement, en français.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/dashboard?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#08111F",
   "theme_color": "#08111F",
+  "categories": ["education", "productivity"],
   "icons": [
-    { "src": "/icondevroad.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Mes roadmaps", "short_name": "Roadmaps", "url": "/roadmaps?source=pwa", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mes fiches mémo", "short_name": "Mémos", "url": "/memos?source=pwa", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Rechercher", "short_name": "Recherche", "url": "/search?source=pwa", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

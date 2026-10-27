@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Download } from 'lucide-react';
 import OnboardingSwipe from '@/Components/OnboardingSwipe';
 
 function OnboardingProgress() {
@@ -94,6 +94,13 @@ export default function Welcome() {
 
                             <OnboardingProgress />
 
+                            <Link
+                                href={route('install')}
+                                className="mx-auto mt-5 flex w-fit items-center justify-center gap-2 text-[13px] font-semibold text-white/70 transition hover:text-white"
+                            >
+                                <Download size={16} aria-hidden="true" />
+                                Installer l’application
+                            </Link>
 
                             <a
                                 href="https://handcode.site"

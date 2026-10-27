@@ -27,8 +27,11 @@
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'DevRoad') }}">
         <meta name="description" content="DevRoad — apprenez, planifiez et construisez vos projets de développement.">
         <link rel="icon" type="image/png" href="/icondevroad.png">
-        <link rel="apple-touch-icon" href="/icondevroad.png">
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
         <link rel="manifest" href="/manifest.webmanifest">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
         <title inertia>{{ config('app.name', 'DevRoad') }}</title>
 
